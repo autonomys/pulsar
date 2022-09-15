@@ -1,0 +1,48 @@
+name: "ci tests"
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+env:
+  # Not needed in CI, should make things a bit faster
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  clippy-fmt:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-12
+          - windows-2022
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v2
+
+      - name: install Rust nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2022-08-12
+          target: wasm32-unknown-unknown
+          override: true
+          components: rustfmt, clippy
+
+      - name: fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: -- -D warnings
