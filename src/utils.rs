@@ -14,10 +14,12 @@ pub(crate) fn print_ascii_art() {
 
 pub(crate) fn print_version() {
     let version: &str = env!("CARGO_PKG_VERSION");
-    println!("{version}");
+    println!("version: {version}");
 }
 
-pub(crate) fn get_user_input() -> String {
+pub(crate) fn get_user_input(prompt: &str) -> String {
+    print!("{prompt}");
+    std::io::Write::flush(&mut std::io::stdout()).expect("flush failed!");
     let mut input = String::new();
     if let Err(why) = std::io::stdin().read_line(&mut input) {
         panic!("could not read user input because: {why}");
