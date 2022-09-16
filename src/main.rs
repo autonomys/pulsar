@@ -1,5 +1,5 @@
 use clap::Command;
-use utils::create_config;
+use utils::{create_config, print_ascii_art, print_version};
 mod utils;
 
 fn cli() -> Command<'static> {
@@ -18,7 +18,21 @@ fn cli() -> Command<'static> {
 
 fn config() {
     let _file = create_config();
-    todo!("initialize the config");
+    print_ascii_art();
+    print_version();
+
+    /*
+    Enter your farmer/reward address: WALLET_ADDRESS
+    Enter your node name to be identified on the network(defaults to HOSTNAME): HOSTNAME
+    Specify a sector location (whatever the default was):
+    Specify a sector size (defaults to 1GB): 100GB
+    Specify the chain to farm(defaults to `gemini-1`): taurus-2
+
+    Configuration has been generated at $HOME/.config/subspace/config
+    */
+
+    println!("Ready for lift off! Run the follow command to begin:");
+    println!("'subspace farm'");
 }
 
 fn main() {
