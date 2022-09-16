@@ -1,23 +1,3 @@
-use std::fs::{create_dir, File};
-
-/// Creates a config file at the location
-/// - **Linux:** `$HOME/.config/subspace-cli/subspace.cfg`.
-/// - **macOS:** `$HOME/Library/Application Support/subspace-cli/subspace.cfg`.
-/// - **Windows:** `{FOLDERID_RoamingAppData}/subspace-cli/subspace.cfg`.
-pub(crate) fn create_config() -> File {
-    let config_path = match dirs::config_dir() {
-        Some(path) => path,
-        None => panic!("couldn't get the default config directory!"),
-    };
-    let config_path = config_path.join("subspace-cli");
-    let _ = create_dir(config_path.clone()); // if folder already exists, ignore the error
-
-    match File::create(config_path.join("subspace.cfg")) {
-        Err(why) => panic!("couldn't create the config file because: {}", why),
-        Ok(file) => file,
-    }
-}
-
 pub(crate) fn print_ascii_art() {
     println!("
  ____             __                                              __  __          __                               __
@@ -35,4 +15,12 @@ pub(crate) fn print_ascii_art() {
 pub(crate) fn print_version() {
     let version: &str = env!("CARGO_PKG_VERSION");
     println!("{version}");
+}
+
+pub(crate) fn get_user_input() -> String {
+    let mut input = String::new();
+    if let Err(why) = std::io::stdin().read_line(&mut input) {
+        panic!("could not read user input because: {why}");
+    }
+    input.trim().to_string()
 }
