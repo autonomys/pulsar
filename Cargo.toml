@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.21", features = ["derive"] }
+dirs = "4.0.0"

@@ -1,4 +1,7 @@
 use clap::Command;
+mod init;
+use init::init;
+mod utils;
 
 fn cli() -> Command<'static> {
     Command::new("subspace")
@@ -16,20 +19,16 @@ fn cli() -> Command<'static> {
 
 fn main() {
     let command = cli();
-    if let Ok(matches) = command.clone().try_get_matches() {
-        match matches.subcommand() {
-            Some(("init", _)) => {
-                println!("hmm");
-            }
-            Some(("farm", _)) => {
-                println!(
-                    "Config could not be found. Please run `subspace init` to generate the default"
-                )
-            }
-            _ => unreachable!(), // all commands are defined above
+    let matches = command.get_matches();
+    match matches.subcommand() {
+        Some(("init", _)) => {
+            init();
         }
-    } else {
-        println!("You have entered an invalid command.\n");
-        command.clone().print_help().unwrap();
+        Some(("farm", _)) => {
+            println!(
+                "Config could not be found. Please run `subspace init` to generate the default"
+            )
+        }
+        _ => unreachable!(), // all commands are defined above
     }
 }
