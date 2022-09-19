@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 base58 = "0.2.0"
 blake2-rfc = "0.2.18"
+bytesize = "1.1.0"
 clap = { version = "3.2.21", features = ["derive"] }
 dirs = "4.0.0"
 ss58-registry = "1.29.0"

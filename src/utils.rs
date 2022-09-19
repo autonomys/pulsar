@@ -1,4 +1,5 @@
 use crate::ss58::parse_ss58_reward_address;
+use bytesize::ByteSize;
 use std::path::Path;
 
 pub(crate) fn print_ascii_art() {
@@ -59,8 +60,8 @@ pub(crate) fn is_valid_location(location: &str) -> bool {
     Path::new(location).is_dir()
 }
 
-pub(crate) fn is_valid_size(_size: &str) -> bool {
-    todo!();
+pub(crate) fn is_valid_size(size: &str) -> bool {
+    size.parse::<ByteSize>().is_ok()
 }
 
 pub(crate) fn is_valid_chain(_chain: &str) -> bool {
