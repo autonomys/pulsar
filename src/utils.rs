@@ -1,3 +1,6 @@
+use crate::ss58::parse_ss58_reward_address;
+use std::path::Path;
+
 pub(crate) fn print_ascii_art() {
     println!("
  ____             __                                              __  __          __                               __
@@ -17,12 +20,53 @@ pub(crate) fn print_version() {
     println!("version: {version}");
 }
 
-pub(crate) fn get_user_input(prompt: &str) -> String {
-    print!("{prompt}");
-    std::io::Write::flush(&mut std::io::stdout()).expect("flush failed!");
-    let mut input = String::new();
-    if let Err(why) = std::io::stdin().read_line(&mut input) {
-        panic!("could not read user input because: {why}");
+pub(crate) fn get_user_input(
+    prompt: &str,
+    default_value: Option<&str>,
+    condition: fn(input: &str) -> bool,
+    error_msg: &str,
+) -> String {
+    let user_input = loop {
+        print!("{prompt}");
+        std::io::Write::flush(&mut std::io::stdout()).expect("flush failed!");
+        let mut input = String::new();
+        if let Err(why) = std::io::stdin().read_line(&mut input) {
+            panic!("could not read user input because: {why}");
+        }
+        let user_input = input.trim().to_string();
+
+        if condition(&user_input) {
+            break user_input;
+        }
+        println!("{error_msg}");
+    };
+
+    if let Some(default) = default_value && user_input.is_empty() {
+        return default.to_string();
     }
-    input.trim().to_string()
+    user_input
+}
+
+pub(crate) fn is_valid_hostname(hostname: &str) -> bool {
+    hostname.is_ascii()
+}
+
+pub(crate) fn is_valid_address(address: &str) -> bool {
+    parse_ss58_reward_address(address).is_ok()
+}
+
+pub(crate) fn is_valid_location(location: &str) -> bool {
+    Path::new(location).is_dir()
+}
+
+pub(crate) fn is_valid_size(_size: &str) -> bool {
+    todo!();
+}
+
+pub(crate) fn is_valid_chain(_chain: &str) -> bool {
+    todo!(
+        "get chain names from telemetry,
+    add each of them to a list,
+    then, check -> `if chain_list.includes(chain)`"
+    );
 }

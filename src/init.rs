@@ -1,10 +1,12 @@
+use crate::utils::{
+    get_user_input, is_valid_address, is_valid_chain, is_valid_hostname, is_valid_location,
+    is_valid_size, print_ascii_art, print_version,
+};
 use std::{
     fs::{create_dir, File},
     io::Write,
     path::PathBuf,
 };
-
-use crate::utils::{get_user_input, print_ascii_art, print_version};
 
 pub(crate) fn init() {
     let (config, config_path) = create_config();
@@ -27,15 +29,38 @@ pub(crate) fn init() {
 // TODO: use the default values if user pressed enter
 fn write_config(mut config: File) {
     // get user inputs
-    let reward_address = get_user_input("Enter your farmer/reward address: ");
-    let hostname = get_user_input("Enter your node name to be identified on the network(defaults to HOSTNAME, press enter to use the default): ");
+    let reward_address = get_user_input(
+        "Enter your farmer/reward address: ",
+        None,
+        is_valid_address,
+        "Reward address is not in the correct format! Please enter a valid address...",
+    );
+
+    let hostname = get_user_input(
+        "Enter your node name to be identified on the network(defaults to HOSTNAME, press enter to use the default): ",
+        Some("HOSTNAME"),
+        is_valid_hostname,
+        "hostname includes non-ascii characters! Please enter a valid hostname");
+
     let plot_location = get_user_input(
         "Specify a sector location (whatever the default was, press enter to use the default): ",
+        dirs::data_dir().unwrap().join("subspace").to_str(),
+        is_valid_location,
+        "supplied directory does not exist! Please enter a valid path...",
     );
-    let plot_size =
-        get_user_input("Specify a sector size (defaults to 1GB, press enter to use the default): ");
+
+    let plot_size = get_user_input(
+        "Specify a sector size (defaults to 1GB, press enter to use the default): ",
+        Some("1GB"),
+        is_valid_size,
+        "could not parse the value! Please enter a valid size...",
+    );
+
     let chain = get_user_input(
         "Specify the chain to farm(defaults to `gemini-1`, press enter to use the default): ",
+        Some("gemini-1"),
+        is_valid_chain,
+        "given chain is not valid! Please enter a valid chain...",
     );
 
     let config_text = construct_config(
