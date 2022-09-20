@@ -49,8 +49,8 @@ pub(crate) fn get_user_input(
     user_input
 }
 
-pub(crate) fn is_valid_hostname(hostname: &str) -> bool {
-    hostname.is_ascii()
+pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
+    node_name.is_ascii()
 }
 
 pub(crate) fn is_valid_address(address: &str) -> bool {

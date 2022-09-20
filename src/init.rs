@@ -1,5 +1,5 @@
 use crate::utils::{
-    get_user_input, is_valid_address, is_valid_chain, is_valid_hostname, is_valid_location,
+    get_user_input, is_valid_address, is_valid_chain, is_valid_location, is_valid_node_name,
     is_valid_size, plot_location_getter, print_ascii_art, print_version,
 };
 use std::{
@@ -9,7 +9,7 @@ use std::{
 };
 
 const DEFAULT_PLOT_SIZE: &str = "1GB";
-const DEFAULT_HOSTNAME: &str = "HOSTNAME";
+const DEFAULT_NODE_NAME: &str = "NODE_NAME";
 const DEFAULT_CHAIN: &str = "gemini-2a";
 
 pub(crate) fn init() {
@@ -39,14 +39,14 @@ fn write_config(mut config: File) {
         "Enter your farmer/reward address: ",
         None,
         is_valid_address,
-        "Reward address is not in the correct format! Please enter a valid address...",
+        "Reward address is not in the correct format! Please enter a valid address.",
     );
 
-    let hostname = get_user_input(
-        &format!("Enter your node name to be identified on the network(defaults to `{}`, press enter to use the default): ", DEFAULT_HOSTNAME),
-        Some(DEFAULT_HOSTNAME),
-        is_valid_hostname,
-        "hostname includes non-ascii characters! Please enter a valid hostname");
+    let node_name = get_user_input(
+        &format!("Enter your node name to be identified on the network(defaults to `{}`, press enter to use the default): ", DEFAULT_NODE_NAME),
+        Some(DEFAULT_NODE_NAME),
+        is_valid_node_name,
+        "Node name cannot include non-ascii characters! Please enter a valid node name.");
 
     let plot_location = get_user_input(
         &format!(
@@ -55,7 +55,7 @@ fn write_config(mut config: File) {
         ),
         default_plot_loc.to_str(),
         is_valid_location,
-        "supplied directory does not exist! Please enter a valid path...",
+        "supplied directory does not exist! Please enter a valid path.",
     );
 
     let plot_size = get_user_input(
@@ -65,7 +65,7 @@ fn write_config(mut config: File) {
         ),
         Some(DEFAULT_PLOT_SIZE),
         is_valid_size,
-        "could not parse the value! Please enter a valid size...",
+        "could not parse the value! Please enter a valid size.",
     );
 
     let chain = get_user_input(
@@ -75,7 +75,7 @@ fn write_config(mut config: File) {
         ),
         Some(DEFAULT_CHAIN),
         is_valid_chain,
-        "given chain is not recognized! Please enter a valid chain...",
+        "given chain is not recognized! Please enter a valid chain.",
     );
 
     let config_text = construct_config(
@@ -83,7 +83,7 @@ fn write_config(mut config: File) {
         &plot_location,
         &plot_size,
         &chain,
-        &hostname,
+        &node_name,
     );
 
     // write to config
@@ -115,7 +115,7 @@ fn construct_config(
     plot_location: &str,
     plot_size: &str,
     chain: &str,
-    hostname: &str,
+    node_name: &str,
 ) -> String {
     format!(
         "[farmer]
@@ -140,6 +140,6 @@ gemini-2= \"rpc://\"
 leo-3 = \"myown-network\"
 dev = \"that local node experience\"
 ",
-        reward_address, plot_location, plot_size, chain, hostname
+        reward_address, plot_location, plot_size, chain, node_name
     )
 }
