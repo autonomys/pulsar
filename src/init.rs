@@ -58,9 +58,9 @@ fn write_config(mut config: File) {
 
     let chain = get_user_input(
         "Specify the chain to farm(defaults to `gemini-1`, press enter to use the default): ",
-        Some("gemini-1"),
+        Some("gemini-2a"),
         is_valid_chain,
-        "given chain is not valid! Please enter a valid chain...",
+        "given chain is not recognized! Please enter a valid chain...",
     );
 
     let config_text = construct_config(

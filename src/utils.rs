@@ -64,10 +64,8 @@ pub(crate) fn is_valid_size(size: &str) -> bool {
     size.parse::<ByteSize>().is_ok()
 }
 
-pub(crate) fn is_valid_chain(_chain: &str) -> bool {
-    todo!(
-        "get chain names from telemetry,
-    add each of them to a list,
-    then, check -> `if chain_list.includes(chain)`"
-    );
+pub(crate) fn is_valid_chain(chain: &str) -> bool {
+    // TODO: instead of a hardcoded list, get the chain names from telemetry
+    let chain_list = vec!["gemini-2a", "gemini-1", "testnet", "lamda2513-3", "x-net-1"];
+    chain_list.contains(&chain)
 }
