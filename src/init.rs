@@ -1,12 +1,16 @@
 use crate::utils::{
     get_user_input, is_valid_address, is_valid_chain, is_valid_hostname, is_valid_location,
-    is_valid_size, print_ascii_art, print_version,
+    is_valid_size, plot_location_getter, print_ascii_art, print_version,
 };
 use std::{
     fs::{create_dir, File},
     io::Write,
     path::PathBuf,
 };
+
+const DEFAULT_PLOT_SIZE: &str = "1GB";
+const DEFAULT_HOSTNAME: &str = "HOSTNAME";
+const DEFAULT_CHAIN: &str = "gemini-2a";
 
 pub(crate) fn init() {
     let (config, config_path) = create_config();
@@ -28,6 +32,8 @@ pub(crate) fn init() {
 // TODO: validate user inputs
 // TODO: use the default values if user pressed enter
 fn write_config(mut config: File) {
+    let default_plot_loc = plot_location_getter();
+
     // get user inputs
     let reward_address = get_user_input(
         "Enter your farmer/reward address: ",
@@ -37,28 +43,37 @@ fn write_config(mut config: File) {
     );
 
     let hostname = get_user_input(
-        "Enter your node name to be identified on the network(defaults to HOSTNAME, press enter to use the default): ",
-        Some("HOSTNAME"),
+        &format!("Enter your node name to be identified on the network(defaults to `{}`, press enter to use the default): ", DEFAULT_HOSTNAME),
+        Some(DEFAULT_HOSTNAME),
         is_valid_hostname,
         "hostname includes non-ascii characters! Please enter a valid hostname");
 
     let plot_location = get_user_input(
-        "Specify a sector location (whatever the default was, press enter to use the default): ",
-        dirs::data_dir().unwrap().join("subspace").to_str(),
+        &format!(
+            "Specify a sector location (press enter to use the default: `{}`): ",
+            default_plot_loc.display()
+        ),
+        default_plot_loc.to_str(),
         is_valid_location,
         "supplied directory does not exist! Please enter a valid path...",
     );
 
     let plot_size = get_user_input(
-        "Specify a sector size (defaults to 1GB, press enter to use the default): ",
-        Some("1GB"),
+        &format!(
+            "Specify a sector size (defaults to `{}`, press enter to use the default): ",
+            DEFAULT_PLOT_SIZE
+        ),
+        Some(DEFAULT_PLOT_SIZE),
         is_valid_size,
         "could not parse the value! Please enter a valid size...",
     );
 
     let chain = get_user_input(
-        "Specify the chain to farm(defaults to `gemini-1`, press enter to use the default): ",
-        Some("gemini-2a"),
+        &format!(
+            "Specify the chain to farm(defaults to `{}`, press enter to use the default): ",
+            DEFAULT_CHAIN
+        ),
+        Some(DEFAULT_CHAIN),
         is_valid_chain,
         "given chain is not recognized! Please enter a valid chain...",
     );

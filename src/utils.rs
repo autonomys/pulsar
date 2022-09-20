@@ -1,6 +1,6 @@
 use crate::ss58::parse_ss58_reward_address;
 use bytesize::ByteSize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub(crate) fn print_ascii_art() {
     println!("
@@ -39,12 +39,13 @@ pub(crate) fn get_user_input(
         if condition(&user_input) {
             break user_input;
         }
+        if let Some(default) = default_value && user_input.is_empty() {
+            break default.to_string();
+        }
+
         println!("{error_msg}");
     };
 
-    if let Some(default) = default_value && user_input.is_empty() {
-        return default.to_string();
-    }
     user_input
 }
 
@@ -68,4 +69,8 @@ pub(crate) fn is_valid_chain(chain: &str) -> bool {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
     let chain_list = vec!["gemini-2a", "gemini-1", "testnet", "lamda2513-3", "x-net-1"];
     chain_list.contains(&chain)
+}
+
+pub(crate) fn plot_location_getter() -> PathBuf {
+    dirs::data_dir().unwrap().join("subspace").join("plots")
 }
