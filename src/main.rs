@@ -1,7 +1,9 @@
-use clap::Command;
 mod init;
-use init::init;
+mod ss58;
 mod utils;
+
+use clap::Command;
+use init::init;
 
 fn cli() -> Command<'static> {
     Command::new("subspace")
