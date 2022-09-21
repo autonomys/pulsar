@@ -8,7 +8,7 @@ use std::{
     path::PathBuf,
 };
 
-const DEFAULT_PLOT_SIZE: &str = "1GB";
+const DEFAULT_PLOT_SIZE: &str = "100GB";
 const DEFAULT_NODE_NAME: &str = "NODE_NAME";
 const DEFAULT_CHAIN: &str = "gemini-2a";
 
@@ -39,7 +39,7 @@ fn write_config(mut config: File) {
         "Enter your farmer/reward address: ",
         None,
         is_valid_address,
-        "Reward address is not in the correct format! Please enter a valid address.",
+        "Reward address is using an invalid format. Please enter a valid address.",
     );
 
     let node_name = get_user_input(
