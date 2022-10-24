@@ -1,11 +1,12 @@
-mod init;
+mod commands;
+mod config;
 mod ss58;
 mod utils;
 
 use clap::Command;
-use init::init;
+use commands::{farm::farm, init::init};
 
-fn cli() -> Command<'static> {
+fn cli() -> Command {
     Command::new("subspace")
         .about("Subspace CLI interface")
         .subcommand_required(true)
@@ -19,7 +20,8 @@ fn cli() -> Command<'static> {
         )
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let command = cli();
     let matches = command.get_matches();
     match matches.subcommand() {
@@ -27,9 +29,7 @@ fn main() {
             init();
         }
         Some(("farm", _)) => {
-            println!(
-                "Config could not be found. Please run `subspace init` to generate the default"
-            )
+            farm().await;
         }
         _ => unreachable!(), // all commands are defined above
     }
