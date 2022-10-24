@@ -11,7 +11,15 @@ blake2-rfc = "0.2.18"
 bytesize = "1.1.0"
 clap = { version = "3.2.21", features = ["derive"] }
 dirs = "4.0.0"
+serde = "1.0.147"
+serde_derive = "1.0.147"
 ss58-registry = "1.29.0"
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk" }
 subspace-core-primitives = { git = "https://github.com/subspace/subspace", rev = "8f7c62db1f1c5e08486c595894409fda50d73cce" }
 thiserror = "1.0.35"
+toml = "0.5.9"
+either = "1.8.0"
+tempdir = "0.3.7"
+tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
+
 
