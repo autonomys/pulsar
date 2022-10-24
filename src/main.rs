@@ -30,9 +30,6 @@ async fn main() {
         }
         Some(("farm", _)) => {
             farm().await;
-            // println!(
-            //     "Config could not be found. Please run `subspace init` to generate the default"
-            // )
         }
         _ => unreachable!(), // all commands are defined above
     }

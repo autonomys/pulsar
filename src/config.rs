@@ -102,7 +102,7 @@ pub(crate) fn parse_config() -> Result<FarmingConfigArgs, String> {
     let config_path = config_path.join("subspace-cli");
 
     let config: Config = toml::from_str(
-        &std::fs::read_to_string(config_path).expect("could not read the configuration file"),
+        &std::fs::read_to_string(config_path).expect("could not read the configuration file, please make sure you run `subspace init` before farming"),
     )
     .expect("config file is corrupted, it couldn't be parsed!");
 
