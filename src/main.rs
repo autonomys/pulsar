@@ -2,7 +2,7 @@ mod commands;
 mod config;
 mod utils;
 
-use clap::Command;
+use clap::{Parser, Subcommand};
 use commands::{farm::farm, init::init};
 use std::fs::create_dir_all;
 use tracing::level_filters::LevelFilter;
@@ -11,19 +11,22 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 const KEEP_LAST_N_DAYS: usize = 7;
+#[derive(Debug, Parser)]
+#[command(subcommand_required = true)]
+#[command(arg_required_else_help = true)]
+#[command(name = "subspace")]
+#[command(about = "Subspace CLI", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-fn cli() -> Command {
-    Command::new("subspace")
-        .about("Subspace CLI interface")
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        .subcommand(
-            Command::new("init").about("initializes the config file required for the farming"),
-        )
-        .subcommand(
-            Command::new("farm")
-                .about("starting the farming process (along with node in the background)"),
-        )
+#[derive(Debug, Subcommand)]
+enum Commands {
+    #[command(about = "initializes the config file required for the farming")]
+    Init,
+    #[command(about = "starting the farming process (along with node in the background")]
+    Farm,
 }
 
 #[tokio::main]
@@ -57,15 +60,13 @@ async fn main() {
         )
         .init();
 
-    let command = cli();
-    let matches = command.get_matches();
-    match matches.subcommand() {
-        Some(("init", _)) => {
+    let args = Cli::parse();
+    match args.command {
+        Commands::Init => {
             init();
         }
-        Some(("farm", _)) => {
+        Commands::Farm => {
             farm().await;
         }
-        _ => unreachable!(), // all commands are defined above
     }
 }

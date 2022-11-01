@@ -1,7 +1,8 @@
-use subspace_sdk::Farmer;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
+use subspace_sdk::{Farmer, NodeMode};
 
 use crate::config::{parse_config, ConfigParseError};
+use crate::utils::node_directory_getter;
 
 pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
@@ -10,11 +11,7 @@ pub(crate) struct FarmingArgs {
 }
 
 pub(crate) async fn farm() {
-    let node: Node = Node::builder()
-        .build("node", chain_spec::gemini_2a().unwrap())
-        .await
-        .unwrap();
-    match get_args_for_farming(node) {
+    match prepare_farming().await {
         Ok(args) => start_farming(args).await,
         Err(why) => panic!("Error: {why}"),
     }
@@ -30,16 +27,26 @@ async fn start_farming(farming_args: FarmingArgs) {
     let _ = Farmer::builder()
         .build(reward_address, node, &[plot])
         .await
-        .unwrap();
+        .expect("farmer builder failed");
 }
 
-fn get_args_for_farming(node: Node) -> Result<FarmingArgs, ConfigParseError> {
-    match parse_config() {
-        Ok(config_args) => Ok(FarmingArgs {
-            reward_address: config_args.reward_address,
-            plot: config_args.plot,
-            node,
-        }),
-        Err(why) => Err(why),
-    }
+async fn prepare_farming() -> Result<FarmingArgs, ConfigParseError> {
+    let config_args = parse_config()?;
+
+    // TODO: use the below when SDK is compatible with it
+    // let chain = config_args.node_config_args.chain;
+    let node_name = config_args.node_config_args.name;
+    let node_directory = node_directory_getter();
+    let node: Node = Node::builder()
+        .mode(NodeMode::Full)
+        .name(node_name)
+        .build(node_directory, chain_spec::gemini_2a().unwrap())
+        .await
+        .expect("error building the node");
+
+    Ok(FarmingArgs {
+        reward_address: config_args.farmer_config_args.reward_address,
+        plot: config_args.farmer_config_args.plot,
+        node,
+    })
 }

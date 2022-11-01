@@ -3949,16 +3949,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
-name = "nu-ansi-term"
-version = "0.46.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a8165726e8236064dbb45459242600304b42a5ea24ee2948e18e023bf7ba84"
-dependencies = [
- "overload",
- "winapi",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4115,12 +4105,6 @@ name = "os_str_bytes"
 version = "6.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3baf96e39c5359d2eb0dd6ccb42c62b91d9678aa68160d261b9e0ccbf9e9dea9"
-
-[[package]]
-name = "overload"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "owning_ref"
@@ -5038,18 +5022,18 @@ dependencies = [
 
 [[package]]
 name = "ref-cast"
-version = "1.0.12"
+version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12a733f1746c929b4913fe48f8697fcf9c55e3304ba251a79ffb41adfeaf49c2"
+checksum = "53b15debb4f9d60d767cd8ca9ef7abb2452922f3214671ff052defc7f3502c44"
 dependencies = [
  "ref-cast-impl",
 ]
 
 [[package]]
 name = "ref-cast-impl"
-version = "1.0.12"
+version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5887de4a01acafd221861463be6113e6e87275e79804e56779f4cdc131c60368"
+checksum = "abfa8511e9e94fd3de6585a3d3cd00e01ed556dc9814829280af0e8dc72a8f36"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6082,7 +6066,7 @@ dependencies = [
  "sp-tracing",
  "thiserror",
  "tracing",
- "tracing-log",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-subscriber 0.2.25",
 ]
 
@@ -6884,7 +6868,7 @@ dependencies = [
  "sp-trie",
  "sp-wasm-interface",
  "tracing",
- "tracing-core 0.1.30",
+ "tracing-core",
 ]
 
 [[package]]
@@ -7122,7 +7106,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-std",
  "tracing",
- "tracing-core 0.1.30",
+ "tracing-core",
  "tracing-subscriber 0.2.25",
 ]
 
@@ -7312,7 +7296,6 @@ dependencies = [
 name = "subspace-cli"
 version = "0.1.0"
 dependencies = [
- "base58",
  "bytesize",
  "clap 4.0.18",
  "dirs",
@@ -7325,7 +7308,7 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-bunyan-formatter",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
 ]
 
 [[package]]
@@ -7401,7 +7384,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
  "ulid",
  "zeroize",
 ]
@@ -7451,7 +7434,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
  "unsigned-varint",
 ]
 
@@ -8061,15 +8044,14 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.37"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
+version = "0.1.36"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "cfg-if",
  "log",
  "pin-project-lite 0.2.9",
  "tracing-attributes",
- "tracing-core 0.1.30",
+ "tracing-core",
 ]
 
 [[package]]
@@ -8085,9 +8067,8 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4017f8f45139870ca7e672686113917c71c7a6e02d4924eda67186083c03081a"
+version = "0.1.22"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8096,9 +8077,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-bunyan-formatter"
-version = "0.3.4"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2445962f94a813b2aaea29ceeccb6dce9fd3aa5b1cb45595cde755b00d021ad"
+checksum = "a788f2119fde477cd33823330c14004fa8cdac6892fd6f12181bbda9dbf14fc9"
 dependencies = [
  "gethostname",
  "log",
@@ -8106,24 +8087,15 @@ dependencies = [
  "serde_json",
  "time 0.3.16",
  "tracing",
- "tracing-core 0.1.30",
- "tracing-log",
- "tracing-subscriber 0.3.16",
+ "tracing-core",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tracing-subscriber 0.3.15",
 ]
 
 [[package]]
 name = "tracing-core"
 version = "0.1.29"
 source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
-dependencies = [
- "once_cell",
-]
-
-[[package]]
-name = "tracing-core"
-version = "0.1.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
 dependencies = [
  "once_cell",
  "valuable",
@@ -8147,7 +8119,17 @@ checksum = "78ddad33d2d10b1ed7eb9d1f518a5674713876e97e5bb9b7345a7984fbb4f922"
 dependencies = [
  "lazy_static",
  "log",
- "tracing-core 0.1.30",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-log"
+version = "0.1.3"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
+dependencies = [
+ "log",
+ "once_cell",
+ "tracing-core",
 ]
 
 [[package]]
@@ -8157,7 +8139,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc6b213177105856957181934e4920de57730fc69bf42c37ee5bb664d406d9e1"
 dependencies = [
  "serde",
- "tracing-core 0.1.30",
+ "tracing-core",
 ]
 
 [[package]]
@@ -8178,8 +8160,8 @@ dependencies = [
  "smallvec",
  "thread_local",
  "tracing",
- "tracing-core 0.1.30",
- "tracing-log",
+ "tracing-core",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-serde",
 ]
 
@@ -8188,27 +8170,16 @@ name = "tracing-subscriber"
 version = "0.3.15"
 source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
- "sharded-slab",
- "thread_local",
- "tracing-core 0.1.29",
-]
-
-[[package]]
-name = "tracing-subscriber"
-version = "0.3.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6176eae26dd70d0c919749377897b54a9276bd7061339665dd68777926b5a70"
-dependencies = [
+ "ansi_term",
  "matchers 0.1.0",
- "nu-ansi-term",
  "once_cell",
  "regex",
  "sharded-slab",
  "smallvec",
  "thread_local",
  "tracing",
- "tracing-core 0.1.30",
- "tracing-log",
+ "tracing-core",
+ "tracing-log 0.1.3 (git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x)",
 ]
 
 [[package]]
@@ -9116,8 +9087,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "tracing"
-version = "0.1.36"
-source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"

@@ -15,7 +15,7 @@ pub(crate) fn init() {
     print_version();
     println!();
     println!("Configuration creation process has started...");
-    write_config(config);
+    fill_config_from_user_inputs(config);
 
     println!(
         "Configuration has been generated at {}",
@@ -26,7 +26,7 @@ pub(crate) fn init() {
     println!("'subspace farm'");
 }
 
-fn write_config(mut config: File) {
+fn fill_config_from_user_inputs(mut config: File) {
     let default_plot_loc = plot_location_getter();
 
     // get user inputs

@@ -53,7 +53,7 @@ pub(crate) fn get_user_input(
 }
 
 pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
-    node_name.is_ascii()
+    node_name.is_ascii() && !node_name.trim().is_empty()
 }
 
 pub(crate) fn is_valid_address(address: &str) -> bool {
@@ -75,7 +75,11 @@ pub(crate) fn is_valid_chain(chain: &str) -> bool {
 }
 
 pub(crate) fn plot_location_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace").join("plots")
+    dirs::data_dir().unwrap().join("subspace-cli").join("plots")
+}
+
+pub(crate) fn node_directory_getter() -> PathBuf {
+    dirs::data_dir().unwrap().join("subspace-cli").join("node")
 }
 
 pub(crate) fn custom_log_dir() -> PathBuf {

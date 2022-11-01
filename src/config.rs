@@ -10,52 +10,68 @@ use subspace_sdk::{PlotDescription, PublicKey, Ss58ParsingError};
 
 #[derive(Debug, Error)]
 pub(crate) enum ConfigParseError {
-    #[error("IO error")]
+    #[error("Cannot read the config file")]
     IO(#[from] std::io::Error),
-    #[error("Toml error")]
+    #[error("Cannot parse the config file")]
     Toml(#[from] toml::de::Error),
     #[error("SS58 parse error")]
     SS58Parse(#[from] Ss58ParsingError),
+    #[error("Plot size parse error")]
+    SizeParse(String),
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct Config {
     farmer: FarmerConfig,
-    _node: NodeConfig,
-    _chains: NodeConfig,
+    node: NodeConfig,
+    chains: ChainConfig,
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct FarmerConfig {
     address: String,
     sector_directory: PathBuf,
     sector_size: String,
-    _opencl: bool,
+    opencl: bool,
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct NodeConfig {
-    _chain: String,
-    _execution: String,
-    _blocks_pruning: usize,
-    _state_pruning: usize,
-    _validator: bool,
-    _name: String,
-    _port: usize,
-    _unsafe_ws_external: bool,
+    chain: String,
+    execution: String,
+    blocks_pruning: usize,
+    state_pruning: usize,
+    validator: bool,
+    name: String,
+    port: usize,
+    unsafe_ws_external: bool,
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct ChainConfig {
-    _gemini_1: String,
-    _gemini_2: String,
-    _leo_3: String,
-    _dev: String,
+    gemini_1: String,
+    gemini_2: String,
+    leo_3: String,
+    dev: String,
+}
+
+pub(crate) struct ConfigArgs {
+    pub(crate) farmer_config_args: FarmingConfigArgs,
+    pub(crate) node_config_args: NodeConfigArgs,
 }
 
 pub(crate) struct FarmingConfigArgs {
     pub(crate) reward_address: PublicKey,
     pub(crate) plot: PlotDescription,
+}
+
+pub(crate) struct NodeConfigArgs {
+    pub(crate) name: String,
+    pub(crate) _chain: String,
 }
 
 /// Creates a config file at the location
@@ -85,48 +101,53 @@ pub(crate) fn construct_config(
 ) -> String {
     format!(
         "[farmer]
-address = \"{}\"
-sector_directory = \"{}\"
-sector_size = \"{}\"
+address = \"{reward_address}\"
+sector_directory = \"{plot_location}\"
+sector_size = \"{plot_size}\"
 opencl = false
 
 [node]
-chain = \"{}\"
+chain = \"{chain}\"
 execution = \"wasm\"
-blocks-pruning = 1024
-state-pruning = 1024
+blocks_pruning = 1024
+state_pruning = 1024
 validator = true
-name = \"{}\"
+name = \"{node_name}\"
 port = 30333
-unsafe-ws-external = true # not sure we need this
+unsafe_ws_external = true # not sure we need this
 
 [chains]
-gemini-1 = \"rpc://1212312\"
-gemini-2= \"rpc://\"
-leo-3 = \"myown-network\"
+gemini_1 = \"rpc://1212312\"
+gemini_2= \"rpc://\"
+leo_3 = \"myown-network\"
 dev = \"that local node experience\"
-",
-        reward_address, plot_location, plot_size, chain, node_name
+"
     )
 }
 
-pub(crate) fn parse_config() -> Result<FarmingConfigArgs, ConfigParseError> {
+pub(crate) fn parse_config() -> Result<ConfigArgs, ConfigParseError> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
-    let config_path = config_path.join("subspace-cli");
+    let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
 
     let reward_address = PublicKey::from_str(&config.farmer.address)?;
 
-    Ok(FarmingConfigArgs {
-        reward_address,
-        plot: PlotDescription {
-            directory: config.farmer.sector_directory,
-            space_pledged: config
-                .farmer
-                .sector_size
-                .parse::<bytesize::ByteSize>()
-                .expect("Plot size in config is malformed"),
+    Ok(ConfigArgs {
+        farmer_config_args: FarmingConfigArgs {
+            reward_address,
+            plot: PlotDescription {
+                directory: config.farmer.sector_directory,
+                space_pledged: config
+                    .farmer
+                    .sector_size
+                    .parse::<bytesize::ByteSize>()
+                    .map_err(ConfigParseError::SizeParse)?,
+            },
+        },
+        node_config_args: NodeConfigArgs {
+            name: config.node.name,
+            _chain: config.node.chain,
         },
     })
 }
