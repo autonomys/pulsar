@@ -1,6 +1,5 @@
 mod commands;
 mod config;
-mod ss58;
 mod utils;
 
 use clap::Command;
@@ -10,6 +9,8 @@ use tracing::level_filters::LevelFilter;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+const KEEP_LAST_N_DAYS: usize = 7;
 
 fn cli() -> Command {
     Command::new("subspace")
@@ -30,7 +31,8 @@ async fn main() {
     let log_dir = utils::custom_log_dir();
     create_dir_all(log_dir.clone()).expect("path creation should always succeed");
 
-    let file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
+    let mut file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
+    file_appender.keep_last_n_logs(KEEP_LAST_N_DAYS); // keep the logs of last 7 days only
 
     // filter for logging
     let filter = || {
