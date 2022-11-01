@@ -1894,12 +1894,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 
 [[package]]
-name = "fuchsia-cprng"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
-
-[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2301,15 +2295,6 @@ checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
  "crypto-mac 0.11.1",
  "digest 0.9.0",
-]
-
-[[package]]
-name = "hmac"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
-dependencies = [
- "digest 0.10.5",
 ]
 
 [[package]]
@@ -3964,16 +3949,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
-name = "nu-ansi-term"
-version = "0.46.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a8165726e8236064dbb45459242600304b42a5ea24ee2948e18e023bf7ba84"
-dependencies = [
- "overload",
- "winapi",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4132,12 +4107,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3baf96e39c5359d2eb0dd6ccb42c62b91d9678aa68160d261b9e0ccbf9e9dea9"
 
 [[package]]
-name = "overload"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
-
-[[package]]
 name = "owning_ref"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4218,7 +4187,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -4253,7 +4222,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-std",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -4313,7 +4282,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-runtime-primitives",
  "subspace-solving",
  "subspace-verification",
@@ -4897,19 +4866,6 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
 name = "rand"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "552840b97013b1a26992c11eac34bdd778e464601a4c2054b5f0bff7c6761293"
-dependencies = [
- "fuchsia-cprng",
- "libc",
- "rand_core 0.3.1",
- "rdrand",
- "winapi",
-]
-
-[[package]]
-name = "rand"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
@@ -4952,21 +4908,6 @@ dependencies = [
  "ppv-lite86",
  "rand_core 0.6.4",
 ]
-
-[[package]]
-name = "rand_core"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a6fdeb83b075e8266dcc8762c22776f6877a63111121f5f8c7411e5be7eed4b"
-dependencies = [
- "rand_core 0.4.2",
-]
-
-[[package]]
-name = "rand_core"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c33a3c44ca05fa6f1807d8e6743f3824e8509beca625669633be0acbdf509dc"
 
 [[package]]
 name = "rand_core"
@@ -5042,15 +4983,6 @@ dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
  "num_cpus",
-]
-
-[[package]]
-name = "rdrand"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
-dependencies = [
- "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -5585,7 +5517,7 @@ dependencies = [
  "sp-runtime",
  "sp-version",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-solving",
  "subspace-verification",
  "substrate-prometheus-endpoint",
@@ -5616,7 +5548,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-rpc-primitives",
 ]
 
@@ -5898,7 +5830,7 @@ source = "git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d6
 dependencies = [
  "parity-scale-codec",
  "sc-client-api",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -6134,7 +6066,7 @@ dependencies = [
  "sp-tracing",
  "thiserror",
  "tracing",
- "tracing-log",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-subscriber 0.2.25",
 ]
 
@@ -6465,16 +6397,6 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.5",
- "sha2-asm",
-]
-
-[[package]]
-name = "sha2-asm"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf27176fb5d15398e3a479c652c20459d9dac830dedd1fa55b42a77dbcdbfcea"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -6761,7 +6683,7 @@ dependencies = [
  "sp-std",
  "sp-timestamp",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-solving",
  "subspace-verification",
  "thiserror",
@@ -6875,7 +6797,7 @@ dependencies = [
  "sp-state-machine",
  "sp-std",
  "sp-trie",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-runtime-primitives",
  "thiserror",
 ]
@@ -6982,7 +6904,7 @@ source = "git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d6
 dependencies = [
  "sp-api",
  "sp-std",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-runtime-primitives",
 ]
 
@@ -7366,7 +7288,7 @@ dependencies = [
  "parity-scale-codec",
  "reed-solomon-erasure",
  "serde",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "thiserror",
 ]
 
@@ -7375,24 +7297,19 @@ name = "subspace-cli"
 version = "0.1.0"
 dependencies = [
  "base58",
- "blake2-rfc",
  "bytesize",
  "clap 4.0.18",
  "dirs",
- "either",
  "serde",
  "serde_derive",
- "ss58-registry",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=8f7c62db1f1c5e08486c595894409fda50d73cce)",
  "subspace-sdk",
- "tempdir",
  "thiserror",
  "tokio",
  "toml",
  "tracing",
  "tracing-appender",
  "tracing-bunyan-formatter",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
 ]
 
 [[package]]
@@ -7415,23 +7332,6 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_arrays",
- "uint",
-]
-
-[[package]]
-name = "subspace-core-primitives"
-version = "0.1.0"
-source = "git+https://github.com/subspace/subspace?rev=8f7c62db1f1c5e08486c595894409fda50d73cce#8f7c62db1f1c5e08486c595894409fda50d73cce"
-dependencies = [
- "derive_more",
- "hex",
- "hmac 0.12.1",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_arrays",
- "sha2 0.10.6",
  "uint",
 ]
 
@@ -7475,7 +7375,7 @@ dependencies = [
  "static_assertions",
  "std-semaphore",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-networking",
  "subspace-rpc-primitives",
  "subspace-solving",
@@ -7485,7 +7385,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
  "ulid",
  "zeroize",
 ]
@@ -7531,11 +7431,11 @@ dependencies = [
  "pin-project",
  "serde",
  "serde_json",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "thiserror",
  "tokio",
  "tracing",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
  "unsigned-varint",
 ]
 
@@ -7546,7 +7446,7 @@ source = "git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d6
 dependencies = [
  "hex",
  "serde",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -7590,7 +7490,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-runtime-primitives",
  "subspace-verification",
  "subspace-wasm-tools",
@@ -7610,19 +7510,20 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk#43015b4bcfa8a92013f0d3db062c700af443c7b3"
+source = "git+https://github.com/subspace/subspace-sdk#46e80a5353585728bfc7cd7924d46b11be5304c7"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base58",
+ "blake2-rfc",
  "bytesize",
- "dirs",
- "either",
+ "derive_more",
  "frame-support",
  "futures",
  "jsonrpsee-core",
@@ -7640,8 +7541,9 @@ dependencies = [
  "sp-core",
  "sp-domains",
  "sp-runtime",
+ "ss58-registry",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-farmer",
  "subspace-fraud-proof",
  "subspace-networking",
@@ -7650,7 +7552,6 @@ dependencies = [
  "subspace-runtime-primitives",
  "subspace-service",
  "system-domain-runtime",
- "tempdir",
  "thiserror",
  "tokio",
 ]
@@ -7702,7 +7603,7 @@ dependencies = [
  "sp-timestamp",
  "sp-transaction-pool",
  "sp-trie",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-fraud-proof",
  "subspace-networking",
  "subspace-runtime-primitives",
@@ -7720,7 +7621,7 @@ source = "git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d6
 dependencies = [
  "merlin 2.0.1",
  "schnorrkel",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
 ]
 
 [[package]]
@@ -7735,7 +7636,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-std",
  "subspace-archiving",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f)",
+ "subspace-core-primitives",
  "subspace-solving",
  "thiserror",
 ]
@@ -7917,16 +7818,6 @@ name = "target-lexicon"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
-
-[[package]]
-name = "tempdir"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15f2b5fb00ccdf689e0149d1b1b3c03fead81c2b37735d812fa8bddbbf41b6d8"
-dependencies = [
- "rand 0.4.6",
- "remove_dir_all",
-]
 
 [[package]]
 name = "tempfile"
@@ -8154,9 +8045,8 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.37"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
+version = "0.1.36"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "cfg-if",
  "log",
@@ -8168,19 +8058,18 @@ dependencies = [
 [[package]]
 name = "tracing-appender"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09d48f71a791638519505cefafe162606f706c25592e4bde4d97600c0195312e"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "crossbeam-channel",
+ "thiserror",
  "time 0.3.16",
- "tracing-subscriber 0.3.16",
+ "tracing-subscriber 0.3.15",
 ]
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4017f8f45139870ca7e672686113917c71c7a6e02d4924eda67186083c03081a"
+version = "0.1.22"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8189,9 +8078,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-bunyan-formatter"
-version = "0.3.4"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2445962f94a813b2aaea29ceeccb6dce9fd3aa5b1cb45595cde755b00d021ad"
+checksum = "a788f2119fde477cd33823330c14004fa8cdac6892fd6f12181bbda9dbf14fc9"
 dependencies = [
  "gethostname",
  "log",
@@ -8200,15 +8089,14 @@ dependencies = [
  "time 0.3.16",
  "tracing",
  "tracing-core",
- "tracing-log",
- "tracing-subscriber 0.3.16",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tracing-subscriber 0.3.15",
 ]
 
 [[package]]
 name = "tracing-core"
-version = "0.1.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
+version = "0.1.29"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
  "once_cell",
  "valuable",
@@ -8232,6 +8120,16 @@ checksum = "78ddad33d2d10b1ed7eb9d1f518a5674713876e97e5bb9b7345a7984fbb4f922"
 dependencies = [
  "lazy_static",
  "log",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-log"
+version = "0.1.3"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
+dependencies = [
+ "log",
+ "once_cell",
  "tracing-core",
 ]
 
@@ -8264,18 +8162,17 @@ dependencies = [
  "thread_local",
  "tracing",
  "tracing-core",
- "tracing-log",
+ "tracing-log 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-serde",
 ]
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.3.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6176eae26dd70d0c919749377897b54a9276bd7061339665dd68777926b5a70"
+version = "0.3.15"
+source = "git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x#06e280373923410c7e65ee27c82c836f913182c8"
 dependencies = [
+ "ansi_term",
  "matchers 0.1.0",
- "nu-ansi-term",
  "once_cell",
  "regex",
  "sharded-slab",
@@ -8283,7 +8180,7 @@ dependencies = [
  "thread_local",
  "tracing",
  "tracing-core",
- "tracing-log",
+ "tracing-log 0.1.3 (git+https://github.com/subspace/tracing-keep-last-n-logs?branch=v0.1.x)",
 ]
 
 [[package]]
