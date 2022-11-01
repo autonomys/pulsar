@@ -9,7 +9,7 @@ edition = "2021"
 base58 = "0.2.0"
 blake2-rfc = "0.2.18"
 bytesize = "1.1.0"
-clap = { version = "3.2.21", features = ["derive"] }
+clap = { version = "4.0.18", features = ["derive"] }
 dirs = "4.0.0"
 serde = "1.0.147"
 serde_derive = "1.0.147"
@@ -23,3 +23,7 @@ tempdir = "0.3.7"
 tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 
 
+[patch.crates-io]
+# TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
+chacha20poly1305 = { git = "https://github.com/RustCrypto/AEADs", rev = "06dbfb5571687fd1bbe9d3c9b2193a1ba17f8e99" }
+libp2p = { git = "https://github.com/subspace/rust-libp2p", branch = "subspace-v3" }

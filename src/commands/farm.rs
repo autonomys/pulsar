@@ -1,4 +1,4 @@
-use subspace_sdk::{Directory, Farmer};
+use subspace_sdk::Farmer;
 use subspace_sdk::{Node, PlotDescription, PublicKey};
 
 use crate::config::parse_config;
@@ -10,7 +10,7 @@ pub(crate) struct FarmingArgs {
 }
 
 pub(crate) async fn farm() {
-    let node: Node = Node::builder().build(Directory::Default).await.unwrap();
+    let node: Node = Node::builder().build().await.unwrap();
     match get_args_for_farming(node) {
         Ok(args) => start_farming(args).await,
         Err(why) => println!("Error: {why}"),
@@ -25,7 +25,7 @@ async fn start_farming(farming_args: FarmingArgs) {
     } = farming_args;
 
     let _ = Farmer::builder()
-        .build(reward_address, node, plot)
+        .build(reward_address, node, &[plot])
         .await
         .unwrap();
 }

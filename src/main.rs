@@ -6,7 +6,7 @@ mod utils;
 use clap::Command;
 use commands::{farm::farm, init::init};
 
-fn cli() -> Command<'static> {
+fn cli() -> Command {
     Command::new("subspace")
         .about("Subspace CLI interface")
         .subcommand_required(true)
