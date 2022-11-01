@@ -1,9 +1,22 @@
 use serde_derive::Deserialize;
+use std::str::FromStr;
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use subspace_sdk::{PlotDescription, PublicKey};
+use thiserror::Error;
+
+use subspace_sdk::{PlotDescription, PublicKey, Ss58ParsingError};
+
+#[derive(Debug, Error)]
+pub(crate) enum ConfigParseError {
+    #[error("IO error")]
+    IO(#[from] std::io::Error),
+    #[error("Toml error")]
+    Toml(#[from] toml::de::Error),
+    #[error("SS58 parse error")]
+    SS58Parse(#[from] Ss58ParsingError),
+}
 
 #[derive(Deserialize)]
 struct Config {
@@ -14,7 +27,7 @@ struct Config {
 
 #[derive(Deserialize)]
 struct FarmerConfig {
-    address: PublicKey,
+    address: String,
     sector_directory: PathBuf,
     sector_size: String,
     _opencl: bool,
@@ -97,19 +110,18 @@ dev = \"that local node experience\"
     )
 }
 
-pub(crate) fn parse_config() -> Result<FarmingConfigArgs, String> {
+pub(crate) fn parse_config() -> Result<FarmingConfigArgs, ConfigParseError> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("subspace-cli");
 
-    let config: Config = toml::from_str(
-        &std::fs::read_to_string(config_path).expect("could not read the configuration file, please make sure you run `subspace init` before farming"),
-    )
-    .expect("config file is corrupted, it couldn't be parsed!");
+    let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
+
+    let reward_address = PublicKey::from_str(&config.farmer.address)?;
 
     Ok(FarmingConfigArgs {
-        reward_address: config.farmer.address,
+        reward_address,
         plot: PlotDescription {
-            directory: either::Either::Left(config.farmer.sector_directory),
+            directory: config.farmer.sector_directory,
             space_pledged: config
                 .farmer
                 .sector_size
