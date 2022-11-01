@@ -6,16 +6,16 @@ use std::{
 };
 use thiserror::Error;
 
-use subspace_sdk::{PlotDescription, PublicKey};
+use subspace_sdk::{PlotDescription, PublicKey, Ss58ParsingError};
 
 #[derive(Debug, Error)]
 pub(crate) enum ConfigParseError {
     #[error("IO error")]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
     #[error("Toml error")]
-    TomlError(#[from] toml::de::Error),
-    //#[error("SS58 parse error")]
-    //SS58ParseError(#[from] SS58ParseError)
+    Toml(#[from] toml::de::Error),
+    #[error("SS58 parse error")]
+    SS58Parse(#[from] Ss58ParsingError),
 }
 
 #[derive(Deserialize)]
@@ -119,7 +119,7 @@ pub(crate) fn parse_config() -> Result<FarmingConfigArgs, ConfigParseError> {
     let reward_address = PublicKey::from_str(&config.farmer.address)?;
 
     Ok(FarmingConfigArgs {
-        reward_address: reward_address,
+        reward_address,
         plot: PlotDescription {
             directory: config.farmer.sector_directory,
             space_pledged: config
