@@ -1,5 +1,5 @@
 [package]
-name = "clap-trial"
+name = "subspace-cli"
 version = "0.1.0"
 edition = "2021"
 
@@ -21,6 +21,10 @@ toml = "0.5.9"
 either = "1.8.0"
 tempdir = "0.3.7"
 tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.37"
+tracing-appender = "0.2"
+tracing-bunyan-formatter = "0.3.4"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 
 
 [patch.crates-io]
