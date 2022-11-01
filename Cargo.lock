@@ -703,7 +703,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
- "time",
+ "time 0.1.44",
  "wasm-bindgen",
  "winapi",
 ]
@@ -771,27 +771,6 @@ dependencies = [
  "once_cell",
  "strsim",
  "termcolor",
-]
-
-[[package]]
-name = "clap-trial"
-version = "0.1.0"
-dependencies = [
- "base58",
- "blake2-rfc",
- "bytesize",
- "clap 4.0.18",
- "dirs",
- "either",
- "serde",
- "serde_derive",
- "ss58-registry",
- "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=8f7c62db1f1c5e08486c595894409fda50d73cce)",
- "subspace-sdk",
- "tempdir",
- "thiserror",
- "tokio",
- "toml",
 ]
 
 [[package]]
@@ -2087,6 +2066,16 @@ checksum = "bff49e947297f3312447abdca79f45f4738097cc82b06e72054d2223f601f1b9"
 dependencies = [
  "typenum",
  "version_check",
+]
+
+[[package]]
+name = "gethostname"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1ebd34e35c46e00bb73e81363248d627782724609fe1b6396f553f68fe3862e"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]
@@ -4064,6 +4053,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19e64526ebdee182341572e50e9ad03965aa510cd94427a4549448f285e957a1"
 dependencies = [
  "hermit-abi",
+ "libc",
+]
+
+[[package]]
+name = "num_threads"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2819ce041d2ee131036f4fc9d6ae7ae125a3a40e97ba64d04fe799ad9dabbb44"
+dependencies = [
  "libc",
 ]
 
@@ -7373,6 +7371,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "subspace-cli"
+version = "0.1.0"
+dependencies = [
+ "base58",
+ "blake2-rfc",
+ "bytesize",
+ "clap 4.0.18",
+ "dirs",
+ "either",
+ "serde",
+ "serde_derive",
+ "ss58-registry",
+ "subspace-core-primitives 0.1.0 (git+https://github.com/subspace/subspace?rev=8f7c62db1f1c5e08486c595894409fda50d73cce)",
+ "subspace-sdk",
+ "tempdir",
+ "thiserror",
+ "tokio",
+ "toml",
+ "tracing",
+ "tracing-appender",
+ "tracing-bunyan-formatter",
+ "tracing-subscriber 0.3.16",
+]
+
+[[package]]
 name = "subspace-core-primitives"
 version = "0.1.0"
 source = "git+https://github.com/subspace/subspace?rev=7ddb32d2d4a25837bff8669d698218cffb2abd7f#7ddb32d2d4a25837bff8669d698218cffb2abd7f"
@@ -7984,6 +8007,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "time"
+version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fab5c8b9980850e06d92ddbe3ab839c062c801f3927c0fb8abd6fc8e918fbca"
+dependencies = [
+ "itoa",
+ "libc",
+ "num_threads",
+ "serde",
+ "time-core",
+ "time-macros",
+]
+
+[[package]]
+name = "time-core"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e153e1f1acaef8acc537e68b44906d2db6436e2b35ac2c6b42640fff91f00fd"
+
+[[package]]
+name = "time-macros"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65bb801831d812c562ae7d2bfb531f26e66e4e1f6b17307ba4149c5064710e5b"
+dependencies = [
+ "time-core",
+]
+
+[[package]]
 name = "tiny-bip39"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8107,9 +8159,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
 dependencies = [
  "cfg-if",
+ "log",
  "pin-project-lite 0.2.9",
  "tracing-attributes",
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-appender"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09d48f71a791638519505cefafe162606f706c25592e4bde4d97600c0195312e"
+dependencies = [
+ "crossbeam-channel",
+ "time 0.3.16",
+ "tracing-subscriber 0.3.16",
 ]
 
 [[package]]
@@ -8121,6 +8185,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tracing-bunyan-formatter"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2445962f94a813b2aaea29ceeccb6dce9fd3aa5b1cb45595cde755b00d021ad"
+dependencies = [
+ "gethostname",
+ "log",
+ "serde",
+ "serde_json",
+ "time 0.3.16",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber 0.3.16",
 ]
 
 [[package]]

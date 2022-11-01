@@ -74,3 +74,21 @@ pub(crate) fn is_valid_chain(chain: &str) -> bool {
 pub(crate) fn plot_location_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace").join("plots")
 }
+
+pub(crate) fn custom_log_dir() -> PathBuf {
+    let id = "subspace-cli";
+
+    #[cfg(target_os = "macos")]
+    let path = dirs::home_dir().map(|dir| dir.join("Library/Logs").join(id));
+    // evaluates to: `~/Library/Logs/${bundle_name}/
+
+    #[cfg(target_os = "linux")]
+    let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
+    // evaluates to: `~/.local/share/${bundle_name}/logs/
+
+    #[cfg(target_os = "windows")]
+    let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
+    // evaluates to: `C:/Users/Username/AppData/Local/${bundle_name}/logs/
+
+    path.expect("Could not resolve custom log directory path!")
+}
