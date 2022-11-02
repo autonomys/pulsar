@@ -12,6 +12,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 const KEEP_LAST_N_DAYS: usize = 7;
+
 #[derive(Debug, Parser)]
 #[command(subcommand_required = true)]
 #[command(arg_required_else_help = true)]
@@ -32,9 +33,26 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    install_tracing();
+
     color_eyre::install()?;
+
+    let args = Cli::parse();
+    match args.command {
+        Commands::Init => {
+            init()?;
+        }
+        Commands::Farm => {
+            farm().await?;
+        }
+    }
+
+    Ok(())
+}
+
+fn install_tracing() {
     let log_dir = utils::custom_log_dir();
-    create_dir_all(log_dir.clone())?;
+    let _ = create_dir_all(log_dir.clone());
 
     let mut file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
     file_appender.keep_last_n_logs(KEEP_LAST_N_DAYS); // keep the logs of last 7 days only
@@ -61,16 +79,4 @@ async fn main() -> Result<()> {
                 .with_filter(filter()),
         )
         .init();
-
-    let args = Cli::parse();
-    match args.command {
-        Commands::Init => {
-            init()?;
-        }
-        Commands::Farm => {
-            farm().await?;
-        }
-    }
-
-    Ok(())
 }

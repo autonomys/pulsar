@@ -83,7 +83,7 @@ fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
         &plot_size,
         &chain,
         &node_name,
-    );
+    )?;
 
     // write to config
     config.write_all(config_text.as_bytes())?;

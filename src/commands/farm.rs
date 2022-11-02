@@ -30,14 +30,19 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer, BuildError> 
 async fn prepare_farming() -> Result<FarmingArgs, ConfigParseError> {
     let config_args = parse_config()?;
 
-    // TODO: use the below when SDK is compatible with it
-    // let chain = config_args.node_config_args.chain;
+    let chain = config_args.node_config_args.chain;
     let node_name = config_args.node_config_args.name;
     let node_directory = node_directory_getter();
+    let chain = match chain.as_str() {
+        "gemini-2a" => chain_spec::gemini_2a().unwrap(),
+        "dev" => chain_spec::dev_config().unwrap(),
+        _ => unreachable!("there are no other valid chain-specs at the moment"),
+    };
+
     let node: Node = Node::builder()
         .mode(NodeMode::Full)
         .name(node_name)
-        .build(node_directory, chain_spec::gemini_2a().unwrap())
+        .build(node_directory, chain)
         .await
         .expect("error building the node");
 
