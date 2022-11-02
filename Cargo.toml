@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bytesize = "1.1.0"
 clap = { version = "4.0.18", features = ["derive"] }
+color-eyre = "0.6.2"
 dirs = "4.0.0"
 serde = "1.0.147"
 serde_derive = "1.0.147"

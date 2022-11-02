@@ -1,3 +1,4 @@
+use color_eyre::eyre::Result;
 use serde_derive::Deserialize;
 use std::str::FromStr;
 use std::{
@@ -78,18 +79,16 @@ pub(crate) struct NodeConfigArgs {
 /// - **Linux:** `$HOME/.config/subspace-cli/settings.toml`.
 /// - **macOS:** `$HOME/Library/Application Support/subspace-cli/settings.toml`.
 /// - **Windows:** `{FOLDERID_RoamingAppData}/subspace-cli/settings.toml`.
-pub(crate) fn create_config() -> (File, PathBuf) {
-    let config_path = match dirs::config_dir() {
-        Some(path) => path,
-        None => panic!("couldn't get the default config directory!"),
-    };
-    let config_path = config_path.join("subspace-cli");
+pub(crate) fn create_config() -> Result<(File, PathBuf)> {
+    let config_path = dirs::config_dir()
+        .expect("couldn't get the default config directory!")
+        .join("subspace-cli");
+
     let _ = create_dir(config_path.clone()); // if folder already exists, ignore the error
 
-    match File::create(config_path.join("settings.toml")) {
-        Err(why) => panic!("couldn't create the config file because: {}", why),
-        Ok(file) => (file, config_path),
-    }
+    let file = File::create(config_path.join("settings.toml"))?;
+
+    Ok((file, config_path))
 }
 
 pub(crate) fn construct_config(

@@ -3,6 +3,7 @@ mod config;
 mod utils;
 
 use clap::{Parser, Subcommand};
+use color_eyre::eyre::Result;
 use commands::{farm::farm, init::init};
 use std::fs::create_dir_all;
 use tracing::level_filters::LevelFilter;
@@ -30,9 +31,10 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    color_eyre::install()?;
     let log_dir = utils::custom_log_dir();
-    create_dir_all(log_dir.clone()).expect("path creation should always succeed");
+    create_dir_all(log_dir.clone())?;
 
     let mut file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
     file_appender.keep_last_n_logs(KEEP_LAST_N_DAYS); // keep the logs of last 7 days only
@@ -63,10 +65,12 @@ async fn main() {
     let args = Cli::parse();
     match args.command {
         Commands::Init => {
-            init();
+            init()?;
         }
         Commands::Farm => {
-            farm().await;
+            farm().await?;
         }
     }
+
+    Ok(())
 }

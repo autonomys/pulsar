@@ -1,4 +1,5 @@
 use bytesize::ByteSize;
+use color_eyre::eyre::Result;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -29,14 +30,12 @@ pub(crate) fn get_user_input(
     default_value: Option<&str>,
     condition: fn(input: &str) -> bool,
     error_msg: &str,
-) -> String {
+) -> Result<String> {
     let user_input = loop {
         print!("{prompt}");
-        std::io::Write::flush(&mut std::io::stdout()).expect("flush failed!");
+        std::io::Write::flush(&mut std::io::stdout())?;
         let mut input = String::new();
-        if let Err(why) = std::io::stdin().read_line(&mut input) {
-            panic!("could not read user input because: {why}");
-        }
+        std::io::stdin().read_line(&mut input)?;
         let user_input = input.trim().to_string();
 
         if condition(&user_input) {
@@ -49,7 +48,7 @@ pub(crate) fn get_user_input(
         println!("{error_msg}");
     };
 
-    user_input
+    Ok(user_input)
 }
 
 pub(crate) fn is_valid_node_name(node_name: &str) -> bool {

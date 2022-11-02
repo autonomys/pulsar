@@ -1,5 +1,6 @@
+use color_eyre::eyre::Result;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
-use subspace_sdk::{Farmer, NodeMode};
+use subspace_sdk::{farmer::BuildError, Farmer, NodeMode};
 
 use crate::config::{parse_config, ConfigParseError};
 use crate::utils::node_directory_getter;
@@ -10,24 +11,20 @@ pub(crate) struct FarmingArgs {
     plot: PlotDescription,
 }
 
-pub(crate) async fn farm() {
-    match prepare_farming().await {
-        Ok(args) => start_farming(args).await,
-        Err(why) => panic!("Error: {why}"),
-    }
+pub(crate) async fn farm() -> Result<()> {
+    let args = prepare_farming().await?;
+    start_farming(args).await?;
+    Ok(())
 }
 
-async fn start_farming(farming_args: FarmingArgs) {
+async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer, BuildError> {
     let FarmingArgs {
         reward_address,
         node,
         plot,
     } = farming_args;
 
-    let _ = Farmer::builder()
-        .build(reward_address, node, &[plot])
-        .await
-        .expect("farmer builder failed");
+    Farmer::builder().build(reward_address, node, &[plot]).await
 }
 
 async fn prepare_farming() -> Result<FarmingArgs, ConfigParseError> {
