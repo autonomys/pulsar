@@ -1,14 +1,13 @@
+use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
-use serde::Serialize;
-use serde_derive::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use tracing::instrument;
-
 use subspace_sdk::{PlotDescription, PublicKey};
+use tracing::instrument;
 
 #[derive(Deserialize, Serialize)]
 #[allow(dead_code)]
@@ -19,16 +18,15 @@ struct Config {
 }
 
 #[derive(Deserialize, Serialize)]
-#[allow(dead_code)]
 struct FarmerConfig {
-    address: String,
-    sector_directory: String,
-    sector_size: String,
+    address: PublicKey,
+    sector_directory: PathBuf,
+    #[serde(with = "bytesize_serde")]
+    sector_size: ByteSize,
     opencl: bool,
 }
 
 #[derive(Deserialize, Serialize)]
-#[allow(dead_code)]
 struct NodeConfig {
     chain: String,
     execution: String,
@@ -41,7 +39,6 @@ struct NodeConfig {
 }
 
 #[derive(Deserialize, Serialize)]
-#[allow(dead_code)]
 struct ChainConfig {
     gemini_1: String,
     gemini_2: String,
@@ -86,12 +83,14 @@ pub(crate) fn construct_config(
     plot_size: &str,
     chain: &str,
     node_name: &str,
-) -> Result<String, toml::ser::Error> {
+) -> Result<String> {
     let config = Config {
         farmer: FarmerConfig {
-            address: reward_address.to_owned(),
-            sector_directory: plot_location.to_owned(),
-            sector_size: plot_size.to_owned(),
+            address: PublicKey::from_str(reward_address)?,
+            sector_directory: PathBuf::from_str(plot_location)?,
+            sector_size: plot_size
+                .parse::<bytesize::ByteSize>()
+                .map_err(Report::msg)?,
             opencl: false,
         },
         node: NodeConfig {
@@ -112,7 +111,7 @@ pub(crate) fn construct_config(
         },
     };
 
-    toml::to_string(&config)
+    toml::to_string(&config).map_err(Report::msg)
 }
 
 #[instrument]
@@ -121,20 +120,13 @@ pub(crate) fn parse_config() -> Result<ConfigArgs> {
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
-    let reward_address = PublicKey::from_str(&config.farmer.address)?;
-    let directory = PathBuf::from_str(&config.farmer.sector_directory)?;
-    let space_pledged = config
-        .farmer
-        .sector_size
-        .parse::<bytesize::ByteSize>()
-        .map_err(Report::msg)?;
 
     Ok(ConfigArgs {
         farmer_config_args: FarmingConfigArgs {
-            reward_address,
+            reward_address: config.farmer.address,
             plot: PlotDescription {
-                directory,
-                space_pledged,
+                directory: config.farmer.sector_directory,
+                space_pledged: config.farmer.sector_size,
             },
         },
         node_config_args: NodeConfigArgs {

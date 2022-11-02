@@ -20,6 +20,7 @@ tracing = "0.1.31"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.2"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
+bytesize-serde = "0.2.0"
 
 
 [patch.crates-io]
