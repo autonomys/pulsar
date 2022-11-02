@@ -3,9 +3,10 @@ mod config;
 mod utils;
 
 use clap::{Parser, Subcommand};
-use color_eyre::eyre::Result;
+use color_eyre::eyre::Report;
 use commands::{farm::farm, init::init};
 use std::fs::create_dir_all;
+use tracing::instrument;
 use tracing::level_filters::LevelFilter;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::prelude::*;
@@ -32,9 +33,9 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+#[instrument]
+async fn main() -> Result<(), Report> {
     install_tracing();
-
     color_eyre::install()?;
 
     let args = Cli::parse();

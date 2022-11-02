@@ -1,8 +1,10 @@
 use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
-use subspace_sdk::{farmer::BuildError, Farmer, NodeMode};
+use subspace_sdk::{Farmer, NodeMode};
+use tracing::instrument;
 
-use crate::config::{parse_config, ConfigParseError};
+use crate::config::parse_config;
 use crate::utils::node_directory_getter;
 
 pub(crate) struct FarmingArgs {
@@ -17,17 +19,22 @@ pub(crate) async fn farm() -> Result<()> {
     Ok(())
 }
 
-async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer, BuildError> {
+#[instrument(skip(farming_args))]
+async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer> {
     let FarmingArgs {
         reward_address,
         node,
         plot,
     } = farming_args;
 
-    Farmer::builder().build(reward_address, node, &[plot]).await
+    Farmer::builder()
+        .build(reward_address, node, &[plot])
+        .await
+        .wrap_err("error building the farmer")
 }
 
-async fn prepare_farming() -> Result<FarmingArgs, ConfigParseError> {
+#[instrument]
+async fn prepare_farming() -> Result<FarmingArgs> {
     let config_args = parse_config()?;
 
     let chain = config_args.node_config_args.chain;

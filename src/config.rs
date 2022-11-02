@@ -6,17 +6,13 @@ use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use subspace_sdk::{PlotDescription, PublicKey, Ss58ParsingError};
 use thiserror::Error;
+use tracing::instrument;
+
+use subspace_sdk::{PlotDescription, PublicKey};
 
 #[derive(Debug, Error)]
 pub(crate) enum ConfigParseError {
-    #[error("Cannot read the config file")]
-    IO(#[from] std::io::Error),
-    #[error("Cannot parse the config file")]
-    Toml(#[from] toml::de::Error),
-    #[error("SS58 parse error")]
-    SS58Parse(#[from] Ss58ParsingError),
     #[error("Plot size parse error")]
     SizeParse(String),
     #[error("Pathbuf parse error")]
@@ -128,25 +124,26 @@ pub(crate) fn construct_config(
     toml::to_string(&config)
 }
 
-pub(crate) fn parse_config() -> Result<ConfigArgs, ConfigParseError> {
+#[instrument]
+pub(crate) fn parse_config() -> Result<ConfigArgs> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
-
     let reward_address = PublicKey::from_str(&config.farmer.address)?;
-    let sector_directory = PathBuf::from_str(&config.farmer.sector_directory)?;
+    let directory = PathBuf::from_str(&config.farmer.sector_directory)?;
+    let space_pledged = config
+        .farmer
+        .sector_size
+        .parse::<bytesize::ByteSize>()
+        .map_err(ConfigParseError::SizeParse)?;
 
     Ok(ConfigArgs {
         farmer_config_args: FarmingConfigArgs {
             reward_address,
             plot: PlotDescription {
-                directory: sector_directory,
-                space_pledged: config
-                    .farmer
-                    .sector_size
-                    .parse::<bytesize::ByteSize>()
-                    .map_err(ConfigParseError::SizeParse)?,
+                directory,
+                space_pledged,
             },
         },
         node_config_args: NodeConfigArgs {
