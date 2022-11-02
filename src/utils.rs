@@ -1,6 +1,10 @@
-use crate::ss58::parse_ss58_reward_address;
 use bytesize::ByteSize;
-use std::path::{Path, PathBuf};
+use color_eyre::eyre::Result;
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
+use subspace_sdk::PublicKey;
 
 pub(crate) fn print_ascii_art() {
     println!("
@@ -26,14 +30,12 @@ pub(crate) fn get_user_input(
     default_value: Option<&str>,
     condition: fn(input: &str) -> bool,
     error_msg: &str,
-) -> String {
+) -> Result<String> {
     let user_input = loop {
         print!("{prompt}");
-        std::io::Write::flush(&mut std::io::stdout()).expect("flush failed!");
+        std::io::Write::flush(&mut std::io::stdout())?;
         let mut input = String::new();
-        if let Err(why) = std::io::stdin().read_line(&mut input) {
-            panic!("could not read user input because: {why}");
-        }
+        std::io::stdin().read_line(&mut input)?;
         let user_input = input.trim().to_string();
 
         if condition(&user_input) {
@@ -46,15 +48,15 @@ pub(crate) fn get_user_input(
         println!("{error_msg}");
     };
 
-    user_input
+    Ok(user_input)
 }
 
 pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
-    node_name.is_ascii()
+    node_name.is_ascii() && !node_name.trim().is_empty()
 }
 
 pub(crate) fn is_valid_address(address: &str) -> bool {
-    parse_ss58_reward_address(address).is_ok()
+    PublicKey::from_str(address).is_ok()
 }
 
 pub(crate) fn is_valid_location(location: &str) -> bool {
@@ -72,5 +74,27 @@ pub(crate) fn is_valid_chain(chain: &str) -> bool {
 }
 
 pub(crate) fn plot_location_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace").join("plots")
+    dirs::data_dir().unwrap().join("subspace-cli").join("plots")
+}
+
+pub(crate) fn node_directory_getter() -> PathBuf {
+    dirs::data_dir().unwrap().join("subspace-cli").join("node")
+}
+
+pub(crate) fn custom_log_dir() -> PathBuf {
+    let id = "subspace-cli";
+
+    #[cfg(target_os = "macos")]
+    let path = dirs::home_dir().map(|dir| dir.join("Library/Logs").join(id));
+    // evaluates to: `~/Library/Logs/${bundle_name}/
+
+    #[cfg(target_os = "linux")]
+    let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
+    // evaluates to: `~/.local/share/${bundle_name}/logs/
+
+    #[cfg(target_os = "windows")]
+    let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
+    // evaluates to: `C:/Users/Username/AppData/Local/${bundle_name}/logs/
+
+    path.expect("Could not resolve custom log directory path!")
 }
