@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Report, Result};
 use serde::Serialize;
 use serde_derive::Deserialize;
 use std::str::FromStr;
@@ -6,18 +6,9 @@ use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use thiserror::Error;
 use tracing::instrument;
 
 use subspace_sdk::{PlotDescription, PublicKey};
-
-#[derive(Debug, Error)]
-pub(crate) enum ConfigParseError {
-    #[error("Plot size parse error")]
-    SizeParse(String),
-    #[error("Pathbuf parse error")]
-    PathParse(#[from] core::convert::Infallible),
-}
 
 #[derive(Deserialize, Serialize)]
 #[allow(dead_code)]
@@ -136,7 +127,7 @@ pub(crate) fn parse_config() -> Result<ConfigArgs> {
         .farmer
         .sector_size
         .parse::<bytesize::ByteSize>()
-        .map_err(ConfigParseError::SizeParse)?;
+        .map_err(Report::msg)?;
 
     Ok(ConfigArgs {
         farmer_config_args: FarmingConfigArgs {
