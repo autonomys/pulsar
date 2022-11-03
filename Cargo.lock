@@ -7578,7 +7578,7 @@ dependencies = [
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk#9fdcc461a89271f40283a035417292bb45834277"
+source = "git+https://github.com/subspace/subspace-sdk#0559cae1384934c4c3d010b82acf17ba0ee6f296"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7599,6 +7599,7 @@ dependencies = [
  "sc-subspace-chain-specs",
  "sc-telemetry",
  "serde",
+ "sp-blockchain",
  "sp-consensus-subspace",
  "sp-core",
  "sp-domains",

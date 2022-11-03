@@ -1,10 +1,18 @@
 use bytesize::ByteSize;
 use color_eyre::eyre::Result;
+use std::fs::create_dir_all;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
 use subspace_sdk::PublicKey;
+use tracing::level_filters::LevelFilter;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_error::ErrorLayer;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+const KEEP_LAST_N_DAYS: usize = 7;
 
 pub(crate) fn print_ascii_art() {
     println!("
@@ -81,7 +89,7 @@ pub(crate) fn node_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("node")
 }
 
-pub(crate) fn custom_log_dir() -> PathBuf {
+fn custom_log_dir() -> PathBuf {
     let id = "subspace-cli";
 
     #[cfg(target_os = "macos")]
@@ -106,4 +114,43 @@ pub(crate) fn support_message() -> String {
             .underline()
             .paint("https://forum.subspace.network")
     )
+}
+
+pub(crate) fn install_tracing(is_verbose: bool) {
+    let log_dir = custom_log_dir();
+    let _ = create_dir_all(log_dir.clone());
+
+    let mut file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
+    file_appender.keep_last_n_logs(KEEP_LAST_N_DAYS); // keep the logs of last 7 days only
+
+    // filter for logging
+    let filter = || {
+        EnvFilter::builder()
+            .with_default_directive(LevelFilter::INFO.into())
+            .from_env_lossy()
+            .add_directive("subspace_cli=debug".parse().unwrap())
+    };
+
+    // start logger, after we acquire the bundle identifier
+    let tracing_layer = tracing_subscriber::registry()
+        .with(
+            BunyanFormattingLayer::new("subspace-desktop".to_owned(), file_appender)
+                .and_then(JsonStorageLayer)
+                .with_filter(filter()),
+        )
+        .with(ErrorLayer::default());
+
+    // if verbose, then also print to stdout
+    if is_verbose {
+        tracing_layer
+            .with(
+                fmt::layer()
+                    .with_ansi(!cfg!(windows))
+                    .with_span_events(FmtSpan::CLOSE)
+                    .with_filter(filter()),
+            )
+            .init();
+    } else {
+        tracing_layer.init();
+    }
 }
