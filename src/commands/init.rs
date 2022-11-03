@@ -49,7 +49,7 @@ fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
 
     let plot_location = get_user_input(
         &format!(
-            "Specify a sector location (press enter to use the default: `{}`): ",
+            "Specify a plot location (press enter to use the default: `{}`): ",
             default_plot_loc.display()
         ),
         default_plot_loc.to_str(),
@@ -59,7 +59,7 @@ fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
 
     let plot_size = get_user_input(
         &format!(
-            "Specify a sector size (defaults to `{}`, press enter to use the default): ",
+            "Specify a plot size (defaults to `{}`, press enter to use the default): ",
             DEFAULT_PLOT_SIZE
         ),
         Some(DEFAULT_PLOT_SIZE),

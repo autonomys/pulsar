@@ -98,3 +98,12 @@ pub(crate) fn custom_log_dir() -> PathBuf {
 
     path.expect("Could not resolve custom log directory path!")
 }
+
+pub(crate) fn support_message() -> String {
+    format!(
+        "This is a bug, please submit it to our forums: {}",
+        ansi_term::Style::new()
+            .underline()
+            .paint("https://forum.subspace.network")
+    )
+}

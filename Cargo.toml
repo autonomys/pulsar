@@ -3,10 +3,9 @@ name = "subspace-cli"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 bytesize = "1.1.0"
+bytesize-serde = "0.2.0"
 clap = { version = "4.0.18", features = ["derive"] }
 color-eyre = "0.6.2"
 dirs = "4.0.0"
@@ -19,8 +18,9 @@ tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.31"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.2"
+tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
-
+ansi_term = "0.12.1"
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
