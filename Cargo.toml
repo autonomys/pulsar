@@ -18,6 +18,7 @@ tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.31"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.2"
+tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 
 [patch.crates-io]

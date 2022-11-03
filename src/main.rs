@@ -9,6 +9,7 @@ use std::fs::create_dir_all;
 use tracing::instrument;
 use tracing::level_filters::LevelFilter;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
@@ -79,5 +80,6 @@ fn install_tracing() {
                 .and_then(JsonStorageLayer)
                 .with_filter(filter()),
         )
+        .with(ErrorLayer::default())
         .init();
 }
