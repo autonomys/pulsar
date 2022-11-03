@@ -4,6 +4,7 @@ mod utils;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
+use color_eyre::Help;
 use commands::{farm::farm, init::init};
 use std::fs::create_dir_all;
 use tracing::instrument;
@@ -12,6 +13,8 @@ use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+use crate::utils::support_message;
 
 const KEEP_LAST_N_DAYS: usize = 7;
 
@@ -42,10 +45,10 @@ async fn main() -> Result<(), Report> {
     let args = Cli::parse();
     match args.command {
         Commands::Init => {
-            init()?;
+            init().suggestion(support_message())?;
         }
         Commands::Farm => {
-            farm().await?;
+            farm().await.suggestion(support_message())?;
         }
     }
 
