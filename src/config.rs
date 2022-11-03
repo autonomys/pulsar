@@ -20,9 +20,9 @@ struct Config {
 #[derive(Deserialize, Serialize)]
 struct FarmerConfig {
     address: PublicKey,
-    sector_directory: PathBuf,
+    plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
-    sector_size: ByteSize,
+    plot_size: ByteSize,
     opencl: bool,
 }
 
@@ -87,8 +87,8 @@ pub(crate) fn construct_config(
     let config = Config {
         farmer: FarmerConfig {
             address: PublicKey::from_str(reward_address)?,
-            sector_directory: PathBuf::from_str(plot_location)?,
-            sector_size: plot_size
+            plot_directory: PathBuf::from_str(plot_location)?,
+            plot_size: plot_size
                 .parse::<bytesize::ByteSize>()
                 .map_err(Report::msg)?,
             opencl: false,
@@ -125,8 +125,8 @@ pub(crate) fn parse_config() -> Result<ConfigArgs> {
         farmer_config_args: FarmingConfigArgs {
             reward_address: config.farmer.address,
             plot: PlotDescription {
-                directory: config.farmer.sector_directory,
-                space_pledged: config.farmer.sector_size,
+                directory: config.farmer.plot_directory,
+                space_pledged: config.farmer.plot_size,
             },
         },
         node_config_args: NodeConfigArgs {
