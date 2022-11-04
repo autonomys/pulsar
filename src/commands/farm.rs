@@ -1,36 +1,41 @@
 use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
+use subspace_sdk::Farmer;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
-use subspace_sdk::{Farmer, NodeMode};
 use tracing::instrument;
 
 use crate::config::parse_config;
-use crate::utils::node_directory_getter;
+use crate::utils::{install_tracing, node_directory_getter};
 
+#[derive(Debug)]
 pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
     node: Node,
     plot: PlotDescription,
 }
 
-pub(crate) async fn farm() -> Result<()> {
+pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
+    install_tracing(is_verbose);
+    color_eyre::install()?;
     let args = prepare_farming().await?;
     start_farming(args).await?;
+
     Ok(())
 }
 
-#[instrument(skip(farming_args))]
-async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer> {
+#[instrument]
+async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
     let FarmingArgs {
         reward_address,
         node,
         plot,
     } = farming_args;
 
-    Farmer::builder()
-        .build(reward_address, node, &[plot])
-        .await
-        .wrap_err("error building the farmer")
+    Ok((
+        Farmer::builder()
+            .build(reward_address, node.clone(), &[plot])
+            .await?,
+        node,
+    ))
 }
 
 #[instrument]
@@ -47,7 +52,6 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     };
 
     let node: Node = Node::builder()
-        .mode(NodeMode::Full)
         .name(node_name)
         .build(node_directory, chain)
         .await

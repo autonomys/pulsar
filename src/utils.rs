@@ -1,10 +1,19 @@
 use bytesize::ByteSize;
 use color_eyre::eyre::Result;
+use std::fs::create_dir_all;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
 use subspace_sdk::PublicKey;
+use tracing::level_filters::LevelFilter;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_error::ErrorLayer;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+const KEEP_LAST_N_DAYS: usize = 7;
 
 pub(crate) fn print_ascii_art() {
     println!("
@@ -81,7 +90,7 @@ pub(crate) fn node_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("node")
 }
 
-pub(crate) fn custom_log_dir() -> PathBuf {
+fn custom_log_dir() -> PathBuf {
     let id = "subspace-cli";
 
     #[cfg(target_os = "macos")]
@@ -106,4 +115,52 @@ pub(crate) fn support_message() -> String {
             .underline()
             .paint("https://forum.subspace.network")
     )
+}
+
+pub(crate) fn install_tracing(is_verbose: bool) {
+    let log_dir = custom_log_dir();
+    let _ = create_dir_all(log_dir.clone());
+
+    let file_appender = RollingFileAppender::builder()
+        .max_log_files(KEEP_LAST_N_DAYS)
+        .rotation(Rotation::DAILY)
+        .filename_prefix("subspace-cli.log")
+        .build(log_dir)
+        .expect("building should always succeed");
+
+    // filter for logging
+    let filter = || {
+        EnvFilter::builder()
+            .with_default_directive(LevelFilter::INFO.into())
+            .from_env_lossy()
+            .add_directive(
+                "subspace_cli=info"
+                    .parse()
+                    .expect("hardcoded value is true"),
+            )
+            .add_directive("regalloc2=off".parse().expect("hardcoded value is true"))
+    };
+
+    // start logger, after we acquire the bundle identifier
+    let tracing_layer = tracing_subscriber::registry()
+        .with(
+            BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
+                .and_then(JsonStorageLayer)
+                .with_filter(filter()),
+        )
+        .with(ErrorLayer::default());
+
+    // if verbose, then also print to stdout
+    if is_verbose {
+        tracing_layer
+            .with(
+                fmt::layer()
+                    .with_ansi(!cfg!(windows))
+                    .with_span_events(FmtSpan::CLOSE)
+                    .with_filter(filter()),
+            )
+            .init();
+    } else {
+        tracing_layer.init();
+    }
 }
