@@ -7,6 +7,7 @@ use std::{
 };
 use subspace_sdk::PublicKey;
 use tracing::level_filters::LevelFilter;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
@@ -120,21 +121,30 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     let log_dir = custom_log_dir();
     let _ = create_dir_all(log_dir.clone());
 
-    let mut file_appender = tracing_appender::rolling::daily(log_dir, "subspace-desktop.log");
-    file_appender.keep_last_n_logs(KEEP_LAST_N_DAYS); // keep the logs of last 7 days only
+    let file_appender = RollingFileAppender::builder()
+        .max_log_files(KEEP_LAST_N_DAYS)
+        .rotation(Rotation::DAILY)
+        .filename_prefix("subspace-cli.log")
+        .build(log_dir)
+        .expect("building should always succeed");
 
     // filter for logging
     let filter = || {
         EnvFilter::builder()
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
-            .add_directive("subspace_cli=debug".parse().unwrap())
+            .add_directive(
+                "subspace_cli=info"
+                    .parse()
+                    .expect("hardcoded value is true"),
+            )
+            .add_directive("regalloc2=off".parse().expect("hardcoded value is true"))
     };
 
     // start logger, after we acquire the bundle identifier
     let tracing_layer = tracing_subscriber::registry()
         .with(
-            BunyanFormattingLayer::new("subspace-desktop".to_owned(), file_appender)
+            BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
                 .with_filter(filter()),
         )

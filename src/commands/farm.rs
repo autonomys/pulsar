@@ -1,5 +1,4 @@
 use color_eyre::eyre::Result;
-use color_eyre::eyre::WrapErr;
 use subspace_sdk::Farmer;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
 use tracing::instrument;
@@ -23,17 +22,19 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
 }
 
 #[instrument(skip(farming_args))]
-async fn start_farming(farming_args: FarmingArgs) -> Result<Farmer> {
+async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
     let FarmingArgs {
         reward_address,
         node,
         plot,
     } = farming_args;
 
-    Farmer::builder()
-        .build(reward_address, node, &[plot])
-        .await
-        .wrap_err("error building the farmer")
+    Ok((
+        Farmer::builder()
+            .build(reward_address, node.clone(), &[plot])
+            .await?,
+        node,
+    ))
 }
 
 #[instrument]
