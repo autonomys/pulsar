@@ -26,7 +26,7 @@ enum Commands {
     Init,
     #[command(about = "starting the farming process (along with node in the background)")]
     Farm {
-        #[arg(short, long, default_value = "true")]
+        #[arg(short, long, action)]
         verbose: bool,
     },
 }

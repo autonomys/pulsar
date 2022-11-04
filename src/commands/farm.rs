@@ -6,6 +6,7 @@ use tracing::instrument;
 use crate::config::parse_config;
 use crate::utils::{install_tracing, node_directory_getter};
 
+#[derive(Debug)]
 pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
     node: Node,
@@ -21,7 +22,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     Ok(())
 }
 
-#[instrument(skip(farming_args))]
+#[instrument]
 async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
     let FarmingArgs {
         reward_address,
