@@ -27,7 +27,11 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     let (mut farmer, _node) = start_farming(args).await?;
 
     tokio::spawn(async move {
-        for plot in farmer.iter_plots().await {
+        for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+            println!(
+                "Initial plotting for plot: #{plot_id} ({})",
+                plot.directory().display()
+            );
             let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
             plot.subscribe_plotting_progress()
                 .await
