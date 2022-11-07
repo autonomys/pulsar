@@ -10,7 +10,7 @@ use crate::config::parse_config;
 use crate::utils::{install_tracing, node_directory_getter};
 
 // TODO: if there is a way to get this from the SDK, revamp this
-const SECTOR_SIZE: u64 = 2750000;
+const SECTOR_SIZE: u64 = 2621440;
 
 #[derive(Debug)]
 pub(crate) struct FarmingArgs {
