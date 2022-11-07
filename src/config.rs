@@ -59,6 +59,7 @@ pub(crate) struct FarmingConfigArgs {
 pub(crate) struct NodeConfigArgs {
     pub(crate) name: String,
     pub(crate) chain: String,
+    pub(crate) validator: bool,
 }
 
 /// Creates a config file at the location
@@ -132,6 +133,7 @@ pub(crate) fn parse_config() -> Result<ConfigArgs> {
         node_config_args: NodeConfigArgs {
             name: config.node.name,
             chain: config.node.chain,
+            validator: config.node.validator,
         },
     })
 }

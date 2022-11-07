@@ -78,7 +78,7 @@ pub(crate) fn is_valid_size(size: &str) -> bool {
 
 pub(crate) fn is_valid_chain(chain: &str) -> bool {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["gemini-2a", "gemini-1", "testnet", "lamda2513-3", "x-net-1"];
+    let chain_list = vec!["gemini-2a", "dev"];
     chain_list.contains(&chain)
 }
 
