@@ -1,5 +1,3 @@
-use std::{thread, time::Duration};
-
 use color_eyre::eyre::Result;
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -10,6 +8,9 @@ use tracing::instrument;
 
 use crate::config::parse_config;
 use crate::utils::{install_tracing, node_directory_getter};
+
+// TODO: if there is a way to get this from the SDK, revamp this
+const SECTOR_SIZE: u64 = 2750000;
 
 #[derive(Debug)]
 pub(crate) struct FarmingArgs {
@@ -24,34 +25,31 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     color_eyre::install()?;
     let args = prepare_farming().await?;
     let (mut farmer, _node) = start_farming(args).await?;
+
     tokio::spawn(async move {
-        // farmer.iter_plots().await.for_each(|plot| async move {
-        //     plot.subscribe_plotting_progress()
-        //         .await
-        //         .for_each(|progress| async move {
-        //             println!(
-        //                 "Progress is: {:?} out of {:?}",
-        //                 progress.current_sector, progress.total_sectors
-        //             )
-        //         })
-        //         .await;
-        // })
         for plot in farmer.iter_plots().await {
+            let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
             plot.subscribe_plotting_progress()
                 .await
-                .for_each(|progress| async move {
-                    println!(
-                        "Progress is: {:?} out of {:?}",
-                        progress.current_sector, progress.total_sectors
-                    )
+                .for_each(|progress| {
+                    let pb_clone = progress_bar.clone();
+                    async move {
+                        let current_bytes = progress.current_sector * SECTOR_SIZE;
+                        pb_clone.set_position(current_bytes);
+                    }
                 })
-                .await
+                .await;
+            progress_bar.set_style(
+                ProgressStyle::with_template(
+                    "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+                  ({bytes}/{total_bytes}) {msg}",
+                )
+                .unwrap()
+                .progress_chars("=> "),
+            );
+            progress_bar.finish_with_message("Initial plotting finished!");
         }
     });
-
-    println!("sleeping for now");
-    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
-    println!("awoken!");
 
     Ok(())
 }
@@ -102,26 +100,17 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     })
 }
 
-// TODO: have a callback here for updating the value of currently encoded
-fn _plotting_progress_bar(total_size: u64) {
-    let mut encoded = 0;
-    let to_be_plotted = total_size;
-
+fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
     pb.set_style(
         ProgressStyle::with_template(
-            "{spinner} [{elapsed_precise}] [{wide_bar}]
-     {bytes}/{total_bytes} ({bytes_per_sec}, {eta})",
+            "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+      ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, remaining time: {eta}",
         )
         .unwrap()
-        .progress_chars("#>-"),
+        .progress_chars("=> "),
     );
+    pb.set_message("plotting");
 
-    while encoded < to_be_plotted {
-        encoded += 123123;
-        pb.set_position(encoded);
-        thread::sleep(Duration::from_millis(12));
-    }
-
-    pb.finish_with_message("downloaded");
+    pb
 }
