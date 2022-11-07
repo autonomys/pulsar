@@ -26,34 +26,36 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     let args = prepare_farming().await?;
     let (mut farmer, _node) = start_farming(args).await?;
 
-    tokio::spawn(async move {
-        for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
-            println!(
-                "Initial plotting for plot: #{plot_id} ({})",
-                plot.directory().display()
-            );
-            let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
-            plot.subscribe_plotting_progress()
-                .await
-                .for_each(|progress| {
-                    let pb_clone = progress_bar.clone();
-                    async move {
-                        let current_bytes = progress.current_sector * SECTOR_SIZE;
-                        pb_clone.set_position(current_bytes);
-                    }
-                })
-                .await;
-            progress_bar.set_style(
-                ProgressStyle::with_template(
-                    "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+    if !is_verbose {
+        tokio::spawn(async move {
+            for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+                println!(
+                    "Initial plotting for plot: #{plot_id} ({})",
+                    plot.directory().display()
+                );
+                let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
+                plot.subscribe_plotting_progress()
+                    .await
+                    .for_each(|progress| {
+                        let pb_clone = progress_bar.clone();
+                        async move {
+                            let current_bytes = progress.current_sector * SECTOR_SIZE;
+                            pb_clone.set_position(current_bytes);
+                        }
+                    })
+                    .await;
+                progress_bar.set_style(
+                    ProgressStyle::with_template(
+                        "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
                   ({bytes}/{total_bytes}) {msg}",
-                )
-                .unwrap()
-                .progress_chars("=> "),
-            );
-            progress_bar.finish_with_message("Initial plotting finished!");
-        }
-    });
+                    )
+                    .unwrap()
+                    .progress_chars("=> "),
+                );
+                progress_bar.finish_with_message("Initial plotting finished!");
+            }
+        });
+    }
 
     Ok(())
 }
