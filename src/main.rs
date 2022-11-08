@@ -5,7 +5,7 @@ mod utils;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
 use color_eyre::Help;
-use commands::{farm::farm, init::init};
+use commands::{farm::farm, init::init, wipe::wipe};
 use tracing::instrument;
 
 use crate::utils::support_message;
@@ -29,6 +29,8 @@ enum Commands {
         #[arg(short, long, action)]
         verbose: bool,
     },
+    #[command(about = "wipes the node and farm instance (along with your plots)")]
+    Wipe,
 }
 
 #[tokio::main]
@@ -45,6 +47,9 @@ async fn main() -> Result<(), Report> {
             loop {
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
             }
+        }
+        Commands::Wipe => {
+            wipe().await?;
         }
     }
 
