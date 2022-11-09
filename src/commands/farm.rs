@@ -11,7 +11,7 @@ use subspace_sdk::Farmer;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
 
 use crate::config::parse_config;
-use crate::summary::{create_summary_file, update_summary};
+use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
 #[derive(Debug)]
@@ -70,28 +70,31 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
                 );
                 progress_bar.finish_with_message("Initial plotting finished!");
                 finished_flag.store(true, Ordering::Relaxed);
-                if let Err(why) = update_summary(Some(true), None).await {
-                    println!("updating summary failed, because: {why}");
-                }
+                update_summary(Some(true), None)
+                    .await
+                    .expect("couldn't update summary");
             }
         });
 
         // solution subscriber
         tokio::spawn({
             let farmer_clone = farmer.clone();
-            // TODO: initialize this value from the file
-            let farmed_block_count = Arc::new(AtomicU64::new(0));
+
+            let farmed_blocks = get_farmed_block_count()
+                .await
+                .expect("couldn't read farmed blocks count from summary");
+            let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
             async move {
                 for plot in farmer_clone.iter_plots().await {
                     plot.subscribe_new_solutions()
                         .await
                         .for_each(|_solution| async {
                             let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                            if let Err(why) = update_summary(None, Some(total_farmed)).await {
-                                println!("updating summary failed, because: {why}");
-                            }
+                            update_summary(None, Some(total_farmed))
+                                .await
+                                .expect("couldn't update summary");
                             if is_initial_progress_finished.load(Ordering::Relaxed) {
-                                println!("Farmed {total_farmed} block(s)!");
+                                println!("You have farmed {total_farmed} block(s) in total!");
                             }
                         })
                         .await

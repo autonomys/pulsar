@@ -77,6 +77,11 @@ pub(crate) async fn update_summary(
     Ok(())
 }
 
+pub(crate) async fn get_farmed_block_count() -> Result<u64> {
+    let summary = parse_summary(&summary_path()).await?;
+    Ok(summary.farmed_block_count)
+}
+
 #[instrument]
 async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
     let summary: FarmerSummary = toml::from_str(&read_to_string(path).await?)?;
