@@ -1,16 +1,17 @@
-use bytesize::ByteSize;
-use color_eyre::eyre::{Report, Result};
-use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use subspace_sdk::{PlotDescription, PublicKey};
+
+use bytesize::ByteSize;
+use color_eyre::eyre::{Report, Result};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
+use subspace_sdk::{PlotDescription, PublicKey};
+
 #[derive(Deserialize, Serialize)]
-#[allow(dead_code)]
 struct Config {
     farmer: FarmerConfig,
     node: NodeConfig,

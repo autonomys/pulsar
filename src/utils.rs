@@ -1,17 +1,19 @@
-use bytesize::ByteSize;
-use color_eyre::eyre::Result;
 use std::fs::create_dir_all;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
-use subspace_sdk::PublicKey;
+
+use bytesize::ByteSize;
+use color_eyre::eyre::Result;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+use subspace_sdk::PublicKey;
 
 const KEEP_LAST_N_DAYS: usize = 7;
 
@@ -50,8 +52,10 @@ pub(crate) fn get_user_input(
         if condition(&user_input) {
             break user_input;
         }
-        if let Some(default) = default_value && user_input.is_empty() {
-            break default.to_string();
+        if let Some(default) = default_value {
+            if user_input.is_empty() {
+                break default.to_string();
+            }
         }
 
         println!("{error_msg}");

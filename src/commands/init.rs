@@ -1,5 +1,6 @@
-use color_eyre::eyre::Result;
 use std::{fs::File, io::Write};
+
+use color_eyre::eyre::Result;
 
 use crate::config::{construct_config, create_config};
 use crate::utils::{
