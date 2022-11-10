@@ -20,19 +20,30 @@ Instead of running a terminal instance for the farmer, and running another termi
 - `wipe` -> This is a dangerous one. If you want to delete everything and start over, this will permanently delete your plots and your node data (this will not erase any rewards you have gained, don't worry).
 - `info` -> This will show info for your farming.
 
-## Farming in the background (macos/linux)
+## Daemonizing the Process (Moving it to the Background)
 
-You want to farm, but as a background task/service? You can do so via `screen`!
+In some instances, you may want to move the farming process to the background. Tools like [`screen`](https://www.gnu.org/software/screen/manual/screen.html) and [`tmux`](https://github.com/tmux/tmux) can help manage this.
 
-Follow the below guide:
-1. `screen -S farming` -> creates a new screen session with the name *farming*.
-2. `./subspace-cli init` -> initializes subspace cli (you can skip this step if you already have an initialization). 
-3. `./subspace-farm farm` -> starts the farming :)
-4. press the key combination: `CTRL+a`, replaced by: `d` -> this will detach your process (it will be running in the background).
+For example, with `tmux`,
+
+```sh
+$ tmux -S farming
+```
+
+This will create a new `tmux` session using a socket file named `farming`.
+
+Once the tmux session is created, you can go ahead and run the farming process.
+
+```sh
+$ subspace-cli farm
+```
+
+Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://researchit.las.iastate.edu/guides/pronto/interactive_computing/tmux/#:~:text=To%20detach%20(meaning%20exit%20the,will%20continue%20going%20without%20you.)
 
 That's it, you should be back to your terminal, with *subspace farming* running in the background as a session.
 
-If you want to re-attach your farming session, run the command: `screen -r farming`.
-Screen is a great command, you can learn more about it using the command `screen -h`.
+To re-attach to your session, use tmux:
 
-If you ever want to delete/kill your farming session, enter the command: `screen -S farming -X quit`.
+```sh
+$ tmux -S farming attach
+```
