@@ -14,7 +14,7 @@ pub(crate) async fn wipe() -> Result<()> {
         }
     };
     let node_directory = node_directory_getter();
-    let _ = Node::wipe(node_directory).await;
+    Node::wipe(node_directory).await?;
     println!("Node is wiped!");
 
     // TODO: modify here when supporting multi-plot
