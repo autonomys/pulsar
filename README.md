@@ -2,13 +2,16 @@
 
 # Subspace CLI
 
+Subspace CLI simplifies the farming process on Subspace Network.
+
 ![ci-tests](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml/badge.svg)
 
 ![prompt](subspace-cli-prompt.png)
 
-Subspace CLI simplifies the farming process on Subspace Network.
 
 </div>
+
+---
 
 Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
