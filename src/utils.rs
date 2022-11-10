@@ -123,7 +123,7 @@ pub(crate) fn support_message() -> String {
 
 pub(crate) fn install_tracing(is_verbose: bool) {
     let log_dir = custom_log_dir();
-    let _ = create_dir_all(log_dir.clone());
+    let _ = create_dir_all(&log_dir);
 
     let file_appender = RollingFileAppender::builder()
         .max_log_files(KEEP_LAST_N_DAYS)

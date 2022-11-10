@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use color_eyre::eyre::{Report, Result};
 use serde::{Deserialize, Serialize};
 use tokio::{
-    fs::{read_to_string, File, OpenOptions},
+    fs::{create_dir_all, read_to_string, File, OpenOptions},
     io::AsyncWriteExt,
 };
 use tracing::instrument;
@@ -22,31 +22,30 @@ struct FarmerSummary {
 #[instrument]
 pub(crate) async fn create_summary_file() -> Result<()> {
     let summary_path = summary_path();
+    let summary_dir = dirs::data_local_dir()
+        .expect("couldn't get the default local data directory!")
+        .join("subspace-cli");
 
     // File::create will truncate the existing file, so first
     // check if the file exists, if not, `open` will return an error
-    // in this case, create the file
-    // if creation gives an error, that means the directory is not created
+    // in this case, create the file and necessary directories
     if File::open(&summary_path).await.is_err() {
-        if File::create(&summary_path).await.is_err() {
-            return Err(Report::msg(
-                "Your config directory is malformed. Please re-run `subspace init`",
-            ));
-        } else {
-            let initialization = FarmerSummary {
-                initial_plotting_finished: false,
-                farmed_block_count: 0,
-            };
-            let summary = toml::to_string(&initialization).map_err(Report::msg)?;
-            OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .open(summary_path)
-                .await?
-                .write_all(summary.as_bytes())
-                .await?;
-        }
+        let _ = create_dir_all(&summary_dir).await;
+        let _ = File::create(&summary_path).await;
+        let initialization = FarmerSummary {
+            initial_plotting_finished: false,
+            farmed_block_count: 0,
+        };
+        let summary = toml::to_string(&initialization).map_err(Report::msg)?;
+        OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(summary_path)
+            .await?
+            .write_all(summary.as_bytes())
+            .await?;
     }
+
     Ok(())
 }
 
@@ -90,6 +89,7 @@ async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
 
 #[instrument]
 fn summary_path() -> PathBuf {
-    let summary_path = dirs::config_dir().expect("couldn't get the default config directory!");
+    let summary_path =
+        dirs::data_local_dir().expect("couldn't get the default local data directory!");
     summary_path.join("subspace-cli").join("summary.toml")
 }
