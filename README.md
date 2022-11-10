@@ -6,7 +6,7 @@ Instead of running a terminal instance for farmer, and running another terminal 
 1. download the executable
 2. in your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`)
 3. run `./subspace-cli init` -> this will initialize your config file, which will store the necessary information for you to farm.
-4. run `.subspace-cli farm` -> this will start farming. Yes, it is that simple! Enjoy!
+4. run `./subspace-cli farm` -> this will start farming. Yes, it is that simple! Enjoy!
 
 ## Other commands
 - `wipe` -> This is a dangerous one. If you want to delete everything and start over, this will permanently delete your plots and your node data (this will not erase any rewards you have gained, don't worry).
