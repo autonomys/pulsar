@@ -1,4 +1,5 @@
 use color_eyre::eyre::Result;
+
 use subspace_sdk::{Node, PlotDescription};
 
 use crate::config::parse_config;
@@ -21,9 +22,9 @@ pub(crate) async fn wipe() -> Result<()> {
         directory: config_args.farmer_config_args.plot.directory,
         space_pledged: config_args.farmer_config_args.plot.space_pledged,
     };
-    println!("Farmer is wiped!");
 
-    plot.wipe().await?;
+    let _ = plot.wipe().await;
+    println!("Farmer is wiped!");
 
     Ok(())
 }
