@@ -38,7 +38,7 @@ Once the tmux session is created, you can go ahead and run the farming process.
 $ subspace-cli farm
 ```
 
-Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://researchit.las.iastate.edu/guides/pronto/interactive_computing/tmux/#:~:text=To%20detach%20(meaning%20exit%20the,will%20continue%20going%20without%20you.)
+Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
 
 That's it, you should be back to your terminal, with *subspace farming* running in the background as a session.
 
