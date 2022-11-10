@@ -2,7 +2,7 @@
 
 ![prompt](subspace-cli-prompt.png)
 
-![ci-tests](https://github.com/github/docs/actions/workflows/ci-tests.yml/badge.svg)
+![ci-tests](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml/badge.svg)
 
 Subspace CLI simplifies the farming process on Subspace Network.
 
