@@ -4,20 +4,24 @@
 
 ![ci-tests](https://github.com/github/docs/actions/workflows/ci-tests.yml/badge.svg)
 
-is a great tool that heavily simplifies the terminal workflow of the farming process. \\
+Subspace CLI simplifies the farming process on Subspace Network.
+
 Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
 ## How to Use (commands)
+
 1. download the executable
 2. in your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`)
 3. run `./subspace-cli init` -> this will initialize your config file, which will store the necessary information for you to farm.
 4. run `./subspace-cli farm` -> this will start farming. Yes, it is that simple! Enjoy!
 
 ## Other commands
+
 - `wipe` -> This is a dangerous one. If you want to delete everything and start over, this will permanently delete your plots and your node data (this will not erase any rewards you have gained, don't worry).
 - `info` -> This will show info for your farming.
 
 ## Farming in the background (macos/linux)
+
 You want to farm, but as a background task/service? You can do so via `screen`!
 
 Follow the below guide:
