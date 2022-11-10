@@ -81,6 +81,11 @@ pub(crate) async fn get_farmed_block_count() -> Result<u64> {
     Ok(summary.farmed_block_count)
 }
 
+pub(crate) async fn get_initial_plotting_progress() -> Result<bool> {
+    let summary = parse_summary(&summary_path()).await?;
+    Ok(summary.initial_plotting_finished)
+}
+
 #[instrument]
 async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
     let summary: FarmerSummary = toml::from_str(&read_to_string(path).await?)?;

@@ -2,9 +2,9 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use color_eyre::eyre::{Report, Result};
-
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
+use single_instance::SingleInstance;
 use tracing::instrument;
 
 use subspace_sdk::Farmer;
@@ -25,6 +25,14 @@ pub(crate) struct FarmingArgs {
 pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     install_tracing(is_verbose);
     color_eyre::install()?;
+
+    let instance = SingleInstance::new("subspaceFarmer")
+        .map_err(|_| Report::msg("Cannot take the instance lock from the OS! Aborting..."))?;
+    if !instance.is_single() {
+        return Err(Report::msg(
+            "It seems like there is already a farming instance running. Aborting...",
+        ));
+    }
 
     println!("Starting node ... (this might take up to couple of minutes)");
     let args = prepare_farming().await?;

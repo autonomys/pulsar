@@ -25,7 +25,7 @@ pub(crate) fn init() -> Result<()> {
     );
 
     println!("Ready for lift off! Run the follow command to begin:");
-    println!("'subspace farm'");
+    println!("`./subspace-cli farm`");
 
     Ok(())
 }
