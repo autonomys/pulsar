@@ -1,6 +1,6 @@
 # Subspace-CLI
 is a great tool that heavily simplifies the terminal workflow of the farming process. \\
-Instead of running a terminal instance for farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
+Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
 ## How to Use (commands)
 1. download the executable
