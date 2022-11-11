@@ -63,7 +63,7 @@ If you ever want to delete/kill your farming session, enter the command:
 tmux kill-session -t farming
 ```
 
-### Example with screen
+### Example with `screen`
 
 
 ```sh
