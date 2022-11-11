@@ -6,7 +6,7 @@ Subspace CLI simplifies the farming process on Subspace Network.
 
 ![ci-tests](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml/badge.svg)
 
-![prompt](subspace-cli-prompt.png)
+![prompt](images/subspace-cli-prompt.png)
 
 
 </div>
@@ -31,6 +31,7 @@ Instead of running a terminal instance for the farmer, and running another termi
 
 In some instances, you may want to move the farming process to the background. Tools like [`screen`](https://www.gnu.org/software/screen/manual/screen.html) and [`tmux`](https://github.com/tmux/tmux) can help manage this.
 
+![Alt text](images/culture.jpeg)
 
 ### Example with `tmux`
 
