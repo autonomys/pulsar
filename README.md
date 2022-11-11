@@ -1,10 +1,17 @@
-# Subspace-CLI
+<div align="center">
 
-![prompt](subspace-cli-prompt.png)
-
-![ci-tests](https://github.com/github/docs/actions/workflows/ci-tests.yml/badge.svg)
+# Subspace CLI
 
 Subspace CLI simplifies the farming process on Subspace Network.
+
+![ci-tests](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml/badge.svg)
+
+![prompt](images/subspace-cli-prompt.png)
+
+
+</div>
+
+---
 
 Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
@@ -24,7 +31,9 @@ Instead of running a terminal instance for the farmer, and running another termi
 
 In some instances, you may want to move the farming process to the background. Tools like [`screen`](https://www.gnu.org/software/screen/manual/screen.html) and [`tmux`](https://github.com/tmux/tmux) can help manage this.
 
-For example, with `tmux`,
+![Alt text](images/culture.jpeg)
+
+### Example with `tmux`
 
 ```sh
 $ tmux -S farming
@@ -38,7 +47,7 @@ Once the tmux session is created, you can go ahead and run the farming process.
 $ subspace-cli farm
 ```
 
-Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://researchit.las.iastate.edu/guides/pronto/interactive_computing/tmux/#:~:text=To%20detach%20(meaning%20exit%20the,will%20continue%20going%20without%20you.)
+Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
 
 That's it, you should be back to your terminal, with *subspace farming* running in the background as a session.
 
@@ -46,4 +55,37 @@ To re-attach to your session, use tmux:
 
 ```sh
 $ tmux -S farming attach
+```
+
+If you ever want to delete/kill your farming session, enter the command:
+
+```sh
+tmux kill-session -t farming
+```
+
+### Example with `screen`
+
+
+```sh
+screen -S farming
+```
+
+This will create a new `screen` session.
+
+```sh
+subspace-cli farm
+```
+
+Once it's running, you can detach the process by pressing `CTRL+d a`.
+
+To re-attach it to your current session:
+
+```sh
+screen -r farming
+```
+
+If you ever want to delete/kill your farming session, enter the command:
+
+```sh
+screen -S farming -X quit
 ```
