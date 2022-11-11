@@ -1,11 +1,17 @@
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+
 use color_eyre::eyre::{Report, Result};
+
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
-use subspace_sdk::Farmer;
-use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
 use tracing::instrument;
 
+use subspace_sdk::Farmer;
+use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
+
 use crate::config::parse_config;
+use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
 #[derive(Debug)]
@@ -24,13 +30,19 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
     let args = prepare_farming().await?;
     println!("Node started successfully!");
 
+    create_summary_file().await?;
+
     println!("Starting farmer ...");
     let (farmer, _node) = start_farming(args).await?;
     println!("Farmer started successfully!");
 
     if !is_verbose {
+        let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
         let farmer_clone = farmer.clone();
+        let finished_flag = is_initial_progress_finished.clone();
+
+        // initial plotting progress subscriber
         tokio::spawn(async move {
             for (plot_id, plot) in farmer_clone.iter_plots().await.enumerate() {
                 println!(
@@ -57,17 +69,33 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
                     .progress_chars("=> "),
                 );
                 progress_bar.finish_with_message("Initial plotting finished!");
+                finished_flag.store(true, Ordering::Relaxed);
+                update_summary(Some(true), None)
+                    .await
+                    .expect("couldn't update summary");
             }
         });
 
+        // solution subscriber
         tokio::spawn({
             let farmer_clone = farmer.clone();
+
+            let farmed_blocks = get_farmed_block_count()
+                .await
+                .expect("couldn't read farmed blocks count from summary");
+            let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
             async move {
                 for plot in farmer_clone.iter_plots().await {
                     plot.subscribe_new_solutions()
                         .await
-                        .for_each(|_solution| async move {
-                            println!("Farmed a new block!");
+                        .for_each(|_solution| async {
+                            let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
+                            update_summary(None, Some(total_farmed))
+                                .await
+                                .expect("couldn't update summary");
+                            if is_initial_progress_finished.load(Ordering::Relaxed) {
+                                println!("You have farmed {total_farmed} block(s) in total!");
+                            }
                         })
                         .await
                 }

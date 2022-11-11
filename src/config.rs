@@ -1,16 +1,17 @@
-use bytesize::ByteSize;
-use color_eyre::eyre::{Report, Result};
-use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
-use subspace_sdk::{PlotDescription, PublicKey};
+
+use bytesize::ByteSize;
+use color_eyre::eyre::{Report, Result};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
+use subspace_sdk::{PlotDescription, PublicKey};
+
 #[derive(Deserialize, Serialize)]
-#[allow(dead_code)]
 struct Config {
     farmer: FarmerConfig,
     node: NodeConfig,
@@ -71,7 +72,7 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
         .expect("couldn't get the default config directory!")
         .join("subspace-cli");
 
-    let _ = create_dir(config_path.clone()); // if folder already exists, ignore the error
+    let _ = create_dir(&config_path); // if folder already exists, ignore the error
 
     let file = File::create(config_path.join("settings.toml"))?;
 

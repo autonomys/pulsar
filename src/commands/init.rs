@@ -1,5 +1,6 @@
-use color_eyre::eyre::Result;
 use std::{fs::File, io::Write};
+
+use color_eyre::eyre::Result;
 
 use crate::config::{construct_config, create_config};
 use crate::utils::{
@@ -8,7 +9,6 @@ use crate::utils::{
 };
 
 const DEFAULT_PLOT_SIZE: &str = "100GB";
-const DEFAULT_NODE_NAME: &str = "NODE_NAME";
 const DEFAULT_CHAIN: &str = "gemini-2a";
 
 pub(crate) fn init() -> Result<()> {
@@ -41,9 +41,10 @@ fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
         "Reward address is using an invalid format. Please enter a valid address.",
     )?;
 
+    let default_node_name = whoami::username();
     let node_name = get_user_input(
-        &format!("Enter your node name to be identified on the network(defaults to `{}`, press enter to use the default): ", DEFAULT_NODE_NAME),
-        Some(DEFAULT_NODE_NAME),
+        &format!("Enter your node name to be identified on the network(defaults to `{}`, press enter to use the default): ", default_node_name),
+        Some(&default_node_name),
         is_valid_node_name,
         "Node name cannot include non-ascii characters! Please enter a valid node name.")?;
 

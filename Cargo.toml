@@ -10,6 +10,8 @@ bytesize-serde = "0.2.0"
 clap = { version = "4.0.18", features = ["derive"] }
 color-eyre = "0.6.2"
 dirs = "4.0.0"
+futures = "0.3.25"
+indicatif = "0.17.1"
 serde = "1.0.147"
 serde_derive = "1.0.147"
 thiserror = "1.0.35"
@@ -20,8 +22,7 @@ tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.4"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
-indicatif = "0.17.1"
-futures = "0.3.25"
+whoami = "1.2.3"
 
 subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ac669aee4c5d89514599c063a0fca033ad247c18" }
 
