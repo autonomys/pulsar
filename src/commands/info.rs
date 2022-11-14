@@ -1,15 +1,25 @@
 use color_eyre::{Report, Result};
 use single_instance::SingleInstance;
 
-use crate::summary::{get_farmed_block_count, get_initial_plotting_progress};
+use crate::commands::farm::SINGLE_INSTANCE;
+use crate::summary::{
+    get_farmed_block_count, get_initial_plotting_progress, get_user_space_pledged,
+};
 
 pub(crate) async fn info() -> Result<()> {
-    let instance = SingleInstance::new("subspaceFarmer").map_err(Report::msg)?;
+    let instance = SingleInstance::new(SINGLE_INSTANCE).map_err(Report::msg)?;
     if !instance.is_single() {
         println!("A farmer instance is active!");
     } else {
         println!("There is no active farmer instance...");
     }
+
+    println!(
+        "You have pledged to the network: {}",
+        get_user_space_pledged().await.map_err(|_| Report::msg(
+            "Couldn't read the summary file, are you sure you ran the farm command?"
+        ))?
+    );
 
     println!(
         "Total farmed blocks: {}",

@@ -25,12 +25,11 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1.2.3"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ac669aee4c5d89514599c063a0fca033ad247c18" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "301f58af6015910eb6075a715b453e5c43525a81" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
 chacha20poly1305 = { git = "https://github.com/RustCrypto/AEADs", rev = "06dbfb5571687fd1bbe9d3c9b2193a1ba17f8e99" }
-libp2p = { git = "https://github.com/subspace/rust-libp2p", branch = "subspace-v3" }
 
 # TODO: remove once tracing-appender has a new release
 tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }

@@ -41,9 +41,6 @@ struct NodeConfig {
 
 #[derive(Deserialize, Serialize)]
 struct ChainConfig {
-    gemini_1: String,
-    gemini_2: String,
-    leo_3: String,
     dev: String,
 }
 
@@ -106,9 +103,6 @@ pub(crate) fn construct_config(
             unsafe_ws_external: true, // not sure we need this
         },
         chains: ChainConfig {
-            gemini_1: "rpc://1212312".to_owned(),
-            gemini_2: "rpc://".to_owned(),
-            leo_3: "myown_network".to_owned(),
             dev: "that local node experience".to_owned(),
         },
     };

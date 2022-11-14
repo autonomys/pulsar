@@ -5,6 +5,7 @@
 /// when initial plotting is finished.
 use std::path::PathBuf;
 
+use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
 use serde::{Deserialize, Serialize};
 use tokio::{
@@ -17,10 +18,12 @@ use tracing::instrument;
 struct FarmerSummary {
     initial_plotting_finished: bool,
     farmed_block_count: u64,
+    #[serde(with = "bytesize_serde")]
+    user_space_pledged: ByteSize,
 }
 
 #[instrument]
-pub(crate) async fn create_summary_file() -> Result<()> {
+pub(crate) async fn create_summary_file(user_space_pledged: ByteSize) -> Result<()> {
     let summary_path = summary_path();
     let summary_dir = dirs::data_local_dir()
         .expect("couldn't get the default local data directory!")
@@ -35,6 +38,7 @@ pub(crate) async fn create_summary_file() -> Result<()> {
         let initialization = FarmerSummary {
             initial_plotting_finished: false,
             farmed_block_count: 0,
+            user_space_pledged,
         };
         let summary = toml::to_string(&initialization).map_err(Report::msg)?;
         OpenOptions::new()
@@ -74,6 +78,11 @@ pub(crate) async fn update_summary(
         .await?;
 
     Ok(())
+}
+
+pub(crate) async fn get_user_space_pledged() -> Result<ByteSize> {
+    let summary = parse_summary(&summary_path()).await?;
+    Ok(summary.user_space_pledged)
 }
 
 pub(crate) async fn get_farmed_block_count() -> Result<u64> {

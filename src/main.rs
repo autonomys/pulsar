@@ -50,7 +50,8 @@ async fn main() -> Result<(), Report> {
             init().suggestion(support_message())?;
         }
         Commands::Farm { verbose } => {
-            farm(verbose).await.suggestion(support_message())?;
+            let (_farmer, _instance) = farm(verbose).await.suggestion(support_message())?;
+
             // TODO: replace this with `farm.sync()` when it's ready on the SDK side
             loop {
                 tokio::time::sleep(std::time::Duration::from_secs(10)).await;
