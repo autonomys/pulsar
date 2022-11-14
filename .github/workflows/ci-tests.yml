@@ -3,9 +3,6 @@ on:
   push:
     paths-ignore:
       - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
 
 env:
   # Not needed in CI, should make things a bit faster
@@ -30,10 +27,13 @@ jobs:
       - name: install Rust nightly
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2022-08-12
+          toolchain: nightly-2022-11-09
           target: wasm32-unknown-unknown
           override: true
           components: rustfmt, clippy
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
 
       - name: fmt
         uses: actions-rs/cargo@v1

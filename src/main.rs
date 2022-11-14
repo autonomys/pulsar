@@ -6,7 +6,8 @@ mod utils;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
 use color_eyre::Help;
-use commands::{farm::farm, init::init, wipe::wipe};
+use commands::{farm::farm, info::info, init::init, wipe::wipe};
+use tokio::signal;
 use tracing::instrument;
 
 use crate::utils::support_message;
@@ -23,6 +24,10 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    #[command(
+        about = "displays info about the farmer instance (i.e. total amount of rewards, and status of initial plotting)"
+    )]
+    Info,
     #[command(about = "initializes the config file required for the farming")]
     Init,
     #[command(about = "starting the farming process (along with node in the background)")]
@@ -39,15 +44,18 @@ enum Commands {
 async fn main() -> Result<(), Report> {
     let args = Cli::parse();
     match args.command {
+        Commands::Info => {
+            info().await?;
+        }
         Commands::Init => {
             init().suggestion(support_message())?;
         }
         Commands::Farm { verbose } => {
-            farm(verbose).await.suggestion(support_message())?;
-            // TODO: replace this with `farm.sync()` when it's ready on the SDK side
-            loop {
-                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            }
+            let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
+
+            signal::ctrl_c().await?;
+            farmer.close().await;
+            node.close().await;
         }
         Commands::Wipe => {
             wipe().await?;

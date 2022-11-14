@@ -2,9 +2,9 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use color_eyre::eyre::{Report, Result};
-
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
+use single_instance::SingleInstance;
 use tracing::instrument;
 
 use subspace_sdk::Farmer;
@@ -14,6 +14,8 @@ use crate::config::parse_config;
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
+pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
+
 #[derive(Debug)]
 pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
@@ -22,18 +24,27 @@ pub(crate) struct FarmingArgs {
 }
 
 #[instrument]
-pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
+pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
     install_tracing(is_verbose);
     color_eyre::install()?;
+
+    // TODO: this can be configured for chain in the future
+    let instance = SingleInstance::new(SINGLE_INSTANCE)
+        .map_err(|_| Report::msg("Cannot take the instance lock from the OS! Aborting..."))?;
+    if !instance.is_single() {
+        return Err(Report::msg(
+            "It seems like there is already a farming instance running. Aborting...",
+        ));
+    }
 
     println!("Starting node ... (this might take up to couple of minutes)");
     let args = prepare_farming().await?;
     println!("Node started successfully!");
 
-    create_summary_file().await?;
+    create_summary_file(args.plot.space_pledged).await?;
 
     println!("Starting farmer ...");
-    let (farmer, _node) = start_farming(args).await?;
+    let (farmer, node) = start_farming(args).await?;
     println!("Farmer started successfully!");
 
     if !is_verbose {
@@ -103,7 +114,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<()> {
         });
     }
 
-    Ok(())
+    Ok((farmer, node, instance))
 }
 
 #[instrument]
@@ -128,7 +139,6 @@ async fn prepare_farming() -> Result<FarmingArgs> {
 
     let node_name = config_args.node_config_args.name;
     let chain = match config_args.node_config_args.chain.as_str() {
-        "gemini-2a" => chain_spec::gemini_2a().unwrap(),
         "dev" => chain_spec::dev_config().unwrap(),
         _ => unreachable!("there are no other valid chain-specs at the moment"),
     };
