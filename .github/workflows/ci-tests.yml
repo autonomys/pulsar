@@ -3,9 +3,6 @@ on:
   push:
     paths-ignore:
       - "**.md"
-  pull_request:
-    paths-ignore:
-      - "**.md"
 
 env:
   # Not needed in CI, should make things a bit faster

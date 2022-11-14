@@ -14,7 +14,7 @@ use crate::config::parse_config;
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
-pub(crate) const SINGLE_INSTANCE: &str = "subspaceFarmer";
+pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
 
 #[derive(Debug)]
 pub(crate) struct FarmingArgs {
@@ -24,7 +24,7 @@ pub(crate) struct FarmingArgs {
 }
 
 #[instrument]
-pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, SingleInstance)> {
+pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
     install_tracing(is_verbose);
     color_eyre::install()?;
 
@@ -44,7 +44,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, SingleInstance)> {
     create_summary_file(args.plot.space_pledged).await?;
 
     println!("Starting farmer ...");
-    let (farmer, _node) = start_farming(args).await?;
+    let (farmer, node) = start_farming(args).await?;
     println!("Farmer started successfully!");
 
     if !is_verbose {
@@ -114,7 +114,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, SingleInstance)> {
         });
     }
 
-    Ok((farmer, instance))
+    Ok((farmer, node, instance))
 }
 
 #[instrument]

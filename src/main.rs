@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
 use color_eyre::Help;
 use commands::{farm::farm, info::info, init::init, wipe::wipe};
+use tokio::signal;
 use tracing::instrument;
 
 use crate::utils::support_message;
@@ -50,12 +51,11 @@ async fn main() -> Result<(), Report> {
             init().suggestion(support_message())?;
         }
         Commands::Farm { verbose } => {
-            let (_farmer, _instance) = farm(verbose).await.suggestion(support_message())?;
+            let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
 
-            // TODO: replace this with `farm.sync()` when it's ready on the SDK side
-            loop {
-                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            }
+            signal::ctrl_c().await?;
+            farmer.close().await;
+            node.close().await;
         }
         Commands::Wipe => {
             wipe().await?;
