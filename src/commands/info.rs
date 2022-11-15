@@ -6,6 +6,9 @@ use crate::summary::{
     get_farmed_block_count, get_initial_plotting_progress, get_user_space_pledged,
 };
 
+/// implementation of the `init` command. 
+///
+/// informs the user about the current farming instance
 pub(crate) async fn info() -> Result<()> {
     let instance = SingleInstance::new(SINGLE_INSTANCE).map_err(Report::msg)?;
     if !instance.is_single() {
