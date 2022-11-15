@@ -43,7 +43,7 @@ pub(crate) fn print_version() {
 ///
 /// [`default_value`]: will be used if user does not provide any input
 ///
-/// [`condition`]: will be checked against for the user input, 
+/// [`condition`]: will be checked against for the user input,
 /// the user will be repeatedly prompted to provide a valid input
 ///
 /// [`error_msg`]: will be displayed if user enters an input which does not satisfy the [`condition`]
@@ -112,7 +112,7 @@ pub(crate) fn node_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("node")
 }
 
-/// returns OS specific log directory 
+/// returns OS specific log directory
 fn custom_log_dir() -> PathBuf {
     let id = "subspace-cli";
 

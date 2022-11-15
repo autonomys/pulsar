@@ -148,7 +148,7 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
 ///
 /// parses the config and gets the necessary information for both node and farmer
 /// then starts a node instance
-/// and returns a [`FarmingArgs`] 
+/// and returns a [`FarmingArgs`]
 #[instrument]
 async fn prepare_farming() -> Result<FarmingArgs> {
     let config_args = parse_config()?;

@@ -1,4 +1,4 @@
-//! CLI application for farming 
+//! CLI application for farming
 //! brings `farmer` and `node` together
 
 #![deny(missing_docs)]
