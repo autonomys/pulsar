@@ -5,12 +5,13 @@ use color_eyre::eyre::{Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
+use subspace_sdk::node::{BlocksPruning, Constraints, PruningMode, RpcMethods};
 use tracing::instrument;
 
 use subspace_sdk::Farmer;
 use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
 
-use crate::config::parse_config;
+use crate::config::{parse_config, NodeConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
@@ -135,31 +136,60 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
 
 #[instrument]
 async fn prepare_farming() -> Result<FarmingArgs> {
-    let config_args = parse_config()?;
+    let config = parse_config()?;
 
-    let node_name = config_args.node_config_args.name;
-    let chain = match config_args.node_config_args.chain.as_str() {
+    let node_config = config.node;
+    let NodeConfig {
+        chain,
+        execution: _,
+        blocks_pruning,
+        state_pruning,
+        validator,
+        name,
+        port,
+        unsafe_ws_external,
+    } = node_config;
+
+    let chain = match chain.as_str() {
         "dev" => chain_spec::dev_config().unwrap(),
         _ => unreachable!("there are no other valid chain-specs at the moment"),
     };
-    let is_validator = config_args.node_config_args.validator;
-    let role = match is_validator {
+    let role = match validator {
         true => subspace_sdk::node::Role::Authority,
         false => subspace_sdk::node::Role::Full,
     };
+    let rpc_method = match unsafe_ws_external {
+        true => RpcMethods::Unsafe,
+        false => RpcMethods::Auto,
+    };
+    let state_pruning = Some(PruningMode::Constrained(Constraints {
+        max_blocks: Some(state_pruning),
+        max_mem: None,
+    }));
+    let blocks_pruning = BlocksPruning::Some(blocks_pruning);
+    let listen_on = vec![port
+        .parse()
+        .map_err(|_| Report::msg("port in the config file is incorrect"))?];
     let node_directory = node_directory_getter();
 
     let node: Node = Node::builder()
-        .name(node_name)
-        .force_authoring(is_validator)
+        .name(name)
+        .listen_on(listen_on)
+        .state_pruning(state_pruning)
+        .blocks_pruning(blocks_pruning)
+        .force_authoring(validator)
         .role(role)
+        .rpc_methods(rpc_method)
         .build(node_directory, chain)
         .await
         .expect("error building the node");
 
     Ok(FarmingArgs {
-        reward_address: config_args.farmer_config_args.reward_address,
-        plot: config_args.farmer_config_args.plot,
+        reward_address: config.farmer.address,
+        plot: PlotDescription {
+            directory: config.farmer.plot_directory,
+            space_pledged: config.farmer.plot_size,
+        },
         node,
     })
 }

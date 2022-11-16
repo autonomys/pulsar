@@ -9,55 +9,39 @@ use color_eyre::eyre::{Report, Result};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use subspace_sdk::{PlotDescription, PublicKey};
+use subspace_sdk::PublicKey;
 
 #[derive(Deserialize, Serialize)]
-struct Config {
-    farmer: FarmerConfig,
-    node: NodeConfig,
-    chains: ChainConfig,
+pub(crate) struct Config {
+    pub(crate) farmer: FarmerConfig,
+    pub(crate) node: NodeConfig,
+    pub(crate) chains: ChainConfig,
 }
 
 #[derive(Deserialize, Serialize)]
-struct FarmerConfig {
-    address: PublicKey,
-    plot_directory: PathBuf,
+pub(crate) struct FarmerConfig {
+    pub(crate) address: PublicKey,
+    pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
-    plot_size: ByteSize,
-    opencl: bool,
+    pub(crate) plot_size: ByteSize,
+    pub(crate) opencl: bool,
 }
 
 #[derive(Deserialize, Serialize)]
-struct NodeConfig {
-    chain: String,
-    execution: String,
-    blocks_pruning: usize,
-    state_pruning: usize,
-    validator: bool,
-    name: String,
-    port: usize,
-    unsafe_ws_external: bool,
-}
-
-#[derive(Deserialize, Serialize)]
-struct ChainConfig {
-    dev: String,
-}
-
-pub(crate) struct ConfigArgs {
-    pub(crate) farmer_config_args: FarmingConfigArgs,
-    pub(crate) node_config_args: NodeConfigArgs,
-}
-
-pub(crate) struct FarmingConfigArgs {
-    pub(crate) reward_address: PublicKey,
-    pub(crate) plot: PlotDescription,
-}
-
-pub(crate) struct NodeConfigArgs {
-    pub(crate) name: String,
+pub(crate) struct NodeConfig {
     pub(crate) chain: String,
+    pub(crate) execution: String,
+    pub(crate) blocks_pruning: u32,
+    pub(crate) state_pruning: u32,
     pub(crate) validator: bool,
+    pub(crate) name: String,
+    pub(crate) port: String,
+    pub(crate) unsafe_ws_external: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub(crate) struct ChainConfig {
+    pub(crate) dev: String,
 }
 
 /// Creates a config file at the location
@@ -99,7 +83,7 @@ pub(crate) fn construct_config(
             state_pruning: 1024,
             validator: true,
             name: node_name.to_owned(),
-            port: 30333,
+            port: "".to_owned(),
             unsafe_ws_external: true, // not sure we need this
         },
         chains: ChainConfig {
@@ -111,24 +95,11 @@ pub(crate) fn construct_config(
 }
 
 #[instrument]
-pub(crate) fn parse_config() -> Result<ConfigArgs> {
+pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
 
-    Ok(ConfigArgs {
-        farmer_config_args: FarmingConfigArgs {
-            reward_address: config.farmer.address,
-            plot: PlotDescription {
-                directory: config.farmer.plot_directory,
-                space_pledged: config.farmer.plot_size,
-            },
-        },
-        node_config_args: NodeConfigArgs {
-            name: config.node.name,
-            chain: config.node.chain,
-            validator: config.node.validator,
-        },
-    })
+    Ok(config)
 }
