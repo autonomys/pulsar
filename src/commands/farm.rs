@@ -27,7 +27,7 @@ pub(crate) struct FarmingArgs {
 
 /// implementation of the `farm` command
 ///
-/// takes [`is_verbose`], returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
+/// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
 ///
 /// first, checks for an existing farmer instance
 /// then prepares the necessary arguments for the farming [`FarmingArgs`]

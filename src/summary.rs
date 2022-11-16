@@ -58,8 +58,8 @@ pub(crate) async fn create_summary_file(user_space_pledged: ByteSize) -> Result<
 /// updates the summary file
 ///
 /// this function will be called by the farmer when
-/// the status of the [`plotting_finished`]
-/// or value of [`farmed_block_count`] changes
+/// the status of the `plotting_finished`
+/// or value of `farmed_block_count` changes
 #[instrument]
 pub(crate) async fn update_summary(
     plotting_finished: Option<bool>,

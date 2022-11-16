@@ -41,12 +41,12 @@ pub(crate) fn print_version() {
 
 /// gets the input from the user for a given `prompt`
 ///
-/// [`default_value`]: will be used if user does not provide any input
+/// `default_value`: will be used if user does not provide any input
 ///
-/// [`condition`]: will be checked against for the user input,
+/// `condition`: will be checked against for the user input,
 /// the user will be repeatedly prompted to provide a valid input
 ///
-/// [`error_msg`]: will be displayed if user enters an input which does not satisfy the [`condition`]
+/// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
 pub(crate) fn get_user_input(
     prompt: &str,
     default_value: Option<&str>,
