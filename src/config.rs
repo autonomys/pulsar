@@ -11,6 +11,7 @@ use tracing::instrument;
 
 use subspace_sdk::{PlotDescription, PublicKey};
 
+/// structure of the config toml file
 #[derive(Deserialize, Serialize)]
 struct Config {
     farmer: FarmerConfig,
@@ -18,6 +19,7 @@ struct Config {
     chains: ChainConfig,
 }
 
+/// structure for the `farmer` field of the config toml file
 #[derive(Deserialize, Serialize)]
 struct FarmerConfig {
     address: PublicKey,
@@ -27,6 +29,7 @@ struct FarmerConfig {
     opencl: bool,
 }
 
+/// structure for the `node` field of the config toml file
 #[derive(Deserialize, Serialize)]
 struct NodeConfig {
     chain: String,
@@ -39,21 +42,28 @@ struct NodeConfig {
     unsafe_ws_external: bool,
 }
 
+/// structure for the `chain` field of the config toml file
 #[derive(Deserialize, Serialize)]
 struct ChainConfig {
     dev: String,
 }
 
+/// struct to be returned from the [`parse_config`]
+///
+/// when we need all the fields of the config toml file,
+/// this may become unnecessary
 pub(crate) struct ConfigArgs {
     pub(crate) farmer_config_args: FarmingConfigArgs,
     pub(crate) node_config_args: NodeConfigArgs,
 }
 
+/// inner struct of the [`ConfigArgs`]
 pub(crate) struct FarmingConfigArgs {
     pub(crate) reward_address: PublicKey,
     pub(crate) plot: PlotDescription,
 }
 
+/// inner struct of the [`ConfigArgs`]
 pub(crate) struct NodeConfigArgs {
     pub(crate) name: String,
     pub(crate) chain: String,
@@ -76,6 +86,10 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
+/// constructs the config toml file
+///
+/// some of the values are initialized with their default values
+/// these may be configurable in the future
 pub(crate) fn construct_config(
     reward_address: &str,
     plot_location: &str,
@@ -110,6 +124,7 @@ pub(crate) fn construct_config(
     toml::to_string(&config).map_err(Report::msg)
 }
 
+/// parses the config, and returns [`ConfigArgs`]
 #[instrument]
 pub(crate) fn parse_config() -> Result<ConfigArgs> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
