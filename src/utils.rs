@@ -15,8 +15,10 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 use subspace_sdk::PublicKey;
 
+/// for how long a log file should be valid
 const KEEP_LAST_N_DAYS: usize = 7;
 
+/// <3
 pub(crate) fn print_ascii_art() {
     println!("
  ____             __                                              __  __          __                               __
@@ -31,11 +33,20 @@ pub(crate) fn print_ascii_art() {
 ");
 }
 
+/// prints the version of the crate
 pub(crate) fn print_version() {
     let version: &str = env!("CARGO_PKG_VERSION");
     println!("version: {version}");
 }
 
+/// gets the input from the user for a given `prompt`
+///
+/// `default_value`: will be used if user does not provide any input
+///
+/// `condition`: will be checked against for the user input,
+/// the user will be repeatedly prompted to provide a valid input
+///
+/// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
 pub(crate) fn get_user_input(
     prompt: &str,
     default_value: Option<&str>,
@@ -64,36 +75,44 @@ pub(crate) fn get_user_input(
     Ok(user_input)
 }
 
+/// node name should be ascii, and should begin/end with whitespace
 pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
     node_name.is_ascii() && !node_name.trim().is_empty()
 }
 
+/// check for a valid SS58 address
 pub(crate) fn is_valid_address(address: &str) -> bool {
     PublicKey::from_str(address).is_ok()
 }
 
+/// the provided path should be an existing directory
 pub(crate) fn is_valid_location(location: &str) -> bool {
     Path::new(location).is_dir()
 }
 
+/// utilize `ByteSize` crate for the validation
 pub(crate) fn is_valid_size(size: &str) -> bool {
     size.parse::<ByteSize>().is_ok()
 }
 
+/// user can only specify a valid chain
 pub(crate) fn is_valid_chain(chain: &str) -> bool {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["gemini-2a", "dev"];
+    let chain_list = vec!["dev"];
     chain_list.contains(&chain)
 }
 
+/// generates a plot path from the given path
 pub(crate) fn plot_location_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("plots")
 }
 
+/// generates a node path from the given path
 pub(crate) fn node_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("node")
 }
 
+/// returns OS specific log directory
 fn custom_log_dir() -> PathBuf {
     let id = "subspace-cli";
 
@@ -112,6 +131,7 @@ fn custom_log_dir() -> PathBuf {
     path.expect("Could not resolve custom log directory path!")
 }
 
+/// in case of any error, display this message
 pub(crate) fn support_message() -> String {
     format!(
         "This is a bug, please submit it to our forums: {}",
@@ -121,6 +141,7 @@ pub(crate) fn support_message() -> String {
     )
 }
 
+/// install a logger for the application
 pub(crate) fn install_tracing(is_verbose: bool) {
     let log_dir = custom_log_dir();
     let _ = create_dir_all(&log_dir);

@@ -14,6 +14,7 @@ use tokio::{
 };
 use tracing::instrument;
 
+/// Struct for holding the information of what to be displayed with the `info` command
 #[derive(Deserialize, Serialize, Debug)]
 struct FarmerSummary {
     initial_plotting_finished: bool,
@@ -22,6 +23,7 @@ struct FarmerSummary {
     user_space_pledged: ByteSize,
 }
 
+/// utilizing persistent storage for the information to be displayed for the `info` command
 #[instrument]
 pub(crate) async fn create_summary_file(user_space_pledged: ByteSize) -> Result<()> {
     let summary_path = summary_path();
@@ -53,6 +55,11 @@ pub(crate) async fn create_summary_file(user_space_pledged: ByteSize) -> Result<
     Ok(())
 }
 
+/// updates the summary file
+///
+/// this function will be called by the farmer when
+/// the status of the `plotting_finished`
+/// or value of `farmed_block_count` changes
 #[instrument]
 pub(crate) async fn update_summary(
     plotting_finished: Option<bool>,
@@ -80,27 +87,32 @@ pub(crate) async fn update_summary(
     Ok(())
 }
 
+/// retrives how much space has user pledged to the network from the summary file
 pub(crate) async fn get_user_space_pledged() -> Result<ByteSize> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.user_space_pledged)
 }
 
+/// retrieves how many blocks have been farmed, from the summary file
 pub(crate) async fn get_farmed_block_count() -> Result<u64> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.farmed_block_count)
 }
 
+/// retrieves the status of the initial plotting, from the summary file
 pub(crate) async fn get_initial_plotting_progress() -> Result<bool> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.initial_plotting_finished)
 }
 
+/// parses the summary file and returns [`FarmerSummary`]
 #[instrument]
 async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
     let summary: FarmerSummary = toml::from_str(&read_to_string(path).await?)?;
     Ok(summary)
 }
 
+/// returns the path for the summary file
 #[instrument]
 fn summary_path() -> PathBuf {
     let summary_path =
