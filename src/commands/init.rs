@@ -9,7 +9,7 @@ use crate::utils::{
 };
 
 const DEFAULT_PLOT_SIZE: &str = "100GB";
-const DEFAULT_CHAIN: &str = "gemini-2a";
+const DEFAULT_CHAIN: &str = "dev";
 
 pub(crate) fn init() -> Result<()> {
     let (config, config_path) = create_config()?;
