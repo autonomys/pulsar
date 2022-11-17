@@ -42,6 +42,7 @@ pub(crate) struct NodeConfig {
     pub(crate) unsafe_ws_external: bool,
 }
 
+/// structure for the `chain` field of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct ChainConfig {
     pub(crate) dev: String,

@@ -87,18 +87,21 @@ pub(crate) async fn update_summary(
     Ok(())
 }
 
+/// retrives how much space has user pledged to the network from the summary file
 #[instrument]
 pub(crate) async fn get_user_space_pledged() -> Result<ByteSize> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.user_space_pledged)
 }
 
+/// retrieves how many blocks have been farmed, from the summary file
 #[instrument]
 pub(crate) async fn get_farmed_block_count() -> Result<u64> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.farmed_block_count)
 }
 
+/// retrieves the status of the initial plotting, from the summary file
 #[instrument]
 pub(crate) async fn get_initial_plotting_progress() -> Result<bool> {
     let summary = parse_summary(&summary_path()).await?;
@@ -112,12 +115,13 @@ async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
     Ok(summary)
 }
 
-/// returns the path for the summary file
+/// deletes the summary file
 #[instrument]
 pub(crate) async fn delete_summary() {
     let _ = remove_file(summary_path()).await;
 }
 
+/// returns the path for the summary file
 #[instrument]
 fn summary_path() -> PathBuf {
     let summary_path =
