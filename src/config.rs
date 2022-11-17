@@ -6,68 +6,51 @@ use std::{
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
+use libp2p_core::Multiaddr;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use subspace_sdk::{PlotDescription, PublicKey};
+use subspace_sdk::{
+    node::{Role, RpcMethods},
+    PublicKey,
+};
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
-struct Config {
-    farmer: FarmerConfig,
-    node: NodeConfig,
-    chains: ChainConfig,
+pub(crate) struct Config {
+    pub(crate) farmer: FarmerConfig,
+    pub(crate) node: NodeConfig,
+    pub(crate) chains: ChainConfig,
 }
 
 /// structure for the `farmer` field of the config toml file
 #[derive(Deserialize, Serialize)]
-struct FarmerConfig {
-    address: PublicKey,
-    plot_directory: PathBuf,
+pub(crate) struct FarmerConfig {
+    pub(crate) address: PublicKey,
+    pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
-    plot_size: ByteSize,
-    opencl: bool,
+    pub(crate) plot_size: ByteSize,
+    pub(crate) opencl: bool,
 }
 
 /// structure for the `node` field of the config toml file
 #[derive(Deserialize, Serialize)]
-struct NodeConfig {
-    chain: String,
-    execution: String,
-    blocks_pruning: usize,
-    state_pruning: usize,
-    validator: bool,
-    name: String,
-    port: usize,
-    unsafe_ws_external: bool,
+pub(crate) struct NodeConfig {
+    pub(crate) chain: String,
+    pub(crate) execution: String,
+    pub(crate) blocks_pruning: u32,
+    pub(crate) state_pruning: u32,
+    pub(crate) role: Role,
+    pub(crate) name: String,
+    pub(crate) listen_addresses: Vec<Multiaddr>,
+    pub(crate) rpc_method: RpcMethods,
+    pub(crate) force_authoring: bool,
 }
 
 /// structure for the `chain` field of the config toml file
 #[derive(Deserialize, Serialize)]
-struct ChainConfig {
-    dev: String,
-}
-
-/// struct to be returned from the [`parse_config`]
-///
-/// when we need all the fields of the config toml file,
-/// this may become unnecessary
-pub(crate) struct ConfigArgs {
-    pub(crate) farmer_config_args: FarmingConfigArgs,
-    pub(crate) node_config_args: NodeConfigArgs,
-}
-
-/// inner struct of the [`ConfigArgs`]
-pub(crate) struct FarmingConfigArgs {
-    pub(crate) reward_address: PublicKey,
-    pub(crate) plot: PlotDescription,
-}
-
-/// inner struct of the [`ConfigArgs`]
-pub(crate) struct NodeConfigArgs {
-    pub(crate) name: String,
-    pub(crate) chain: String,
-    pub(crate) validator: bool,
+pub(crate) struct ChainConfig {
+    pub(crate) dev: String,
 }
 
 /// Creates a config file at the location
@@ -111,10 +94,11 @@ pub(crate) fn construct_config(
             execution: "wasm".to_owned(),
             blocks_pruning: 1024,
             state_pruning: 1024,
-            validator: true,
+            role: Role::Full,
             name: node_name.to_owned(),
-            port: 30333,
-            unsafe_ws_external: true, // not sure we need this
+            listen_addresses: vec![],
+            rpc_method: RpcMethods::Auto,
+            force_authoring: false,
         },
         chains: ChainConfig {
             dev: "that local node experience".to_owned(),
@@ -126,24 +110,11 @@ pub(crate) fn construct_config(
 
 /// parses the config, and returns [`ConfigArgs`]
 #[instrument]
-pub(crate) fn parse_config() -> Result<ConfigArgs> {
+pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
 
-    Ok(ConfigArgs {
-        farmer_config_args: FarmingConfigArgs {
-            reward_address: config.farmer.address,
-            plot: PlotDescription {
-                directory: config.farmer.plot_directory,
-                space_pledged: config.farmer.plot_size,
-            },
-        },
-        node_config_args: NodeConfigArgs {
-            name: config.node.name,
-            chain: config.node.chain,
-            validator: config.node.validator,
-        },
-    })
+    Ok(config)
 }

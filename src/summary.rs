@@ -9,7 +9,7 @@ use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
 use serde::{Deserialize, Serialize};
 use tokio::{
-    fs::{create_dir_all, read_to_string, File, OpenOptions},
+    fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions},
     io::AsyncWriteExt,
 };
 use tracing::instrument;
@@ -88,18 +88,21 @@ pub(crate) async fn update_summary(
 }
 
 /// retrives how much space has user pledged to the network from the summary file
+#[instrument]
 pub(crate) async fn get_user_space_pledged() -> Result<ByteSize> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.user_space_pledged)
 }
 
 /// retrieves how many blocks have been farmed, from the summary file
+#[instrument]
 pub(crate) async fn get_farmed_block_count() -> Result<u64> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.farmed_block_count)
 }
 
 /// retrieves the status of the initial plotting, from the summary file
+#[instrument]
 pub(crate) async fn get_initial_plotting_progress() -> Result<bool> {
     let summary = parse_summary(&summary_path()).await?;
     Ok(summary.initial_plotting_finished)
@@ -110,6 +113,12 @@ pub(crate) async fn get_initial_plotting_progress() -> Result<bool> {
 async fn parse_summary(path: &PathBuf) -> Result<FarmerSummary> {
     let summary: FarmerSummary = toml::from_str(&read_to_string(path).await?)?;
     Ok(summary)
+}
+
+/// deletes the summary file
+#[instrument]
+pub(crate) async fn delete_summary() {
+    let _ = remove_file(summary_path()).await;
 }
 
 /// returns the path for the summary file

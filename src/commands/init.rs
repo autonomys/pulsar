@@ -10,7 +10,7 @@ use crate::utils::{
 
 /// defaults for the user config file
 const DEFAULT_PLOT_SIZE: &str = "100GB";
-const DEFAULT_CHAIN: &str = "gemini-2a";
+const DEFAULT_CHAIN: &str = "dev";
 
 /// implementation of the `init` command
 ///
