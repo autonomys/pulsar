@@ -71,7 +71,7 @@ fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
         ),
         Some(DEFAULT_PLOT_SIZE),
         is_valid_size,
-        "could not parse the value! Please enter a valid size.",
+        "could not parse the value! Please enter a valid size. The size should also be bigger than 1GB.",
     )?;
 
     let chain = get_user_input(

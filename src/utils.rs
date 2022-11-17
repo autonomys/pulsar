@@ -92,7 +92,10 @@ pub(crate) fn is_valid_location(location: &str) -> bool {
 
 /// utilize `ByteSize` crate for the validation
 pub(crate) fn is_valid_size(size: &str) -> bool {
-    size.parse::<ByteSize>().is_ok()
+    let Ok(size) = size.parse::<ByteSize>() else {
+        return false;
+    };
+    size < "1GB".parse::<ByteSize>().expect("hardcoded value is true")
 }
 
 /// user can only specify a valid chain
@@ -134,7 +137,7 @@ fn custom_log_dir() -> PathBuf {
 /// in case of any error, display this message
 pub(crate) fn support_message() -> String {
     format!(
-        "This is a bug, please submit it to our forums: {}",
+        "If you think this is a bug, please submit it to our forums: {}",
         ansi_term::Style::new()
             .underline()
             .paint("https://forum.subspace.network")
