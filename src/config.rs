@@ -15,6 +15,8 @@ use subspace_sdk::{
     PublicKey,
 };
 
+use crate::utils::{is_valid_chain, is_valid_node_name};
+
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct Config {
@@ -115,6 +117,24 @@ pub(crate) fn parse_config() -> Result<Config> {
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
+
+    // validity checks
+    if config.farmer.plot_size < "1GB".parse::<ByteSize>().expect("hardcoded value is true") {
+        return Err(Report::msg("size should be bigger than 1GB!"));
+    }
+    if !is_valid_chain(&config.node.chain) {
+        return Err(Report::msg("chain is not recognized!"));
+    }
+    if !config.farmer.plot_directory.is_dir() {
+        return Err(Report::msg(
+            "Plot directory could not be found. Please check if that folder exists",
+        ));
+    }
+    if !is_valid_node_name(&config.node.name) {
+        return Err(Report::msg(
+            "Node nome is either empty or includes non-ascii characters",
+        ));
+    }
 
     Ok(config)
 }
