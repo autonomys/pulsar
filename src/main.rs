@@ -1,3 +1,8 @@
+//! CLI application for farming
+//! brings `farmer` and `node` together
+
+#![deny(missing_docs)]
+
 mod commands;
 mod config;
 mod summary;
@@ -22,6 +27,7 @@ struct Cli {
     command: Commands,
 }
 
+/// Available commands for the CLI
 #[derive(Debug, Subcommand)]
 enum Commands {
     #[command(

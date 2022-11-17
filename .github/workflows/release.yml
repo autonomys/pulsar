@@ -1,0 +1,137 @@
+# This action enables building the executables for cli, can be triggered manually or by release creation.
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  executables:
+    strategy:
+      matrix:
+        build:
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            suffix: ubuntu-x86_64-${{ github.ref_name }}
+            rustflags: ""
+          - os: ubuntu-20.04
+            target: aarch64-unknown-linux-gnu
+            suffix: ubuntu-aarch64-${{ github.ref_name }}
+            rustflags: "-C linker=aarch64-linux-gnu-gcc"
+          - os: macos-12
+            target: x86_64-apple-darwin
+            suffix: macos-x86_64-${{ github.ref_name }}
+            rustflags: ""
+          - os: macos-12
+            target: aarch64-apple-darwin
+            suffix: macos-aarch64-${{ github.ref_name }}
+            rustflags: ""
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+            suffix: windows-x86_64-${{ github.ref_name }}
+            rustflags: ""
+
+    runs-on: ${{ matrix.build.os }}
+
+    env:
+      PRODUCTION_TARGET: target/${{ matrix.build.target }}/production
+      RUSTFLAGS: ${{ matrix.build.rustflags }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # @v3.1.0
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # @v1.1.2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
+      - name: Remove msys64
+        run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
+        if: runner.os == 'Windows'
+
+      - name: AArch64 cross-compile packages
+        run: sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+        if: matrix.build.target == 'aarch64-unknown-linux-gnu'
+
+      - name: Build the executable
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        with:
+          command: build
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin subspace-cli
+
+      - name: Sign Application (macOS)
+        run: |
+          echo "Importing certificate"
+          echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
+          security create-keychain -p "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
+          echo "Signing farmer"
+          codesign --force --options=runtime --entitlements .github/workflows/Entitlements.plist -s "${{ secrets.MACOS_IDENTITY }}" --timestamp ${{ env.PRODUCTION_TARGET }}/subspace-cli
+          echo "Creating an archive"
+          mkdir ${{ env.PRODUCTION_TARGET }}/macos-binaries
+          cp ${{ env.PRODUCTION_TARGET }}/subspace-cli ${{ env.PRODUCTION_TARGET }}/macos-binaries
+          ditto -c -k --rsrc ${{ env.PRODUCTION_TARGET }}/macos-binaries subspace-binaries.zip
+          echo "Notarizing"
+          xcrun altool --notarize-app --primary-bundle-id binaries-${{ github.ref_name }} --username "${{ secrets.MACOS_APPLE_ID}}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --file subspace-binaries.zip
+          # TODO: Wait for notarization before stapling
+          # echo "Stapling farmer"
+          # xcrun stapler staple ${{ env.PRODUCTION_TARGET }}/subspace-cli
+          echo "Done!"
+        # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
+        continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
+        if: runner.os == 'macOS'
+
+      - name: Sign Application (Windows)
+        uses: skymatic/code-sign-action@cfcc1c15b32938bab6dea25192045b6d2989e4d0 # @v1.1.0
+        with:
+          certificate: "${{ secrets.WINDOWS_CERTIFICATE }}"
+          password: "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}"
+          certificatesha1: "${{ secrets.WINDOWS_CERTIFICATE_SHA }}"
+          folder: "${{ env.PRODUCTION_TARGET }}"
+        # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
+        continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
+        if: runner.os == 'Windows'
+
+      - name: Prepare executables for uploading (Ubuntu)
+        run: |
+          mkdir executables
+          mv ${{ env.PRODUCTION_TARGET }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+        if: runner.os == 'Linux'
+
+      - name: Prepare executables for uploading (macOS)
+        run: |
+          mkdir executables
+          mv ${{ env.PRODUCTION_TARGET }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+          # Zip it so that signature is not lost
+          ditto -c -k --rsrc executables/subspace-cli-${{ matrix.build.suffix }} executables/subspace-cli-${{ matrix.build.suffix }}.zip
+          rm executables/subspace-cli-${{ matrix.build.suffix }}
+        if: runner.os == 'macOS'
+
+      - name: Prepare executables for uploading (Windows)
+        run: |
+          mkdir executables
+          move ${{ env.PRODUCTION_TARGET }}/subspace-cli.exe executables/subspace-cli-${{ matrix.build.suffix }}.exe
+        if: runner.os == 'Windows'
+
+      - name: Upload executable to artifacts
+        uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb # @v3.1.1
+        with:
+          name: executables-${{ matrix.build.suffix }}
+          path: |
+            executables/*
+          if-no-files-found: error
+
+      - name: Upload executable to assets
+        uses: alexellis/upload-assets@259de5111cb56966d046ced998941e93f91d2c93 # @0.4.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["executables/*"]'
+        if: github.event_name == 'push' && github.ref_type == 'tag'

@@ -8,9 +8,14 @@ use crate::utils::{
     is_valid_size, plot_location_getter, print_ascii_art, print_version,
 };
 
+/// defaults for the user config file
 const DEFAULT_PLOT_SIZE: &str = "100GB";
 const DEFAULT_CHAIN: &str = "dev";
 
+/// implementation of the `init` command
+///
+/// prints a very cool ascii art,
+/// creates a config file from the user inputs
 pub(crate) fn init() -> Result<()> {
     let (config, config_path) = create_config()?;
     print_ascii_art();
@@ -30,6 +35,7 @@ pub(crate) fn init() -> Result<()> {
     Ok(())
 }
 
+/// gets the necessary information from user, and writes them to the given configuration file
 fn fill_config_from_user_inputs(mut config: File) -> Result<()> {
     let default_plot_loc = plot_location_getter();
 

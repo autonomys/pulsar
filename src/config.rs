@@ -11,6 +11,7 @@ use tracing::instrument;
 
 use subspace_sdk::PublicKey;
 
+/// structure of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct Config {
     pub(crate) farmer: FarmerConfig,
@@ -18,6 +19,7 @@ pub(crate) struct Config {
     pub(crate) chains: ChainConfig,
 }
 
+/// structure for the `farmer` field of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct FarmerConfig {
     pub(crate) address: PublicKey,
@@ -27,6 +29,7 @@ pub(crate) struct FarmerConfig {
     pub(crate) opencl: bool,
 }
 
+/// structure for the `node` field of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct NodeConfig {
     pub(crate) chain: String,
@@ -60,6 +63,10 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
+/// constructs the config toml file
+///
+/// some of the values are initialized with their default values
+/// these may be configurable in the future
 pub(crate) fn construct_config(
     reward_address: &str,
     plot_location: &str,
@@ -94,6 +101,7 @@ pub(crate) fn construct_config(
     toml::to_string(&config).map_err(Report::msg)
 }
 
+/// parses the config, and returns [`ConfigArgs`]
 #[instrument]
 pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");

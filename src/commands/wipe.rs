@@ -6,6 +6,9 @@ use crate::config::parse_config;
 use crate::summary::delete_summary;
 use crate::utils::node_directory_getter;
 
+/// implementation of the `wipe` command
+///
+/// wipes both farmer and node files (basically a fresh start)
 pub(crate) async fn wipe() -> Result<()> {
     let config = match parse_config() {
         Ok(args) => args,

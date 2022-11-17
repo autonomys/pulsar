@@ -15,8 +15,10 @@ use crate::config::{parse_config, NodeConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
+/// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
 
+/// necessary information for starting a farming instance
 #[derive(Debug)]
 pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
@@ -24,6 +26,14 @@ pub(crate) struct FarmingArgs {
     plot: PlotDescription,
 }
 
+/// implementation of the `farm` command
+///
+/// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
+///
+/// first, checks for an existing farmer instance
+/// then prepares the necessary arguments for the farming [`FarmingArgs`]
+/// then starts the farming instance,
+/// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
     install_tracing(is_verbose);
@@ -118,6 +128,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     Ok((farmer, node, instance))
 }
 
+/// Starts the farming instance
 #[instrument]
 async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
     let FarmingArgs {
@@ -134,6 +145,11 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
     ))
 }
 
+/// Prepares [`FarmingArgs`]
+///
+/// parses the config and gets the necessary information for both node and farmer
+/// then starts a node instance
+/// and returns a [`FarmingArgs`]
 #[instrument]
 async fn prepare_farming() -> Result<FarmingArgs> {
     let config = parse_config()?;
@@ -194,6 +210,7 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     })
 }
 
+/// nice looking progress bar for the initial plotting :)
 fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
     pb.set_style(
