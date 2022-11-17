@@ -6,10 +6,14 @@ use std::{
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
+use libp2p_core::Multiaddr;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use subspace_sdk::PublicKey;
+use subspace_sdk::{
+    node::{Role, RpcMethods},
+    PublicKey,
+};
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
@@ -36,10 +40,11 @@ pub(crate) struct NodeConfig {
     pub(crate) execution: String,
     pub(crate) blocks_pruning: u32,
     pub(crate) state_pruning: u32,
-    pub(crate) validator: bool,
+    pub(crate) role: Role,
     pub(crate) name: String,
-    pub(crate) port: String,
-    pub(crate) unsafe_ws_external: bool,
+    pub(crate) listen_addresses: Vec<Multiaddr>,
+    pub(crate) rpc_method: RpcMethods,
+    pub(crate) force_authoring: bool,
 }
 
 /// structure for the `chain` field of the config toml file
@@ -89,10 +94,11 @@ pub(crate) fn construct_config(
             execution: "wasm".to_owned(),
             blocks_pruning: 1024,
             state_pruning: 1024,
-            validator: true,
+            role: Role::Full,
             name: node_name.to_owned(),
-            port: "".to_owned(),
-            unsafe_ws_external: true, // not sure we need this
+            listen_addresses: vec![],
+            rpc_method: RpcMethods::Auto,
+            force_authoring: false,
         },
         chains: ChainConfig {
             dev: "that local node experience".to_owned(),

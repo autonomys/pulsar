@@ -5,11 +5,10 @@ use color_eyre::eyre::{Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::{BlocksPruning, Constraints, PruningMode, RpcMethods};
+use subspace_sdk::node::{BlocksPruning, Constraints, PruningMode};
 use tracing::instrument;
 
-use subspace_sdk::Farmer;
-use subspace_sdk::{chain_spec, Node, PlotDescription, PublicKey};
+use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription, PublicKey};
 
 use crate::config::{parse_config, NodeConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
@@ -160,42 +159,32 @@ async fn prepare_farming() -> Result<FarmingArgs> {
         execution: _,
         blocks_pruning,
         state_pruning,
-        validator,
+        role,
         name,
-        port,
-        unsafe_ws_external,
+        listen_addresses,
+        rpc_method,
+        force_authoring,
     } = node_config;
 
     let chain = match chain.as_str() {
         "dev" => chain_spec::dev_config().unwrap(),
         _ => unreachable!("there are no other valid chain-specs at the moment"),
     };
-    let role = match validator {
-        true => subspace_sdk::node::Role::Authority,
-        false => subspace_sdk::node::Role::Full,
-    };
-    let rpc_method = match unsafe_ws_external {
-        true => RpcMethods::Unsafe,
-        false => RpcMethods::Auto,
-    };
     let state_pruning = Some(PruningMode::Constrained(Constraints {
         max_blocks: Some(state_pruning),
         max_mem: None,
     }));
     let blocks_pruning = BlocksPruning::Some(blocks_pruning);
-    let listen_on = vec![port
-        .parse()
-        .map_err(|_| Report::msg("port in the config file is incorrect"))?];
     let node_directory = node_directory_getter();
 
     let node: Node = Node::builder()
         .name(name)
-        .listen_on(listen_on)
+        .listen_on(listen_addresses)
         .state_pruning(state_pruning)
         .blocks_pruning(blocks_pruning)
-        .force_authoring(validator)
-        .role(role)
         .rpc_methods(rpc_method)
+        .force_authoring(force_authoring)
+        .role(role)
         .build(node_directory, chain)
         .await
         .expect("error building the node");
