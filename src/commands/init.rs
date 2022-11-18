@@ -9,7 +9,7 @@ use crate::utils::{
 };
 
 /// defaults for the user config file
-const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
+const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gib(100);
 const DEFAULT_CHAIN: &str = "dev";
 
 /// implementation of the `init` command
@@ -82,7 +82,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ),
         Some(DEFAULT_PLOT_SIZE),
         |s| match s.parse::<bytesize::ByteSize>() {
-            Ok(ok) if ok >= bytesize::ByteSize::gib(1) => Ok(ok),
+            Ok(ok) if ok >= bytesize::ByteSize::gb(1) => Ok(ok),
             Ok(_) => Err(eyre!("Plot size should be more than 1Gib")),
             Err(err) => Err(eyre!("Failed to parse byte size: {err}")),
         },
