@@ -1,10 +1,6 @@
 use std::fs::create_dir_all;
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::path::PathBuf;
 
-use bytesize::ByteSize;
 use color_eyre::eyre::Result;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -12,8 +8,6 @@ use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
-
-use subspace_sdk::PublicKey;
 
 /// for how long a log file should be valid
 const KEEP_LAST_N_DAYS: usize = 7;
@@ -47,55 +41,33 @@ pub(crate) fn print_version() {
 /// the user will be repeatedly prompted to provide a valid input
 ///
 /// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
-pub(crate) fn get_user_input(
+pub(crate) fn get_user_input<F, O, E>(
     prompt: &str,
-    default_value: Option<&str>,
-    condition: fn(input: &str) -> bool,
-    error_msg: &str,
-) -> Result<String> {
-    let user_input = loop {
+    default_value: Option<O>,
+    mut predicate: F,
+) -> Result<O>
+where
+    E: std::fmt::Display,
+    F: FnMut(String) -> Result<O, E>,
+{
+    loop {
         print!("{prompt}");
         std::io::Write::flush(&mut std::io::stdout())?;
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
         let user_input = input.trim().to_string();
 
-        if condition(&user_input) {
-            break user_input;
-        }
-        if let Some(default) = default_value {
-            if user_input.is_empty() {
-                break default.to_string();
-            }
+        // Allow this unwrap cause
+        #[allow(clippy::unnecessary_unwrap)]
+        if default_value.is_some() && user_input.is_empty() {
+            return Ok(default_value.unwrap());
         }
 
-        println!("{error_msg}");
-    };
-
-    Ok(user_input)
-}
-
-/// node name should be ascii, and should begin/end with whitespace
-pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
-    node_name.is_ascii() && !node_name.trim().is_empty()
-}
-
-/// check for a valid SS58 address
-pub(crate) fn is_valid_address(address: &str) -> bool {
-    PublicKey::from_str(address).is_ok()
-}
-
-/// the provided path should be an existing directory
-pub(crate) fn is_valid_location(location: &str) -> bool {
-    Path::new(location).is_dir()
-}
-
-/// utilize `ByteSize` crate for the validation
-pub(crate) fn is_valid_size(size: &str) -> bool {
-    let Ok(size) = size.parse::<ByteSize>() else {
-        return false;
-    };
-    size < "1GB".parse::<ByteSize>().expect("hardcoded value is true")
+        match predicate(user_input) {
+            Ok(o) => return Ok(o),
+            Err(err) => println!("{err}"),
+        }
+    }
 }
 
 /// user can only specify a valid chain
