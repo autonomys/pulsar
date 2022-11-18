@@ -125,11 +125,6 @@ pub(crate) fn parse_config() -> Result<Config> {
     if !is_valid_chain(&config.node.chain) {
         return Err(Report::msg("chain is not recognized!"));
     }
-    if !config.farmer.plot_directory.is_dir() {
-        return Err(Report::msg(
-            "Plot directory could not be found. Please check if that folder exists",
-        ));
-    }
     if !is_valid_node_name(&config.node.name) {
         return Err(Report::msg(
             "Node nome is either empty or includes non-ascii characters",
