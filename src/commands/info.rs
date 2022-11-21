@@ -1,4 +1,4 @@
-use color_eyre::{Report, Result};
+use color_eyre::eyre::{eyre, Report, Result};
 use single_instance::SingleInstance;
 
 use crate::commands::farm::SINGLE_INSTANCE;
@@ -19,20 +19,20 @@ pub(crate) async fn info() -> Result<()> {
 
     println!(
         "You have pledged to the network: {}",
-        get_user_space_pledged().await.map_err(|_| Report::msg(
+        get_user_space_pledged().await.map_err(|_| eyre!(
             "Couldn't read the summary file, are you sure you ran the farm command?"
         ))?
     );
 
     println!(
         "Total farmed blocks: {}",
-        get_farmed_block_count().await.map_err(|_| Report::msg(
+        get_farmed_block_count().await.map_err(|_| eyre!(
             "Couldn't read the summary file, are you sure you ran the farm command?"
         ))?
     );
 
     if get_initial_plotting_progress().await.map_err(|_| {
-        Report::msg("Couldn't read the summary file, are you sure you ran the farm command?")
+        eyre!("Couldn't read the summary file, are you sure you ran the farm command?")
     })? {
         println!("Initial plotting is finished!");
     } else {
