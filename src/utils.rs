@@ -1,11 +1,11 @@
-use std::fs::create_dir_all;
 use std::{
+    fs::create_dir_all,
     path::{Path, PathBuf},
     str::FromStr,
 };
 
 use bytesize::ByteSize;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{eyre, Report, Result};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
@@ -47,62 +47,86 @@ pub(crate) fn print_version() {
 /// the user will be repeatedly prompted to provide a valid input
 ///
 /// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
-pub(crate) fn get_user_input(
+pub(crate) fn get_user_input<F, O, E>(
     prompt: &str,
-    default_value: Option<&str>,
-    condition: fn(input: &str) -> bool,
-    error_msg: &str,
-) -> Result<String> {
-    let user_input = loop {
+    default_value: Option<O>,
+    condition: F,
+) -> Result<O>
+where
+    E: std::fmt::Display,
+    F: Fn(&str) -> Result<O, E>,
+{
+    loop {
         print!("{prompt}");
         std::io::Write::flush(&mut std::io::stdout())?;
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
         let user_input = input.trim().to_string();
 
-        if condition(&user_input) {
-            break user_input;
-        }
-        if let Some(default) = default_value {
-            if user_input.is_empty() {
-                break default.to_string();
-            }
+        // Allow this unwrap cause
+        #[allow(clippy::unnecessary_unwrap)]
+        if default_value.is_some() && user_input.is_empty() {
+            return Ok(default_value.unwrap());
         }
 
-        println!("{error_msg}");
-    };
-
-    Ok(user_input)
+        match condition(&user_input) {
+            Ok(o) => return Ok(o),
+            Err(err) => println!("{err}"),
+        }
+    }
 }
 
 /// node name should be ascii, and should begin/end with whitespace
-pub(crate) fn is_valid_node_name(node_name: &str) -> bool {
-    node_name.is_ascii() && !node_name.trim().is_empty()
+pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
+    if !node_name.trim().is_empty() {
+        Ok(node_name.to_string())
+    } else {
+        Err(eyre!(
+            "Node name cannot include non-ascii characters! Please enter a valid node name."
+        ))
+    }
 }
 
 /// check for a valid SS58 address
-pub(crate) fn is_valid_address(address: &str) -> bool {
-    PublicKey::from_str(address).is_ok()
+pub(crate) fn reward_address_parser(address: &str) -> Result<PublicKey> {
+    PublicKey::from_str(address).map_err(Report::msg)
 }
 
 /// the provided path should be an existing directory
-pub(crate) fn is_valid_location(location: &str) -> bool {
-    Path::new(location).is_dir()
+pub(crate) fn plot_directory_parser(location: &str) -> Result<PathBuf> {
+    let path = Path::new(location).to_owned();
+    if path.is_dir() {
+        Ok(path)
+    } else {
+        Err(eyre!(
+            "supplied directory does not exist! Please enter a valid path."
+        ))
+    }
 }
 
 /// utilize `ByteSize` crate for the validation
-pub(crate) fn is_valid_size(size: &str) -> bool {
+pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
-        return false;
+         return Err(eyre!("could not parse the value!"));
     };
-    size < "1GB".parse::<ByteSize>().expect("hardcoded value is true")
+    if size < ByteSize::gb(1) {
+        Err(eyre!("size could not be smaller than 1GB"))
+    } else {
+        Ok(size)
+    }
 }
 
 /// user can only specify a valid chain
-pub(crate) fn is_valid_chain(chain: &str) -> bool {
+pub(crate) fn chain_parser(chain: &str) -> Result<String> {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
     let chain_list = vec!["dev"];
-    chain_list.contains(&chain)
+    if chain_list.contains(&chain) {
+        Ok(chain.to_string())
+    } else {
+        Err(eyre!(
+            "given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}."
+        ))
+    }
 }
 
 /// generates a plot path from the given path
