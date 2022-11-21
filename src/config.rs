@@ -82,7 +82,7 @@ pub(crate) fn parse_config() -> Result<Config> {
     if config.farmer.plot_size < ByteSize::gb(1) {
         return Err(eyre!("size should be bigger than 1GB!"));
     }
-    if !chain_parser(&config.node.chain).is_ok() {
+    if chain_parser(&config.node.chain).is_err() {
         return Err(eyre!("chain is not recognized!"));
     }
     if config.node.name.trim().is_empty() {
