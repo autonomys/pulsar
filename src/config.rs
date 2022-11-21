@@ -110,7 +110,7 @@ pub(crate) fn construct_config(
     toml::to_string(&config).map_err(Report::msg)
 }
 
-/// parses the config, and returns [`ConfigArgs`]
+/// parses the config, and returns [`Config`]
 #[instrument]
 pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
