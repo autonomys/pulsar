@@ -1,11 +1,10 @@
-use std::str::FromStr;
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
 };
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{Report, Result};
+use color_eyre::eyre::{eyre, Result};
 use libp2p_core::Multiaddr;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -15,7 +14,7 @@ use subspace_sdk::{
     PublicKey,
 };
 
-use crate::utils::{is_valid_chain, is_valid_node_name};
+use crate::utils::chain_parser;
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
@@ -71,46 +70,7 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
-/// constructs the config toml file
-///
-/// some of the values are initialized with their default values
-/// these may be configurable in the future
-pub(crate) fn construct_config(
-    reward_address: &str,
-    plot_location: &str,
-    plot_size: &str,
-    chain: &str,
-    node_name: &str,
-) -> Result<String> {
-    let config = Config {
-        farmer: FarmerConfig {
-            address: PublicKey::from_str(reward_address)?,
-            plot_directory: PathBuf::from_str(plot_location)?,
-            plot_size: plot_size
-                .parse::<bytesize::ByteSize>()
-                .map_err(Report::msg)?,
-            opencl: false,
-        },
-        node: NodeConfig {
-            chain: chain.to_owned(),
-            execution: "wasm".to_owned(),
-            blocks_pruning: 1024,
-            state_pruning: 1024,
-            role: Role::Full,
-            name: node_name.to_owned(),
-            listen_addresses: vec![],
-            rpc_method: RpcMethods::Auto,
-            force_authoring: false,
-        },
-        chains: ChainConfig {
-            dev: "that local node experience".to_owned(),
-        },
-    };
-
-    toml::to_string(&config).map_err(Report::msg)
-}
-
-/// parses the config, and returns [`ConfigArgs`]
+/// parses the config, and returns [`Config`]
 #[instrument]
 pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
@@ -119,16 +79,14 @@ pub(crate) fn parse_config() -> Result<Config> {
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
 
     // validity checks
-    if config.farmer.plot_size < "1GB".parse::<ByteSize>().expect("hardcoded value is true") {
-        return Err(Report::msg("size should be bigger than 1GB!"));
+    if config.farmer.plot_size < ByteSize::gb(1) {
+        return Err(eyre!("size should be bigger than 1GB!"));
     }
-    if !is_valid_chain(&config.node.chain) {
-        return Err(Report::msg("chain is not recognized!"));
+    if chain_parser(&config.node.chain).is_err() {
+        return Err(eyre!("chain is not recognized!"));
     }
-    if !is_valid_node_name(&config.node.name) {
-        return Err(Report::msg(
-            "Node nome is either empty or includes non-ascii characters",
-        ));
+    if config.node.name.trim().is_empty() {
+        return Err(eyre!("Node nome is empty"));
     }
 
     Ok(config)

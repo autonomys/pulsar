@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{Report, Result};
+use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
@@ -40,9 +40,9 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     // TODO: this can be configured for chain in the future
     let instance = SingleInstance::new(SINGLE_INSTANCE)
-        .map_err(|_| Report::msg("Cannot take the instance lock from the OS! Aborting..."))?;
+        .map_err(|_| eyre!("Cannot take the instance lock from the OS! Aborting..."))?;
     if !instance.is_single() {
-        return Err(Report::msg(
+        return Err(eyre!(
             "It seems like there is already a farming instance running. Aborting...",
         ));
     }
