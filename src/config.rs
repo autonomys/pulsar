@@ -70,7 +70,7 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
-/// parses the config, and returns [`ConfigArgs`]
+/// parses the config, and returns [`Config`]
 #[instrument]
 pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");

@@ -47,13 +47,14 @@ pub(crate) fn print_version() {
 /// the user will be repeatedly prompted to provide a valid input
 ///
 /// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
-pub(crate) fn get_user_input<O, E>(
+pub(crate) fn get_user_input<F, O, E>(
     prompt: &str,
     default_value: Option<O>,
-    condition: fn(input: &str) -> Result<O, E>,
+    condition: F,
 ) -> Result<O>
 where
     E: std::fmt::Display,
+    F: Fn(&str) -> Result<O, E>,
 {
     loop {
         print!("{prompt}");
@@ -123,7 +124,7 @@ pub(crate) fn chain_parser(chain: &str) -> Result<String> {
         Ok(chain.to_string())
     } else {
         Err(eyre!(
-            "given chain is not recognized! Please enter a valid chain."
+            "given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}."
         ))
     }
 }
