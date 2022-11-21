@@ -14,7 +14,7 @@ use subspace_sdk::{
     PublicKey,
 };
 
-use crate::utils::is_valid_chain;
+use crate::utils::chain_parser;
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
@@ -79,10 +79,10 @@ pub(crate) fn parse_config() -> Result<Config> {
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
 
     // validity checks
-    if config.farmer.plot_size < ByteSize::gib(1) {
-        return Err(eyre!("size should be bigger than 1Gib!"));
+    if config.farmer.plot_size < ByteSize::gb(1) {
+        return Err(eyre!("size should be bigger than 1GB!"));
     }
-    if !is_valid_chain(&config.node.chain) {
+    if !chain_parser(&config.node.chain).is_ok() {
         return Err(eyre!("chain is not recognized!"));
     }
     if config.node.name.trim().is_empty() {

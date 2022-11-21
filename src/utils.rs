@@ -1,13 +1,19 @@
-use std::fs::create_dir_all;
-use std::path::PathBuf;
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
-use color_eyre::eyre::Result;
+use bytesize::ByteSize;
+use color_eyre::eyre::{eyre, Report, Result};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
+
+use subspace_sdk::PublicKey;
 
 /// for how long a log file should be valid
 const KEEP_LAST_N_DAYS: usize = 7;
@@ -41,14 +47,13 @@ pub(crate) fn print_version() {
 /// the user will be repeatedly prompted to provide a valid input
 ///
 /// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
-pub(crate) fn get_user_input<F, O, E>(
+pub(crate) fn get_user_input<O, E>(
     prompt: &str,
     default_value: Option<O>,
-    mut predicate: F,
+    condition: fn(input: &str) -> Result<O, E>,
 ) -> Result<O>
 where
     E: std::fmt::Display,
-    F: FnMut(String) -> Result<O, E>,
 {
     loop {
         print!("{prompt}");
@@ -63,18 +68,64 @@ where
             return Ok(default_value.unwrap());
         }
 
-        match predicate(user_input) {
+        match condition(&user_input) {
             Ok(o) => return Ok(o),
             Err(err) => println!("{err}"),
         }
     }
 }
 
+/// node name should be ascii, and should begin/end with whitespace
+pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
+    if !node_name.trim().is_empty() {
+        Ok(node_name.to_string())
+    } else {
+        Err(eyre!(
+            "Node name cannot include non-ascii characters! Please enter a valid node name."
+        ))
+    }
+}
+
+/// check for a valid SS58 address
+pub(crate) fn reward_address_parser(address: &str) -> Result<PublicKey> {
+    PublicKey::from_str(address).map_err(Report::msg)
+}
+
+/// the provided path should be an existing directory
+pub(crate) fn plot_directory_parser(location: &str) -> Result<PathBuf> {
+    let path = Path::new(location).to_owned();
+    if path.is_dir() {
+        Ok(path)
+    } else {
+        Err(eyre!(
+            "supplied directory does not exist! Please enter a valid path."
+        ))
+    }
+}
+
+/// utilize `ByteSize` crate for the validation
+pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
+    let Ok(size) = size.parse::<ByteSize>() else {
+         return Err(eyre!("could not parse the value!"));
+    };
+    if size < ByteSize::gb(1) {
+        Err(eyre!("size could not be smaller than 1GB"))
+    } else {
+        Ok(size)
+    }
+}
+
 /// user can only specify a valid chain
-pub(crate) fn is_valid_chain(chain: &str) -> bool {
+pub(crate) fn chain_parser(chain: &str) -> Result<String> {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
     let chain_list = vec!["dev"];
-    chain_list.contains(&chain)
+    if chain_list.contains(&chain) {
+        Ok(chain.to_string())
+    } else {
+        Err(eyre!(
+            "given chain is not recognized! Please enter a valid chain."
+        ))
+    }
 }
 
 /// generates a plot path from the given path

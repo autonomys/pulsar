@@ -1,15 +1,15 @@
 use std::io::Write;
-use std::path::PathBuf;
 
-use color_eyre::eyre::{eyre, Context, Result};
+use color_eyre::eyre::{Context, Result};
 
 use crate::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
 use crate::utils::{
-    get_user_input, is_valid_chain, plot_location_getter, print_ascii_art, print_version,
+    chain_parser, get_user_input, node_name_parser, plot_directory_parser, plot_location_getter,
+    print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
 /// defaults for the user config file
-const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gib(100);
+const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
 const DEFAULT_CHAIN: &str = "dev";
 
 /// implementation of the `init` command
@@ -46,61 +46,45 @@ pub(crate) fn init() -> Result<()> {
 fn get_config_from_user_inputs() -> Result<Config> {
     let default_plot_loc = plot_location_getter();
 
-    // get user inputs
-    let reward_address = get_user_input("Enter your farmer/reward address: ", None, |s| {
-        s.parse::<subspace_sdk::PublicKey>()
-    })?;
+    // GET USER INPUTS...
+    // get reward address
+    let reward_address = get_user_input(
+        "Enter your farmer/reward address: ",
+        None,
+        reward_address_parser,
+    )?;
 
+    // get node name
     let default_node_name = whoami::username();
     let node_name = get_user_input(
         &format!("Enter your node name to be identified on the network(defaults to `{default_node_name}`, press enter to use the default): "),
         Some(default_node_name),
-        |node_name| {
-            if node_name.is_empty() { Ok(node_name) } else { Err("Node name supposed to be not empty") }
-        },
+        node_name_parser,
     )?;
 
+    // get plot directory
     let plot_directory = get_user_input(
         &format!(
-            "Specify a plot location (press enter to use the default: `{default_plot_loc:?}`): "
+            "Specify a plot location (press enter to use the default: `{default_plot_loc:?}`): ",
         ),
         Some(default_plot_loc),
-        |path| {
-            let path = PathBuf::from(&path);
-            if path.is_dir() {
-                Ok(path)
-            } else {
-                Err("Supplied path should be an existing directory")
-            }
-        },
+        plot_directory_parser,
     )?;
 
+    // get plot size
     let plot_size = get_user_input(
         &format!(
-            "Specify a plot size (defaults to `{}`, press enter to use the default): ",
-            DEFAULT_PLOT_SIZE
-        ),
+            "Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the default): "),
         Some(DEFAULT_PLOT_SIZE),
-        |s| match s.parse::<bytesize::ByteSize>() {
-            Ok(ok) if ok >= bytesize::ByteSize::gb(1) => Ok(ok),
-            Ok(_) => Err(eyre!("Plot size should be more than 1Gib")),
-            Err(err) => Err(eyre!("Failed to parse byte size: {err}")),
-        },
+        size_parser,
     )?;
 
+    // get chain
     let chain = get_user_input(
         &format!(
-            "Specify the chain to farm(defaults to `{}`, press enter to use the default): ",
-            DEFAULT_CHAIN
-        ),
-        Some(DEFAULT_CHAIN.to_owned()),
-        |chain| {
-            if is_valid_chain(&chain) {
-                Ok(chain)
-            } else {
-                Err(eyre!("Unknown chain `{chain}'"))
-            }
-        },
+            "Specify the chain to farm(defaults to `{DEFAULT_CHAIN}`, press enter to use the default): "),
+        Some(DEFAULT_CHAIN.to_string()),
+        chain_parser,
     )?;
 
     Ok(Config {
