@@ -80,6 +80,7 @@ pub(crate) fn parse_config() -> Result<Config> {
     Ok(config)
 }
 
+/// validates the config for farming
 #[instrument]
 pub(crate) fn validate_config() -> Result<Config> {
     let config = parse_config()?;
