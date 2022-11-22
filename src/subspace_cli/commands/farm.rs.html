@@ -226,7 +226,7 @@
 
 <span class="kw">use </span>subspace_sdk::{chain_spec, Farmer, Node, PlotDescription, PublicKey};
 
-<span class="kw">use </span><span class="kw">crate</span>::config::{parse_config, NodeConfig};
+<span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, NodeConfig};
 <span class="kw">use </span><span class="kw">crate</span>::summary::{create_summary_file, get_farmed_block_count, update_summary};
 <span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, node_directory_getter};
 
@@ -367,7 +367,7 @@
 /// and returns a [`FarmingArgs`]
 </span><span class="attr">#[instrument]
 </span><span class="kw">async fn </span>prepare_farming() -&gt; <span class="prelude-ty">Result</span>&lt;FarmingArgs&gt; {
-    <span class="kw">let </span>config = parse_config()<span class="question-mark">?</span>;
+    <span class="kw">let </span>config = validate_config()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>node_config = config.node;
     <span class="kw">let </span>NodeConfig {
