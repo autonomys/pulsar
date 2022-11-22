@@ -6,7 +6,7 @@ Subspace CLI simplifies the farming process on Subspace Network.
 
 ![ci-tests](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml/badge.svg)
 ![Rust Docs](https://github.com/subspace/subspace-cli/actions/workflows/rustdoc.yml/badge.svg)
-[![Latest Release](https://img.shields.io/github/v/release/subspace/subspace-cli?display_name=tag&style=flat-square)](https://github.com/subspace/subspace-cli/releases)
+[![Latest Release](https://img.shields.io/github/v/release/subspace/subspace-cli?color=green&include_prereleases&logo=github)](https://github.com/subspace/subspace-cli/releases)
 
 ![prompt](images/subspace-cli-prompt.png)
 
