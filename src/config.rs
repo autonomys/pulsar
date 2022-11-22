@@ -77,10 +77,16 @@ pub(crate) fn parse_config() -> Result<Config> {
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
+    Ok(config)
+}
+
+#[instrument]
+pub(crate) fn validate_config() -> Result<Config> {
+    let config = parse_config()?;
 
     // validity checks
     if config.farmer.plot_size < ByteSize::gb(1) {
-        return Err(eyre!("size should be bigger than 1GB!"));
+        return Err(eyre!("plot size should be bigger than 1GB!"));
     }
     if chain_parser(&config.node.chain).is_err() {
         return Err(eyre!("chain is not recognized!"));

@@ -10,7 +10,7 @@ use tracing::instrument;
 
 use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription, PublicKey};
 
-use crate::config::{parse_config, NodeConfig};
+use crate::config::{validate_config, NodeConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
@@ -151,7 +151,7 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
 /// and returns a [`FarmingArgs`]
 #[instrument]
 async fn prepare_farming() -> Result<FarmingArgs> {
-    let config = parse_config()?;
+    let config = validate_config()?;
 
     let node_config = config.node;
     let NodeConfig {
