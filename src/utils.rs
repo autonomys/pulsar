@@ -81,9 +81,7 @@ pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
     if !node_name.trim().is_empty() {
         Ok(node_name.to_string())
     } else {
-        Err(eyre!(
-            "Node name cannot include non-ascii characters! Please enter a valid node name."
-        ))
+        Err(eyre!("Node name cannot be empty!"))
     }
 }
 
@@ -130,7 +128,7 @@ pub(crate) fn chain_parser(chain: &str) -> Result<String> {
 }
 
 /// generates a plot path from the given path
-pub(crate) fn plot_location_getter() -> PathBuf {
+pub(crate) fn plot_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("plots")
 }
 
@@ -145,15 +143,15 @@ fn custom_log_dir() -> PathBuf {
 
     #[cfg(target_os = "macos")]
     let path = dirs::home_dir().map(|dir| dir.join("Library/Logs").join(id));
-    // evaluates to: `~/Library/Logs/${bundle_name}/
+    // evaluates to: `~/Library/Logs/{id}/
 
     #[cfg(target_os = "linux")]
     let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
-    // evaluates to: `~/.local/share/${bundle_name}/logs/
+    // evaluates to: `~/.local/share/${id}/logs/
 
     #[cfg(target_os = "windows")]
     let path = dirs::data_local_dir().map(|dir| dir.join(id).join("logs"));
-    // evaluates to: `C:/Users/Username/AppData/Local/${bundle_name}/logs/
+    // evaluates to: `C:/Users/Username/AppData/Local/${id}/logs/
 
     path.expect("Could not resolve custom log directory path!")
 }
@@ -214,5 +212,79 @@ pub(crate) fn install_tracing(is_verbose: bool) {
             .init();
     } else {
         tracing_layer.init();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn node_name_checker() {
+        assert!(node_name_parser("     ").is_err());
+        assert!(node_name_parser("ゴゴゴゴ yare yare daze").is_ok());
+    }
+
+    #[test]
+    fn reward_address_checker() {
+        // below address is randomly generated via metamask and then deleted
+        assert!(reward_address_parser("5FWr7j9DW4uy7K1JLmFN2R3eoae35PFDUfW7G42ARpBEUaN7").is_ok());
+        assert!(reward_address_parser("sdjhfskjfhdksjhfsfhskjskdjhfdsfjhk").is_err());
+    }
+
+    #[test]
+    fn size_checker() {
+        assert!(size_parser("800MB").is_err());
+        assert!(size_parser("103gjie").is_err());
+        assert!(size_parser("12GB").is_ok());
+    }
+
+    #[test]
+    fn chain_checker() {
+        assert!(chain_parser("dev").is_ok());
+        assert!(chain_parser("devv").is_err());
+    }
+
+    #[test]
+    fn plot_directory_tester() {
+        let plot_path = plot_directory_getter();
+
+        #[cfg(target_os = "macos")]
+        assert!(plot_path.ends_with("Library/Application Support/subspace-cli/plots"));
+
+        #[cfg(target_os = "linux")]
+        assert!(plot_path.ends_with(".local/share/subspace-cli/plots"));
+
+        #[cfg(target_os = "windows")]
+        assert!(plot_path.ends_with("AppData/Roaming/subspace-cli/plots"));
+    }
+
+    #[test]
+    fn node_directory_tester() {
+        let node_path = node_directory_getter();
+        println!("node_path: {:?}", node_path);
+
+        #[cfg(target_os = "macos")]
+        assert!(node_path.ends_with("Library/Application Support/subspace-cli/node"));
+
+        #[cfg(target_os = "linux")]
+        assert!(node_path.ends_with(".local/share/subspace-cli/node"));
+
+        #[cfg(target_os = "windows")]
+        assert!(node_path.ends_with("AppData/Roaming/subspace-cli/node"));
+    }
+
+    #[test]
+    fn custom_log_dir_test() {
+        let log_path = custom_log_dir();
+
+        #[cfg(target_os = "macos")]
+        assert!(log_path.ends_with("Library/Logs/subspace-cli"));
+
+        #[cfg(target_os = "linux")]
+        assert!(log_path.ends_with(".local/share/subspace-cli/logs"));
+
+        #[cfg(target_os = "windows")]
+        assert!(log_path.ends_with("AppData/Local/subspace-cli/logs"));
     }
 }

@@ -4,7 +4,7 @@ use color_eyre::eyre::{Context, Result};
 
 use crate::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
 use crate::utils::{
-    chain_parser, get_user_input, node_name_parser, plot_directory_parser, plot_location_getter,
+    chain_parser, get_user_input, node_name_parser, plot_directory_getter, plot_directory_parser,
     print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
@@ -44,7 +44,7 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given configuration file
 fn get_config_from_user_inputs() -> Result<Config> {
-    let default_plot_loc = plot_location_getter();
+    let default_plot_loc = plot_directory_getter();
 
     // GET USER INPUTS...
     // get reward address

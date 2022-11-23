@@ -91,9 +91,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
                 );
                 progress_bar.finish_with_message("Initial plotting finished!");
                 finished_flag.store(true, Ordering::Relaxed);
-                update_summary(Some(true), None)
-                    .await
-                    .expect("couldn't update summary");
+                let _ = update_summary(Some(true), None).await; // ignore the error, since we will abandon this mechanism soon
             }
         });
 
@@ -111,9 +109,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
                         .await
                         .for_each(|_solution| async {
                             let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                            update_summary(None, Some(total_farmed))
-                                .await
-                                .expect("couldn't update summary");
+                            let _ = update_summary(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
                             if is_initial_progress_finished.load(Ordering::Relaxed) {
                                 println!("You have farmed {total_farmed} block(s) in total!");
                             }
