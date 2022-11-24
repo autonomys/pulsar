@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 use subspace_sdk::{
+    farmer::CacheDescription,
     node::{Role, RpcMethods},
     PublicKey,
 };
@@ -32,6 +33,7 @@ pub(crate) struct FarmerConfig {
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
     pub(crate) opencl: bool,
+    pub(crate) cache: CacheDescription,
 }
 
 /// structure for the `node` field of the config toml file
@@ -52,6 +54,7 @@ pub(crate) struct NodeConfig {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct ChainConfig {
     pub(crate) dev: String,
+    pub(crate) gemini_3a: String,
 }
 
 /// Creates a config file at the location

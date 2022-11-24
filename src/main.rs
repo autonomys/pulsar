@@ -60,7 +60,7 @@ async fn main() -> Result<(), Report> {
             let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
 
             signal::ctrl_c().await?;
-            farmer.close().await;
+            farmer.close().await.map_err(Report::msg)?;
             node.close().await;
         }
         Commands::Wipe => {

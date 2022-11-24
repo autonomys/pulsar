@@ -8,7 +8,9 @@ use single_instance::SingleInstance;
 use subspace_sdk::node::{BlocksPruning, Constraints, PruningMode};
 use tracing::instrument;
 
-use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription, PublicKey};
+use subspace_sdk::{
+    chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
+};
 
 use crate::config::{validate_config, NodeConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
@@ -23,6 +25,7 @@ pub(crate) struct FarmingArgs {
     reward_address: PublicKey,
     node: Node,
     plot: PlotDescription,
+    cache: CacheDescription,
 }
 
 /// implementation of the `farm` command
@@ -130,11 +133,12 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
         reward_address,
         node,
         plot,
+        cache,
     } = farming_args;
 
     Ok((
         Farmer::builder()
-            .build(reward_address, node.clone(), &[plot])
+            .build(reward_address, node.clone(), &[plot], cache)
             .await?,
         node,
     ))
@@ -163,7 +167,9 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     } = node_config;
 
     let chain = match chain.as_str() {
-        "dev" => chain_spec::dev_config().unwrap(),
+        "gemini_3a" => chain_spec::gemini_3a_compiled()
+            .expect("cannot extract the gemini3a chain spec from SDK"),
+        "dev" => chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
         _ => unreachable!("there are no other valid chain-specs at the moment"),
     };
     let state_pruning = Some(PruningMode::Constrained(Constraints {
@@ -192,6 +198,7 @@ async fn prepare_farming() -> Result<FarmingArgs> {
             space_pledged: config.farmer.plot_size,
         },
         node,
+        cache: config.farmer.cache,
     })
 }
 

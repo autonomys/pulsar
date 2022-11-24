@@ -117,7 +117,7 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
 /// user can only specify a valid chain
 pub(crate) fn chain_parser(chain: &str) -> Result<String> {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["dev"];
+    let chain_list = vec!["dev, gemini-3a"];
     if chain_list.contains(&chain) {
         Ok(chain.to_string())
     } else {
@@ -130,6 +130,11 @@ pub(crate) fn chain_parser(chain: &str) -> Result<String> {
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
     dirs::data_dir().unwrap().join("subspace-cli").join("plots")
+}
+
+/// generates a cache path from the given path
+pub(crate) fn cache_directory_getter() -> PathBuf {
+    dirs::data_dir().unwrap().join("subspace-cli").join("cache")
 }
 
 /// generates a node path from the given path
@@ -260,9 +265,22 @@ mod tests {
     }
 
     #[test]
+    fn cache_directory_tester() {
+        let cache_path = cache_directory_getter();
+
+        #[cfg(target_os = "macos")]
+        assert!(cache_path.ends_with("Library/Application Support/subspace-cli/cache"));
+
+        #[cfg(target_os = "linux")]
+        assert!(cache_path.ends_with(".local/share/subspace-cli/cache"));
+
+        #[cfg(target_os = "windows")]
+        assert!(cache_path.ends_with("AppData/Roaming/subspace-cli/cache"));
+    }
+
+    #[test]
     fn node_directory_tester() {
         let node_path = node_directory_getter();
-        println!("node_path: {:?}", node_path);
 
         #[cfg(target_os = "macos")]
         assert!(node_path.ends_with("Library/Application Support/subspace-cli/node"));
