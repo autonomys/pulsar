@@ -1,16 +1,18 @@
 use std::io::Write;
 
+use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
+use subspace_sdk::farmer::CacheDescription;
 
 use crate::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
 use crate::utils::{
-    chain_parser, get_user_input, node_name_parser, plot_directory_parser, plot_location_getter,
-    print_ascii_art, print_version, reward_address_parser, size_parser,
+    cache_directory_getter, chain_parser, get_user_input, node_name_parser, plot_directory_getter,
+    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
 /// defaults for the user config file
 const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
-const DEFAULT_CHAIN: &str = "dev";
+const DEFAULT_CHAIN: &str = "gemini-3a";
 
 /// implementation of the `init` command
 ///
@@ -44,7 +46,7 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given configuration file
 fn get_config_from_user_inputs() -> Result<Config> {
-    let default_plot_loc = plot_location_getter();
+    let default_plot_loc = plot_directory_getter();
 
     // GET USER INPUTS...
     // get reward address
@@ -87,12 +89,14 @@ fn get_config_from_user_inputs() -> Result<Config> {
         chain_parser,
     )?;
 
+    // construct and return config
     Ok(Config {
         farmer: FarmerConfig {
             address: reward_address,
             plot_directory,
             plot_size,
             opencl: false,
+            cache: CacheDescription::new(cache_directory_getter(), ByteSize::gib(1))?,
         },
         node: NodeConfig {
             chain,
@@ -107,6 +111,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
         },
         chains: ChainConfig {
             dev: "that local node experience".to_owned(),
+            gemini_3a: "gemini-3a public farming experience".to_owned(),
         },
     })
 }
