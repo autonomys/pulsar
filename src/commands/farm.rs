@@ -167,7 +167,7 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     } = node_config;
 
     let chain = match chain.as_str() {
-        "gemini_3a" => chain_spec::gemini_3a_compiled()
+        "gemini-3a" => chain_spec::gemini_3a_compiled()
             .expect("cannot extract the gemini3a chain spec from SDK"),
         "dev" => chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
         _ => unreachable!("there are no other valid chain-specs at the moment"),

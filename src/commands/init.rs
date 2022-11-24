@@ -12,7 +12,7 @@ use crate::utils::{
 
 /// defaults for the user config file
 const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
-const DEFAULT_CHAIN: &str = "dev";
+const DEFAULT_CHAIN: &str = "gemini-3a";
 
 /// implementation of the `init` command
 ///

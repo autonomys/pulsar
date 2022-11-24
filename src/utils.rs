@@ -117,7 +117,7 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
 /// user can only specify a valid chain
 pub(crate) fn chain_parser(chain: &str) -> Result<String> {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["dev, gemini-3a"];
+    let chain_list = vec!["dev", "gemini-3a"];
     if chain_list.contains(&chain) {
         Ok(chain.to_string())
     } else {
