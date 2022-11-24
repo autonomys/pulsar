@@ -214,6 +214,9 @@
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -224,7 +227,9 @@
 <span class="kw">use </span>subspace_sdk::node::{BlocksPruning, Constraints, PruningMode};
 <span class="kw">use </span>tracing::instrument;
 
-<span class="kw">use </span>subspace_sdk::{chain_spec, Farmer, Node, PlotDescription, PublicKey};
+<span class="kw">use </span>subspace_sdk::{
+    chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
+};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, NodeConfig};
 <span class="kw">use </span><span class="kw">crate</span>::summary::{create_summary_file, get_farmed_block_count, update_summary};
@@ -239,6 +244,7 @@
     reward_address: PublicKey,
     node: Node,
     plot: PlotDescription,
+    cache: CacheDescription,
 }
 
 <span class="doccomment">/// implementation of the `farm` command
@@ -307,10 +313,8 @@
                 );
                 progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!&quot;</span>);
                 finished_flag.store(<span class="bool-val">true</span>, Ordering::Relaxed);
-                update_summary(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">None</span>)
-                    .<span class="kw">await
-                    </span>.expect(<span class="string">&quot;couldn&#39;t update summary&quot;</span>);
-            }
+                <span class="kw">let _ </span>= update_summary(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">None</span>).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism soon
+            </span>}
         });
 
         <span class="comment">// solution subscriber
@@ -327,10 +331,8 @@
                         .<span class="kw">await
                         </span>.for_each(|_solution| <span class="kw">async </span>{
                             <span class="kw">let </span>total_farmed = farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
-                            update_summary(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed))
-                                .<span class="kw">await
-                                </span>.expect(<span class="string">&quot;couldn&#39;t update summary&quot;</span>);
-                            <span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
+                            <span class="kw">let _ </span>= update_summary(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
+                            </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
                                 <span class="macro">println!</span>(<span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;</span>);
                             }
                         })
@@ -350,11 +352,12 @@
         reward_address,
         node,
         plot,
+        cache,
     } = farming_args;
 
     <span class="prelude-val">Ok</span>((
         Farmer::builder()
-            .build(reward_address, node.clone(), <span class="kw-2">&amp;</span>[plot])
+            .build(reward_address, node.clone(), <span class="kw-2">&amp;</span>[plot], cache)
             .<span class="kw">await</span><span class="question-mark">?</span>,
         node,
     ))
@@ -383,7 +386,9 @@
     } = node_config;
 
     <span class="kw">let </span>chain = <span class="kw">match </span>chain.as_str() {
-        <span class="string">&quot;dev&quot; </span>=&gt; chain_spec::dev_config().unwrap(),
+        <span class="string">&quot;gemini-3a&quot; </span>=&gt; chain_spec::gemini_3a_compiled()
+            .expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>),
+        <span class="string">&quot;dev&quot; </span>=&gt; chain_spec::dev_config().expect(<span class="string">&quot;cannot extract the dev chain spec from SDK&quot;</span>),
         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;there are no other valid chain-specs at the moment&quot;</span>),
     };
     <span class="kw">let </span>state_pruning = <span class="prelude-val">Some</span>(PruningMode::Constrained(Constraints {
@@ -412,6 +417,7 @@
             space_pledged: config.farmer.plot_size,
         },
         node,
+        cache: config.farmer.cache,
     })
 }
 

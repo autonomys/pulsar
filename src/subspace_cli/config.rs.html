@@ -98,6 +98,9 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::{create_dir, File},
     path::PathBuf,
@@ -110,6 +113,7 @@
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span>subspace_sdk::{
+    farmer::CacheDescription,
     node::{Role, RpcMethods},
     PublicKey,
 };
@@ -132,6 +136,7 @@
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
     <span class="kw">pub</span>(<span class="kw">crate</span>) opencl: bool,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) cache: CacheDescription,
 }
 
 <span class="doccomment">/// structure for the `node` field of the config toml file
@@ -152,6 +157,7 @@
 </span><span class="attr">#[derive(Deserialize, Serialize)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ChainConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) dev: String,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) gemini_3a: String,
 }
 
 <span class="doccomment">/// Creates a config file at the location

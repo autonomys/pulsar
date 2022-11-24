@@ -110,19 +110,26 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 
+<span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
 <span class="kw">use </span><span class="kw">crate</span>::utils::{
-    chain_parser, get_user_input, node_name_parser, plot_directory_parser, plot_location_getter,
-    print_ascii_art, print_version, reward_address_parser, size_parser,
+    cache_directory_getter, chain_parser, get_user_input, node_name_parser, plot_directory_getter,
+    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
 <span class="doccomment">/// defaults for the user config file
 </span><span class="kw">const </span>DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(<span class="number">100</span>);
-<span class="kw">const </span>DEFAULT_CHAIN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;dev&quot;</span>;
+<span class="kw">const </span>DEFAULT_CHAIN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;gemini-3a&quot;</span>;
 
 <span class="doccomment">/// implementation of the `init` command
 ///
@@ -156,7 +163,7 @@
 
 <span class="doccomment">/// gets the necessary information from user, and writes them to the given configuration file
 </span><span class="kw">fn </span>get_config_from_user_inputs() -&gt; <span class="prelude-ty">Result</span>&lt;Config&gt; {
-    <span class="kw">let </span>default_plot_loc = plot_location_getter();
+    <span class="kw">let </span>default_plot_loc = plot_directory_getter();
 
     <span class="comment">// GET USER INPUTS...
     // get reward address
@@ -199,12 +206,14 @@
         chain_parser,
     )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(Config {
+    <span class="comment">// construct and return config
+    </span><span class="prelude-val">Ok</span>(Config {
         farmer: FarmerConfig {
             address: reward_address,
             plot_directory,
             plot_size,
             opencl: <span class="bool-val">false</span>,
+            cache: CacheDescription::new(cache_directory_getter(), ByteSize::gib(<span class="number">1</span>))<span class="question-mark">?</span>,
         },
         node: NodeConfig {
             chain,
@@ -219,6 +228,7 @@
         },
         chains: ChainConfig {
             dev: <span class="string">&quot;that local node experience&quot;</span>.to_owned(),
+            gemini_3a: <span class="string">&quot;gemini-3a public farming experience&quot;</span>.to_owned(),
         },
     })
 }
