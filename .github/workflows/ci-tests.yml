@@ -1,8 +1,15 @@
 name: "ci tests"
+
 on:
   push:
+    branches:
+      - main
     paths-ignore:
-      - "**.md"
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
 
 env:
   # Not needed in CI, should make things a bit faster
@@ -22,29 +29,39 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: git checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # @v3.1.0
 
-      - name: install Rust nightly
-        uses: actions-rs/toolchain@v1
+      - name: Configure cache
+        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # @v3.0.11
         with:
-          toolchain: nightly-2022-11-09
-          target: wasm32-unknown-unknown
-          override: true
-          components: rustfmt, clippy
-
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+            
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: fmt
-        uses: actions-rs/cargo@v1
+      - name: cargo fmt
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
         with:
           command: fmt
           args: --all -- --check
 
-      - name: clippy
-        uses: actions-rs/clippy-check@v1
+      - name: cargo clippy
+        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: -- -D warnings
+          args: --locked --all-targets -- -D warnings
+
+      - name: cargo test --locked
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        with:
+          command: test
+
+      - name: Check Documentation
+        run: cargo doc --locked --all --no-deps
+        env:
+          RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"

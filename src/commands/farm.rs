@@ -5,7 +5,7 @@ use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::{BlocksPruning, Constraints, PruningMode};
+use subspace_sdk::node::{BlocksPruning, Constraints, NetworkBuilder, PruningMode, RpcBuilder};
 use tracing::instrument;
 
 use subspace_sdk::{
@@ -180,11 +180,14 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     let node_directory = node_directory_getter();
 
     let node: Node = Node::builder()
-        .name(name)
-        .listen_on(listen_addresses)
+        .network(
+            NetworkBuilder::new()
+                .name(name)
+                .listen_addresses(listen_addresses),
+        )
         .state_pruning(state_pruning)
         .blocks_pruning(blocks_pruning)
-        .rpc_methods(rpc_method)
+        .rpc(RpcBuilder::new().methods(rpc_method))
         .force_authoring(force_authoring)
         .role(role)
         .build(node_directory, chain)
