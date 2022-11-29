@@ -5,7 +5,9 @@ use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::{BlocksPruning, Constraints, NetworkBuilder, PruningMode, RpcBuilder};
+use subspace_sdk::node::{
+    BlocksPruning, Constraints, DsnBuilder, NetworkBuilder, PruningMode, RpcBuilder,
+};
 use tracing::instrument;
 
 use subspace_sdk::{
@@ -154,6 +156,7 @@ async fn prepare_farming() -> Result<FarmingArgs> {
     let config = validate_config()?;
 
     let node_config = config.node;
+
     let NodeConfig {
         chain,
         execution: _,
@@ -191,6 +194,14 @@ async fn prepare_farming() -> Result<FarmingArgs> {
         .rpc(RpcBuilder::new().methods(rpc_method))
         .force_authoring(force_authoring)
         .role(role)
+        .dsn(
+            DsnBuilder::new()
+                .listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
+                    .parse()
+                    .expect("hardcoded value is true")])
+                .boot_nodes(vec![])
+                .allow_non_global_addresses_in_dht(false),
+        )
         .build(node_directory, chain)
         .await
         .expect("error building the node");
