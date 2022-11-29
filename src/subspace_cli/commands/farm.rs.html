@@ -220,6 +220,7 @@
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -389,8 +390,9 @@
     } = node_config;
 
     <span class="kw">let </span>chain = <span class="kw">match </span>chain.as_str() {
-        <span class="string">&quot;gemini-3a&quot; </span>=&gt; chain_spec::gemini_3a_compiled()
-            .expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>),
+        <span class="string">&quot;gemini-3a&quot; </span>=&gt; {
+            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>)
+        }
         <span class="string">&quot;dev&quot; </span>=&gt; chain_spec::dev_config().expect(<span class="string">&quot;cannot extract the dev chain spec from SDK&quot;</span>),
         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;there are no other valid chain-specs at the moment&quot;</span>),
     };
