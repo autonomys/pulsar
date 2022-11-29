@@ -62,6 +62,6 @@ jobs:
           command: test
 
       - name: Check Documentation
-        run: cargo doc --locked --all --no-deps --lib
+        run: cargo doc --locked --all --no-deps
         env:
           RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"
