@@ -217,6 +217,9 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -224,7 +227,7 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>indicatif::{ProgressBar, ProgressStyle};
 <span class="kw">use </span>single_instance::SingleInstance;
-<span class="kw">use </span>subspace_sdk::node::{BlocksPruning, Constraints, PruningMode};
+<span class="kw">use </span>subspace_sdk::node::{BlocksPruning, Constraints, NetworkBuilder, PruningMode, RpcBuilder};
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span>subspace_sdk::{
@@ -399,11 +402,14 @@
     <span class="kw">let </span>node_directory = node_directory_getter();
 
     <span class="kw">let </span>node: Node = Node::builder()
-        .name(name)
-        .listen_on(listen_addresses)
+        .network(
+            NetworkBuilder::new()
+                .name(name)
+                .listen_addresses(listen_addresses),
+        )
         .state_pruning(state_pruning)
         .blocks_pruning(blocks_pruning)
-        .rpc_methods(rpc_method)
+        .rpc(RpcBuilder::new().methods(rpc_method))
         .force_authoring(force_authoring)
         .role(role)
         .build(node_directory, chain)
