@@ -26,7 +26,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1.2.3"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "df0c4b69c48594e5fcbebd6dca4b2b2586e63e7a" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "dc78615fb530129f659c08952ee2de0c74d2def8" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
@@ -53,7 +53,6 @@ codegen-units = 1
 # This list is ordered alphabetically.
 [profile.dev.package]
 blake2 = { opt-level = 3 }
-blake2-rfc = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }
 chacha20poly1305 = { opt-level = 3 }
 cranelift-codegen = { opt-level = 3 }
