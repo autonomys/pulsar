@@ -3,6 +3,7 @@ use std::io::Write;
 use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
 use subspace_sdk::farmer::CacheDescription;
+use subspace_sdk::node::{DsnBuilder, NetworkBuilder, RpcBuilder};
 
 use crate::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
 use crate::utils::{
@@ -100,14 +101,12 @@ fn get_config_from_user_inputs() -> Result<Config> {
         },
         node: NodeConfig {
             chain,
-            execution: "wasm".to_owned(),
             blocks_pruning: 1024,
             state_pruning: 1024,
             role: subspace_sdk::node::Role::Full,
-            name: node_name,
-            listen_addresses: vec![],
-            rpc_method: subspace_sdk::node::RpcMethods::Auto,
             force_authoring: false,
+            network: NetworkBuilder::new().name(node_name),
+            ..Default::default()
         },
         chains: ChainConfig {
             dev: "that local node experience".to_owned(),

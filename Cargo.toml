@@ -28,6 +28,10 @@ whoami = "1.2.3"
 
 subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "dc78615fb530129f659c08952ee2de0c74d2def8" }
 
+# TODO: delete this
+sc-network-common = { version = "0.10.0-dev", git = "https://github.com/subspace/substrate", rev = "6d57dbc639bb3d9460dabeccb063cc6556452535" }
+
+
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
 chacha20poly1305 = { git = "https://github.com/RustCrypto/AEADs", rev = "06dbfb5571687fd1bbe9d3c9b2193a1ba17f8e99" }

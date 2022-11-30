@@ -1,5 +1,6 @@
 use std::{
     fs::{create_dir, File},
+    net::SocketAddr,
     path::PathBuf,
 };
 
@@ -9,9 +10,12 @@ use libp2p_core::Multiaddr;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
+// TODO: delete this
+use sc_network_common::config::MultiaddrWithPeerId;
+
 use subspace_sdk::{
     farmer::CacheDescription,
-    node::{Role, RpcMethods},
+    node::{ExecutionStrategy, Role, RpcMethods},
     PublicKey,
 };
 
@@ -39,15 +43,53 @@ pub(crate) struct FarmerConfig {
 /// structure for the `node` field of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct NodeConfig {
-    pub(crate) chain: String,
-    pub(crate) execution: String,
+    pub(crate) force_authoring: bool,
+    pub(crate) role: Role,
     pub(crate) blocks_pruning: u32,
     pub(crate) state_pruning: u32,
-    pub(crate) role: Role,
-    pub(crate) name: String,
+    pub(crate) execution_strategies: ExecutionStrategy,
+    #[serde(with = "bytesize_serde")]
+    pub(crate) piece_cache_size: ByteSize,
+    pub(crate) impl_name: String,
+    pub(crate) impl_version: String,
+    pub(crate) rpc: NodeRpcConfig,
+    pub(crate) network: NodeNetworkConfig,
+    pub(crate) dsn: NodeDsnConfig,
+    pub(crate) chain: String,
+}
+
+/// `NodeRpcConfig` struct for `NodeConfig`
+#[derive(Deserialize, Serialize)]
+pub(crate) struct NodeRpcConfig {
+    pub(crate) htpp: Option<SocketAddr>,
+    pub(crate) ws: Option<SocketAddr>,
+    pub(crate) ipc: Option<String>,
+    pub(crate) ws_max_connections: Option<usize>,
+    pub(crate) cors: Option<Vec<String>>,
+    pub(crate) methods: RpcMethods,
+    pub(crate) max_payload: Option<usize>,
+    pub(crate) max_request_size: Option<usize>,
+    pub(crate) max_response_size: Option<usize>,
+    pub(crate) max_subs_per_conn: usize,
+    pub(crate) ws_max_out_buffer_capacity: Option<usize>,
+}
+
+/// `NodeNetwork` struct for `NodeConfig`
+#[derive(Deserialize, Serialize)]
+pub(crate) struct NodeNetworkConfig {
     pub(crate) listen_addresses: Vec<Multiaddr>,
-    pub(crate) rpc_method: RpcMethods,
-    pub(crate) force_authoring: bool,
+    pub(crate) boot_nodes: Vec<MultiaddrWithPeerId>,
+    pub(crate) force_synced: bool,
+    pub(crate) name: Option<String>,
+    pub(crate) client_id: Option<String>,
+}
+
+/// `NodeDsnConfig` struct for `NodeConfig`
+#[derive(Deserialize, Serialize)]
+pub(crate) struct NodeDsnConfig {
+    pub(crate) listen_addresses: Vec<Multiaddr>,
+    pub(crate) boot_nodes: Vec<Multiaddr>,
+    pub(crate) allow_non_global_addresses_in_dht: bool,
 }
 
 /// structure for the `chain` field of the config toml file
@@ -95,7 +137,10 @@ pub(crate) fn validate_config() -> Result<Config> {
     if chain_parser(&config.node.chain).is_err() {
         return Err(eyre!("chain is not recognized!"));
     }
-    if config.node.name.trim().is_empty() {
+    let Some(name) = config.node.network.name else {
+        return Err(eyre!("Node name was `None`"));
+    };
+    if name.trim().is_empty() {
         return Err(eyre!("Node nome is empty"));
     }
 
