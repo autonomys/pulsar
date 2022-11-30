@@ -70,6 +70,13 @@
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -132,8 +139,15 @@
             <span class="kw">let </span>(farmer, node, _instance) = farm(verbose).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
 
             signal::ctrl_c().<span class="kw">await</span><span class="question-mark">?</span>;
-            farmer.close().<span class="kw">await</span>.map_err(Report::msg)<span class="question-mark">?</span>;
-            node.close().<span class="kw">await</span>;
+            <span class="macro">println!</span>(<span class="string">&quot;\nWill try to gracefully exit the application now. If you press ctrl+c again, it will try to forcefully close the app!&quot;</span>);
+            <span class="kw">let </span>handle = tokio::spawn(<span class="kw">async </span>{
+                <span class="kw">let _ </span>= farmer.close().<span class="kw">await</span>;
+                node.close().<span class="kw">await</span>;
+            });
+            <span class="macro">tokio::select! </span>{
+                <span class="kw">_ </span>= handle =&gt; <span class="macro">println!</span>(<span class="string">&quot;gracefully closed the app!&quot;</span>),
+                <span class="kw">_ </span>= signal::ctrl_c() =&gt; <span class="macro">println!</span>(<span class="string">&quot;\nforcefully closing the app!&quot;</span>),
+            }
         }
         Commands::Wipe =&gt; {
             wipe().<span class="kw">await</span><span class="question-mark">?</span>;
