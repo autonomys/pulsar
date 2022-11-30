@@ -2,10 +2,12 @@ use std::io::Write;
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
-use subspace_sdk::farmer::CacheDescription;
-use subspace_sdk::node::{DsnBuilder, NetworkBuilder, RpcBuilder};
+use subspace_sdk::{
+    farmer::{CacheDescription, DsnBuilder as FarmerDsnBuilder},
+    node::{Builder as NodeBuilder, DsnBuilder as NodeDsnBuilder, NetworkBuilder, RpcBuilder},
+};
 
-use crate::config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig};
+use crate::config::{create_config, Config, ConfigBuilder, FarmerConfigBuilder};
 use crate::utils::{
     cache_directory_getter, chain_parser, get_user_input, node_name_parser, plot_directory_getter,
     plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
@@ -90,27 +92,63 @@ fn get_config_from_user_inputs() -> Result<Config> {
         chain_parser,
     )?;
 
-    // construct and return config
-    Ok(Config {
-        farmer: FarmerConfig {
-            address: reward_address,
-            plot_directory,
-            plot_size,
-            opencl: false,
-            cache: CacheDescription::new(cache_directory_getter(), ByteSize::gib(1))?,
-        },
-        node: NodeConfig {
-            chain,
-            blocks_pruning: 1024,
-            state_pruning: 1024,
-            role: subspace_sdk::node::Role::Full,
-            force_authoring: false,
-            network: NetworkBuilder::new().name(node_name),
-            ..Default::default()
-        },
-        chains: ChainConfig {
-            dev: "that local node experience".to_owned(),
-            gemini_3a: "gemini-3a public farming experience".to_owned(),
-        },
-    })
+    Ok(ConfigBuilder::default()
+        .farmer(
+            FarmerConfigBuilder::new()
+                .address(reward_address)
+                .plot_directory(plot_directory)
+                .plot_size(plot_size)
+                .cache(CacheDescription::new(
+                    cache_directory_getter(),
+                    ByteSize::gib(1),
+                )?)
+                .dsn(
+                    FarmerDsnBuilder::new()
+                        .allow_non_global_addresses_in_dht(false)
+                        .bootstrap_nodes(vec![])
+                        .listen_on(vec!["/ip4/0.0.0.0/tcp/30433"
+                            .parse()
+                            .expect("hardcoded value is true")])
+                        .into(),
+                )
+                .into(),
+        )
+        .node(
+            NodeBuilder::new()
+                .network(NetworkBuilder::new().name(node_name))
+                ._build()
+                .expect("build is correct"),
+        )
+        .chain(chain)
+        .build())
+
+    // Ok(Config {
+    //     farmer: FarmerConfig {
+    //         address: reward_address,
+    //         plot_directory,
+    //         plot_size,
+    //         opencl: false,
+    //         cache: CacheDescription::new(cache_directory_getter(), ByteSize::gib(1))?,
+    //         dsn: FarmerDsnBuilder::new()
+    //             .listen_on(vec!["/ip4/0.0.0.0/tcp/30433" // TODO: fill this value
+    //                 .parse()
+    //                 .expect("hardcoded value is true")])
+    //             .bootstrap_nodes(vec![])
+    //             .allow_non_global_addresses_in_dht(false)
+    //             .into(),
+    //     },
+    //     node: NodeConfig {
+    //         chain,
+    //         blocks_pruning: 1024,
+    //         state_pruning: 1024,
+    //         role: subspace_sdk::node::Role::Full,
+    //         force_authoring: false,
+    //         network: NetworkBuilder::new().name(node_name),
+    //         ..Default::default()
+    //     },
+    //     chains: ChainConfig {
+    //         dev: "that local node experience".to_owned(),
+    //         gemini_3a: "gemini-3a public farming experience".to_owned(),
+    //     },
+    // })
 }
