@@ -16,7 +16,7 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 use subspace_sdk::PublicKey;
 
 /// for how long a log file should be valid
-const KEEP_LAST_N_DAYS: usize = 7;
+const KEEP_LAST_N_FILE: usize = 7;
 
 /// <3
 pub(crate) fn print_ascii_art() {
@@ -177,8 +177,8 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     let _ = create_dir_all(&log_dir);
 
     let file_appender = RollingFileAppender::builder()
-        .max_log_files(KEEP_LAST_N_DAYS)
-        .rotation(Rotation::DAILY)
+        .max_log_files(KEEP_LAST_N_FILE)
+        .rotation(Rotation::MINUTELY) // temporary fix, will switch to daily of hourly later
         .filename_prefix("subspace-cli.log")
         .build(log_dir)
         .expect("building should always succeed");
