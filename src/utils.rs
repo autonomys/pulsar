@@ -178,7 +178,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 
     let file_appender = RollingFileAppender::builder()
         .max_log_files(KEEP_LAST_N_FILE)
-        .rotation(Rotation::MINUTELY) // temporary fix, will switch to daily of hourly later
+        .rotation(Rotation::HOURLY) // temporary fix, will switch to daily of hourly later
         .filename_prefix("subspace-cli.log")
         .build(log_dir)
         .expect("building should always succeed");
@@ -190,6 +190,11 @@ pub(crate) fn install_tracing(is_verbose: bool) {
             .from_env_lossy()
             .add_directive(
                 "subspace_cli=info"
+                    .parse()
+                    .expect("hardcoded value is true"),
+            )
+            .add_directive(
+                "frame_executive=off"
                     .parse()
                     .expect("hardcoded value is true"),
             )
