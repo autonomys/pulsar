@@ -22,7 +22,9 @@ use crate::utils::chain_parser;
 #[derive(Deserialize, Serialize, Builder)]
 #[builder(pattern = "owned", build_fn(name = "_build"))]
 pub(crate) struct Config {
+    #[builder(setter(into))]
     pub(crate) farmer: FarmerConfig,
+    #[builder(setter(into))]
     pub(crate) node: NodeConfig,
     pub(crate) chain: String,
 }
@@ -39,6 +41,7 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_size: ByteSize,
     pub(crate) opencl: bool,
     pub(crate) cache: CacheDescription,
+    #[builder(setter(into))]
     pub(crate) dsn: FarmerDsn,
 }
 

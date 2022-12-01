@@ -108,47 +108,23 @@ fn get_config_from_user_inputs() -> Result<Config> {
                         .bootstrap_nodes(vec![])
                         .listen_on(vec!["/ip4/0.0.0.0/tcp/30433"
                             .parse()
-                            .expect("hardcoded value is true")])
-                        .into(),
-                )
-                .into(),
+                            .expect("hardcoded value is true")]),
+                ),
         )
         .node(
             NodeBuilder::new()
                 .network(NetworkBuilder::new().name(node_name))
-                ._build()
-                .expect("build is correct"),
+                .dsn(
+                    NodeDsnBuilder::new()
+                        .allow_non_global_addresses_in_dht(false)
+                        .boot_nodes(vec![])
+                        .listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
+                            .parse()
+                            .expect("hardcoded value is true")]),
+                )
+                .rpc(RpcBuilder::new())
+                .configuration(),
         )
         .chain(chain)
         .build())
-
-    // Ok(Config {
-    //     farmer: FarmerConfig {
-    //         address: reward_address,
-    //         plot_directory,
-    //         plot_size,
-    //         opencl: false,
-    //         cache: CacheDescription::new(cache_directory_getter(), ByteSize::gib(1))?,
-    //         dsn: FarmerDsnBuilder::new()
-    //             .listen_on(vec!["/ip4/0.0.0.0/tcp/30433" // TODO: fill this value
-    //                 .parse()
-    //                 .expect("hardcoded value is true")])
-    //             .bootstrap_nodes(vec![])
-    //             .allow_non_global_addresses_in_dht(false)
-    //             .into(),
-    //     },
-    //     node: NodeConfig {
-    //         chain,
-    //         blocks_pruning: 1024,
-    //         state_pruning: 1024,
-    //         role: subspace_sdk::node::Role::Full,
-    //         force_authoring: false,
-    //         network: NetworkBuilder::new().name(node_name),
-    //         ..Default::default()
-    //     },
-    //     chains: ChainConfig {
-    //         dev: "that local node experience".to_owned(),
-    //         gemini_3a: "gemini-3a public farming experience".to_owned(),
-    //     },
-    // })
 }

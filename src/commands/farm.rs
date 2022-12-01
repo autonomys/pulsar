@@ -5,16 +5,13 @@ use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::{
-    BlocksPruning, Constraints, DsnBuilder, NetworkBuilder, PruningMode, RpcBuilder,
-};
 use tracing::instrument;
 
 use subspace_sdk::{
     chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
 };
 
-use crate::config::{validate_config, NodeConfig};
+use crate::config::validate_config;
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
@@ -155,54 +152,17 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
 async fn prepare_farming() -> Result<FarmingArgs> {
     let config = validate_config()?;
 
-    let node_config = config.node;
-
-    let NodeConfig {
-        chain,
-        execution: _,
-        blocks_pruning,
-        state_pruning,
-        role,
-        name,
-        listen_addresses,
-        rpc_method,
-        force_authoring,
-    } = node_config;
-
-    let chain = match chain.as_str() {
+    let chain = match config.chain.as_str() {
         "gemini-3a" => {
             chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
         }
         "dev" => chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
         _ => unreachable!("there are no other valid chain-specs at the moment"),
     };
-    let state_pruning = Some(PruningMode::Constrained(Constraints {
-        max_blocks: Some(state_pruning),
-        max_mem: None,
-    }));
-    let blocks_pruning = BlocksPruning::Some(blocks_pruning);
-    let node_directory = node_directory_getter();
 
-    let node: Node = Node::builder()
-        .network(
-            NetworkBuilder::new()
-                .name(name)
-                .listen_addresses(listen_addresses),
-        )
-        .state_pruning(state_pruning)
-        .blocks_pruning(blocks_pruning)
-        .rpc(RpcBuilder::new().methods(rpc_method))
-        .force_authoring(force_authoring)
-        .role(role)
-        .dsn(
-            DsnBuilder::new()
-                .listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
-                    .parse()
-                    .expect("hardcoded value is true")])
-                .boot_nodes(vec![])
-                .allow_non_global_addresses_in_dht(false),
-        )
-        .build(node_directory, chain)
+    let node_instance = config
+        .node
+        .build(node_directory_getter(), chain)
         .await
         .expect("error building the node");
 
@@ -212,7 +172,7 @@ async fn prepare_farming() -> Result<FarmingArgs> {
             directory: config.farmer.plot_directory,
             space_pledged: config.farmer.plot_size,
         },
-        node,
+        node: node_instance,
         cache: config.farmer.cache,
     })
 }
