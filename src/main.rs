@@ -61,8 +61,15 @@ async fn main() -> Result<(), Report> {
             let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
 
             signal::ctrl_c().await?;
-            farmer.close().await.map_err(Report::msg)?;
-            node.close().await;
+            println!("\nWill try to gracefully exit the application now. If you press ctrl+c again, it will try to forcefully close the app!");
+            let handle = tokio::spawn(async {
+                let _ = farmer.close().await;
+                node.close().await;
+            });
+            tokio::select! {
+                _ = handle => println!("gracefully closed the app!"),
+                _ = signal::ctrl_c() => println!("\nforcefully closing the app!"),
+            }
         }
         Commands::Wipe => {
             wipe().await?;
