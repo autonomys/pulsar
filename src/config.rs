@@ -16,8 +16,6 @@ use subspace_sdk::{
     PublicKey,
 };
 
-use crate::utils::chain_parser;
-
 /// structure of the config toml file
 #[derive(Deserialize, Serialize, Builder)]
 #[builder(pattern = "owned", build_fn(name = "_build"))]
@@ -26,7 +24,7 @@ pub(crate) struct Config {
     pub(crate) farmer: FarmerConfig,
     #[builder(setter(into))]
     pub(crate) node: NodeConfig,
-    pub(crate) chain: String,
+    pub(crate) chain: ChainConfig,
 }
 
 generate_builder!(Config);
@@ -39,6 +37,8 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
+    #[builder(default)]
+    #[serde(default)]
     pub(crate) opencl: bool,
     pub(crate) cache: CacheDescription,
     #[builder(setter(into))]
@@ -46,6 +46,22 @@ pub(crate) struct FarmerConfig {
 }
 
 generate_builder!(FarmerConfig);
+
+#[derive(Deserialize, Serialize, Default)]
+pub(crate) enum ChainConfig {
+    #[default]
+    Gemini3a,
+    Dev,
+}
+
+impl std::fmt::Display for ChainConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            ChainConfig::Dev => write!(f, "dev"),
+            ChainConfig::Gemini3a => write!(f, "gemini-3a"),
+        }
+    }
+}
 
 /// Creates a config file at the location
 /// - **Linux:** `$HOME/.config/subspace-cli/settings.toml`.
@@ -81,9 +97,6 @@ pub(crate) fn validate_config() -> Result<Config> {
     // validity checks
     if config.farmer.plot_size < ByteSize::gb(1) {
         return Err(eyre!("plot size should be bigger than 1GB!"));
-    }
-    if chain_parser(&config.chain).is_err() {
-        return Err(eyre!("chain is not recognized!"));
     }
     let Some(ref name) = config.node.network.name else {
         return Err(eyre!("Node name was `None`"));

@@ -11,7 +11,7 @@ use subspace_sdk::{
     chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
 };
 
-use crate::config::validate_config;
+use crate::config::{validate_config, ChainConfig};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
 use crate::utils::{install_tracing, node_directory_getter};
 
@@ -152,12 +152,13 @@ async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
 async fn prepare_farming() -> Result<FarmingArgs> {
     let config = validate_config()?;
 
-    let chain = match config.chain.as_str() {
-        "gemini-3a" => {
+    let chain = match config.chain {
+        ChainConfig::Gemini3a => {
             chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
         }
-        "dev" => chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
-        _ => unreachable!("there are no other valid chain-specs at the moment"),
+        ChainConfig::Dev => {
+            chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK")
+        }
     };
 
     let node_instance = config

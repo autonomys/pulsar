@@ -15,6 +15,8 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 use subspace_sdk::PublicKey;
 
+use crate::config::ChainConfig;
+
 /// for how long a log file should be valid
 const KEEP_LAST_N_FILE: usize = 7;
 
@@ -115,15 +117,13 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
 }
 
 /// user can only specify a valid chain
-pub(crate) fn chain_parser(chain: &str) -> Result<String> {
+pub(crate) fn chain_parser(chain: &str) -> Result<ChainConfig> {
     // TODO: instead of a hardcoded list, get the chain names from telemetry
     let chain_list = vec!["dev", "gemini-3a"];
-    if chain_list.contains(&chain) {
-        Ok(chain.to_string())
-    } else {
-        Err(eyre!(
-            "given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}."
-        ))
+    match chain {
+            "dev" => Ok(ChainConfig::Dev),
+            "gemini-3a" => Ok(ChainConfig::Gemini3a),
+            _ => Err(eyre!("given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.")),
     }
 }
 

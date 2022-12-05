@@ -7,7 +7,7 @@ use subspace_sdk::{
     node::{Builder as NodeBuilder, DsnBuilder as NodeDsnBuilder, NetworkBuilder, RpcBuilder},
 };
 
-use crate::config::{create_config, Config, ConfigBuilder, FarmerConfigBuilder};
+use crate::config::{create_config, ChainConfig, Config, ConfigBuilder, FarmerConfigBuilder};
 use crate::utils::{
     cache_directory_getter, chain_parser, get_user_input, node_name_parser, plot_directory_getter,
     plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
@@ -15,7 +15,6 @@ use crate::utils::{
 
 /// defaults for the user config file
 const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
-const DEFAULT_CHAIN: &str = "gemini-3a";
 
 /// implementation of the `init` command
 ///
@@ -49,8 +48,6 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given configuration file
 fn get_config_from_user_inputs() -> Result<Config> {
-    let default_plot_loc = plot_directory_getter();
-
     // GET USER INPUTS...
     // get reward address
     let reward_address = get_user_input(
@@ -68,6 +65,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get plot directory
+    let default_plot_loc = plot_directory_getter();
     let plot_directory = get_user_input(
         &format!(
             "Specify a plot location (press enter to use the default: `{default_plot_loc:?}`): ",
@@ -85,10 +83,11 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get chain
+    let default_chain = ChainConfig::Gemini3a;
     let chain = get_user_input(
         &format!(
-            "Specify the chain to farm(defaults to `{DEFAULT_CHAIN}`, press enter to use the default): "),
-        Some(DEFAULT_CHAIN.to_string()),
+            "Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the default): "),
+        Some(crate::config::ChainConfig::Gemini3a),
         chain_parser,
     )?;
 
@@ -103,24 +102,18 @@ fn get_config_from_user_inputs() -> Result<Config> {
                     ByteSize::gib(1),
                 )?)
                 .dsn(
-                    FarmerDsnBuilder::new()
-                        .allow_non_global_addresses_in_dht(false)
-                        .bootstrap_nodes(vec![])
-                        .listen_on(vec!["/ip4/0.0.0.0/tcp/30433"
-                            .parse()
-                            .expect("hardcoded value is true")]),
+                    FarmerDsnBuilder::new().listen_on(vec!["/ip4/0.0.0.0/tcp/30433"
+                        .parse()
+                        .expect("hardcoded value is true")]),
                 ),
         )
         .node(
             NodeBuilder::new()
                 .network(NetworkBuilder::new().name(node_name))
                 .dsn(
-                    NodeDsnBuilder::new()
-                        .allow_non_global_addresses_in_dht(false)
-                        .boot_nodes(vec![])
-                        .listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
-                            .parse()
-                            .expect("hardcoded value is true")]),
+                    NodeDsnBuilder::new().listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
+                        .parse()
+                        .expect("hardcoded value is true")]),
                 )
                 .rpc(RpcBuilder::new())
                 .configuration(),
