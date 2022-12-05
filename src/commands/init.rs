@@ -1,16 +1,15 @@
 use std::{io::Write, str::FromStr};
 
-use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
-use subspace_sdk::{
-    farmer::{CacheDescription, DsnBuilder as FarmerDsnBuilder},
-    node::{Builder as NodeBuilder, DsnBuilder as NodeDsnBuilder, NetworkBuilder, RpcBuilder},
-};
+use subspace_sdk::farmer::CacheDescription;
 
-use crate::config::{create_config, ChainConfig, Config, ConfigBuilder, FarmerConfigBuilder};
 use crate::utils::{
     cache_directory_getter, get_user_input, node_name_parser, plot_directory_getter,
     plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
+};
+use crate::{
+    config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig},
+    utils::node_directory_getter,
 };
 
 /// defaults for the user config file
@@ -91,33 +90,30 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ChainConfig::from_str,
     )?;
 
-    Ok(ConfigBuilder::default()
-        .farmer(
-            FarmerConfigBuilder::new()
-                .address(reward_address)
-                .plot_directory(plot_directory)
-                .plot_size(plot_size)
-                .cache(CacheDescription::new(
-                    cache_directory_getter(),
-                    ByteSize::gib(1),
-                )?)
-                .dsn(
-                    FarmerDsnBuilder::new().listen_on(vec!["/ip4/0.0.0.0/tcp/30433"
-                        .parse()
-                        .expect("hardcoded value is true")]),
-                ),
-        )
-        .node(
-            NodeBuilder::new()
-                .network(NetworkBuilder::new().name(node_name))
-                .dsn(
-                    NodeDsnBuilder::new().listen_addresses(vec!["/ip4/0.0.0.0/tcp/30433"
-                        .parse()
-                        .expect("hardcoded value is true")]),
-                )
-                .rpc(RpcBuilder::new())
-                .configuration(),
-        )
-        .chain(chain)
-        .build())
+    let (farmer, node) = match chain {
+        ChainConfig::Dev => (
+            FarmerConfig::dev(
+                reward_address,
+                plot_directory,
+                plot_size,
+                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
+            ),
+            NodeConfig::dev(node_directory_getter(), node_name),
+        ),
+        ChainConfig::Gemini3a => (
+            FarmerConfig::gemini_3a(
+                reward_address,
+                plot_directory,
+                plot_size,
+                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
+            ),
+            NodeConfig::gemini_3a(node_directory_getter(), node_name),
+        ),
+    };
+
+    Ok(Config {
+        chain,
+        farmer,
+        node, // farmer: FarmerConfig::new(),
+    })
 }

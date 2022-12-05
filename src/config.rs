@@ -9,47 +9,117 @@ use color_eyre::{
     eyre::{eyre, Result},
     Report,
 };
-use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 use subspace_sdk::{
-    farmer::{CacheDescription, Dsn as FarmerDsn},
-    generate_builder,
-    node::Config as NodeConfig,
+    farmer::{self, CacheDescription, Config as SdkFarmerConfig, Farmer},
+    node::{self, Config as SdkNodeConfig, Node},
     PublicKey,
 };
 
 /// structure of the config toml file
-#[derive(Deserialize, Serialize, Builder)]
-#[builder(pattern = "owned", build_fn(name = "_build"))]
+#[derive(Deserialize, Serialize)]
 pub(crate) struct Config {
     pub(crate) chain: ChainConfig,
-    #[builder(setter(into))]
     pub(crate) farmer: FarmerConfig,
-    #[builder(setter(into))]
     pub(crate) node: NodeConfig,
 }
 
-generate_builder!(Config);
+/// structure for the `farmer` field of the config toml file
+#[derive(Deserialize, Serialize)]
+pub(crate) struct NodeConfig {
+    pub(crate) directory: PathBuf,
+    #[serde(default, flatten)]
+    pub(crate) node: SdkNodeConfig,
+}
+
+impl NodeConfig {
+    pub fn dev(directory: PathBuf, node_name: String) -> Self {
+        Self::gemini_3a(directory, node_name)
+    }
+
+    pub fn gemini_3a(directory: PathBuf, node_name: String) -> Self {
+        Self {
+            directory,
+            node: Node::builder()
+                .role(node::Role::Authority)
+                .network(
+                    node::NetworkBuilder::new()
+                        .listen_addresses(vec![
+                            "/ip6/::/tcp/30333".parse().unwrap(),
+                            "/ip4/0.0.0.0/tcp/30333".parse().unwrap(),
+                        ])
+                        .name(node_name)
+                        .enable_mdns(true),
+                )
+                .rpc(
+                    node::RpcBuilder::new()
+                        .http("127.0.0.1:9933".parse().unwrap())
+                        .ws("127.0.0.1:9944".parse().unwrap())
+                        .cors(vec![
+                            "http://localhost:*".to_owned(),
+                            "http://127.0.0.1:*".to_owned(),
+                            "https://localhost:*".to_owned(),
+                            "https://127.0.0.1:*".to_owned(),
+                            "https://polkadot.js.org".to_owned(),
+                        ]),
+                )
+                .dsn(node::DsnBuilder::new().listen_addresses(vec![
+                    "/ip6/::/tcp/30433".parse().unwrap(),
+                    "/ip4/0.0.0.0/tcp/30433".parse().unwrap(),
+                ]))
+                .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
+                .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true))
+                .configuration(),
+        }
+    }
+}
 
 /// structure for the `farmer` field of the config toml file
-#[derive(Deserialize, Serialize, Builder)]
-#[builder(pattern = "owned", build_fn(name = "_build"))]
+#[derive(Deserialize, Serialize)]
 pub(crate) struct FarmerConfig {
     pub(crate) address: PublicKey,
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
-    #[builder(default)]
     #[serde(default)]
     pub(crate) opencl: bool,
     pub(crate) cache: CacheDescription,
-    #[builder(setter(into))]
-    pub(crate) dsn: FarmerDsn,
+    #[serde(default, flatten)]
+    pub(crate) farmer: SdkFarmerConfig,
 }
 
-generate_builder!(FarmerConfig);
+impl FarmerConfig {
+    pub fn dev(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self::gemini_3a(address, plot_directory, plot_size, cache)
+    }
+
+    pub fn gemini_3a(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self {
+            address,
+            plot_directory,
+            plot_size,
+            opencl: false,
+            cache,
+            farmer: Farmer::builder()
+                .dsn(farmer::DsnBuilder::new().listen_on(vec![
+                    "/ip4/0.0.0.0/tcp/30533".parse().expect("Valid multiaddr"),
+                ]))
+                .configuration(),
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Default)]
 pub(crate) enum ChainConfig {
@@ -115,7 +185,7 @@ pub(crate) fn validate_config() -> Result<Config> {
     if config.farmer.plot_size < ByteSize::gb(1) {
         return Err(eyre!("plot size should be bigger than 1GB!"));
     }
-    let Some(ref name) = config.node.network.name else {
+    let Some(ref name) = config.node.node.network.name else {
         return Err(eyre!("Node name was `None`"));
     };
     if name.trim().is_empty() {
