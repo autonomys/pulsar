@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, str::FromStr};
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
@@ -9,7 +9,7 @@ use subspace_sdk::{
 
 use crate::config::{create_config, ChainConfig, Config, ConfigBuilder, FarmerConfigBuilder};
 use crate::utils::{
-    cache_directory_getter, chain_parser, get_user_input, node_name_parser, plot_directory_getter,
+    cache_directory_getter, get_user_input, node_name_parser, plot_directory_getter,
     plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
@@ -88,7 +88,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
         &format!(
             "Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the default): "),
         Some(crate::config::ChainConfig::Gemini3a),
-        chain_parser,
+        ChainConfig::from_str,
     )?;
 
     Ok(ConfigBuilder::default()
