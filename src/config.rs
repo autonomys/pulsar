@@ -35,10 +35,6 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn dev(directory: PathBuf, node_name: String) -> Self {
-        Self::gemini_3a(directory, node_name)
-    }
-
     pub fn gemini_3a(directory: PathBuf, node_name: String) -> Self {
         Self {
             directory,
@@ -91,15 +87,6 @@ pub(crate) struct FarmerConfig {
 }
 
 impl FarmerConfig {
-    pub fn dev(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -> Self {
-        Self::gemini_3a(address, plot_directory, plot_size, cache)
-    }
-
     pub fn gemini_3a(
         address: PublicKey,
         plot_directory: PathBuf,
@@ -125,13 +112,11 @@ impl FarmerConfig {
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3a,
-    Dev,
 }
 
 impl std::fmt::Display for ChainConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            ChainConfig::Dev => write!(f, "dev"),
             ChainConfig::Gemini3a => write!(f, "gemini-3a"),
         }
     }
@@ -141,9 +126,8 @@ impl FromStr for ChainConfig {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let chain_list = vec!["dev", "gemini-3a"];
+        let chain_list = vec!["gemini-3a"];
         match s {
-            "dev" => Ok(ChainConfig::Dev),
             "gemini-3a" => Ok(ChainConfig::Gemini3a),
             _ => Err(eyre!("given chain: `{s}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.")),
         }

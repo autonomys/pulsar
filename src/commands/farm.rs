@@ -21,8 +21,7 @@ pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
 /// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
 ///
 /// first, checks for an existing farmer instance
-/// then prepares the necessary arguments for the farming [`FarmingArgs`]
-/// then starts the farming instance,
+/// then starts the farming and node instances,
 /// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
@@ -48,9 +47,6 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     let chain = match chain {
         ChainConfig::Gemini3a => {
             chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
-        }
-        ChainConfig::Dev => {
-            chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK")
         }
     };
 

@@ -91,15 +91,6 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     let (farmer, node) = match chain {
-        ChainConfig::Dev => (
-            FarmerConfig::dev(
-                reward_address,
-                plot_directory,
-                plot_size,
-                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
-            ),
-            NodeConfig::dev(node_directory_getter(), node_name),
-        ),
         ChainConfig::Gemini3a => (
             FarmerConfig::gemini_3a(
                 reward_address,
