@@ -178,7 +178,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 
     let file_appender = RollingFileAppender::builder()
         .max_log_files(KEEP_LAST_N_FILE)
-        .rotation(Rotation::HOURLY) // temporary fix, will switch to daily of hourly later
+        .rotation(Rotation::HOURLY)
         .filename_prefix("subspace-cli.log")
         .build(log_dir)
         .expect("building should always succeed");

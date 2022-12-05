@@ -85,7 +85,7 @@ pub(crate) fn validate_config() -> Result<Config> {
     if chain_parser(&config.chain).is_err() {
         return Err(eyre!("chain is not recognized!"));
     }
-    let Some(name) = config.node.network.name else {
+    let Some(ref name) = config.node.network.name else {
         return Err(eyre!("Node name was `None`"));
     };
     if name.trim().is_empty() {
