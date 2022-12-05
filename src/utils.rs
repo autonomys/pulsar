@@ -118,13 +118,7 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
 
 /// user can only specify a valid chain
 pub(crate) fn chain_parser(chain: &str) -> Result<ChainConfig> {
-    // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["dev", "gemini-3a"];
-    match chain {
-            "dev" => Ok(ChainConfig::Dev),
-            "gemini-3a" => Ok(ChainConfig::Gemini3a),
-            _ => Err(eyre!("given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.")),
-    }
+    ChainConfig::from_str(chain)
 }
 
 /// generates a plot path from the given path

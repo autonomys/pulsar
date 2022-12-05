@@ -1,10 +1,14 @@
 use std::{
     fs::{create_dir, File},
     path::PathBuf,
+    str::FromStr,
 };
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::{
+    eyre::{eyre, Result},
+    Report,
+};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -20,11 +24,11 @@ use subspace_sdk::{
 #[derive(Deserialize, Serialize, Builder)]
 #[builder(pattern = "owned", build_fn(name = "_build"))]
 pub(crate) struct Config {
+    pub(crate) chain: ChainConfig,
     #[builder(setter(into))]
     pub(crate) farmer: FarmerConfig,
     #[builder(setter(into))]
     pub(crate) node: NodeConfig,
-    pub(crate) chain: ChainConfig,
 }
 
 generate_builder!(Config);
@@ -59,6 +63,19 @@ impl std::fmt::Display for ChainConfig {
         match *self {
             ChainConfig::Dev => write!(f, "dev"),
             ChainConfig::Gemini3a => write!(f, "gemini-3a"),
+        }
+    }
+}
+
+impl FromStr for ChainConfig {
+    type Err = Report;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let chain_list = vec!["dev", "gemini-3a"];
+        match s {
+            "dev" => Ok(ChainConfig::Dev),
+            "gemini-3a" => Ok(ChainConfig::Gemini3a),
+            _ => Err(eyre!("given chain: `{s}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.")),
         }
     }
 }
