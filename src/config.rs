@@ -193,7 +193,7 @@ mod test {
                 ByteSize::gb(1),
                 CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
             ),
-            node: NodeConfig::gemini_3a("node".into(), "serialiable-node".to_owned()),
+            node: NodeConfig::gemini_3a("node".into(), "serializable-node".to_owned()),
             chain: ChainConfig::Gemini3a,
         })
         .unwrap();
