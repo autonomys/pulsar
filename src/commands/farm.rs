@@ -5,6 +5,7 @@ use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
+use subspace_sdk::node::SyncStatus;
 use tracing::instrument;
 
 use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
@@ -58,13 +59,47 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     println!("Node started successfully!");
 
-    // sync node as a background task
-    tokio::spawn({
-        let node_clone = node.clone();
-        async move {
-            let _ = node_clone.sync().await;
+    if !is_verbose {
+        let syncing_progress = node
+            .subscribe_syncing_progress()
+            .await
+            .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
+            .then({
+                let node = node.clone();
+                move |status| {
+                    let node = node.clone();
+                    async move {
+                        let target = match status {
+                            SyncStatus::Importing { target } => target as u64,
+                            SyncStatus::Downloading { target } => target as _,
+                        };
+                        let current_block = node
+                            .get_info()
+                            .await
+                            .map_err(|err| eyre!("Failed to get node info: {err}"))?
+                            .best_block
+                            .1 as u64;
+                        let target = target.max(current_block + 1);
+                        Ok::<_, color_eyre::Report>((target, current_block))
+                    }
+                }
+            });
+        let mut syncing_progress = Box::pin(syncing_progress);
+        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
+        let syncing_progress_bar = syncing_progress_bar(current_block as _, target_block);
+
+        while let Some(result) = syncing_progress.next().await {
+            let (target_block, current_block) = result?;
+            syncing_progress_bar.set_position(current_block);
+            syncing_progress_bar.set_length(target_block);
         }
-    });
+
+        syncing_progress_bar.finish_with_message("Syncing is done!");
+    } else {
+        node.sync()
+            .await
+            .map_err(|err| eyre!("Node syncing failed: {err}"))?;
+    }
 
     create_summary_file(farmer_config.plot_size).await?;
 
@@ -163,5 +198,21 @@ fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     );
     pb.set_message("plotting");
 
+    pb
+}
+
+/// nice looking progress bar for the syncing :)
+fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
+    let pb = ProgressBar::new(total_blocks);
+    pb.set_style(
+        ProgressStyle::with_template(
+            "{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+      ({pos}/{len}) {blocks_per_second}, {msg}, ETA: {eta}",
+        )
+        .unwrap()
+        .progress_chars("=> "),
+    );
+    pb.set_message("syncing");
+    pb.set_position(current_block);
     pb
 }
