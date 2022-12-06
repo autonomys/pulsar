@@ -161,21 +161,30 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
         // solution subscriber
         tokio::spawn({
-            let farmer_clone = farmer.clone();
+            let farmer = farmer.clone();
 
-            let farmed_blocks = get_farmed_block_count()
-                .await
-                .expect("couldn't read farmed blocks count from summary");
-            let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
             async move {
-                for plot in farmer_clone.iter_plots().await {
+                let farmed_blocks = get_farmed_block_count()
+                    .await
+                    .expect("couldn't read farmed blocks count from summary");
+                let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+                for plot in farmer.iter_plots().await {
                     plot.subscribe_new_solutions()
                         .await
-                        .for_each(|_solution| async {
-                            let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                            let _ = update_summary(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
-                            if is_initial_progress_finished.load(Ordering::Relaxed) {
-                                println!("You have farmed {total_farmed} block(s) in total!");
+                        .for_each(|solutions| {
+                            let farmed_block_count = &farmed_block_count;
+                            let is_initial_progress_finished = &is_initial_progress_finished;
+                            async move {
+                                if !solutions.solutions.is_empty() {
+                                    let total_farmed =
+                                        farmed_block_count.fetch_add(1, Ordering::Relaxed);
+                                    let _ = update_summary(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
+                                    if is_initial_progress_finished.load(Ordering::Relaxed) {
+                                        println!(
+                                            "You have farmed {total_farmed} block(s) in total!"
+                                        );
+                                    }
+                                }
                             }
                         })
                         .await
