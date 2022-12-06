@@ -34,7 +34,7 @@ pub(crate) struct Config {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
-    #[serde(default, flatten)]
+    #[serde(default)]
     pub(crate) node: SdkNodeConfig,
 }
 
@@ -84,7 +84,7 @@ pub(crate) struct FarmerConfig {
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
     pub(crate) cache: CacheDescription,
-    #[serde(default, flatten)]
+    #[serde(default)]
     pub(crate) farmer: SdkFarmerConfig,
 }
 
