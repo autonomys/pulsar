@@ -101,31 +101,163 @@
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::{create_dir, File},
     path::PathBuf,
+    str::FromStr,
 };
 
 <span class="kw">use </span>bytesize::ByteSize;
-<span class="kw">use </span>color_eyre::eyre::{eyre, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>libp2p_core::Multiaddr;
+<span class="kw">use </span>color_eyre::{
+    eyre::{eyre, <span class="prelude-ty">Result</span>},
+    Report,
+};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span>subspace_sdk::{
-    farmer::CacheDescription,
-    node::{Role, RpcMethods},
+    farmer::{<span class="self">self</span>, CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer},
+    node::{<span class="self">self</span>, Config <span class="kw">as </span>SdkNodeConfig, Node},
     PublicKey,
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::utils::chain_parser;
+<span class="doccomment">/// defaults for the user config file
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(<span class="number">1</span>);
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(<span class="number">32</span>);
 
 <span class="doccomment">/// structure of the config toml file
 </span><span class="attr">#[derive(Deserialize, Serialize)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Config {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) chain: ChainConfig,
     <span class="kw">pub</span>(<span class="kw">crate</span>) farmer: FarmerConfig,
     <span class="kw">pub</span>(<span class="kw">crate</span>) node: NodeConfig,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) chains: ChainConfig,
+}
+
+<span class="doccomment">/// structure for the `farmer` field of the config toml file
+</span><span class="attr">#[derive(Deserialize, Serialize)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeConfig {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) directory: PathBuf,
+    <span class="attr">#[serde(default, flatten)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) node: SdkNodeConfig,
+}
+
+<span class="kw">impl </span>NodeConfig {
+    <span class="kw">pub fn </span>gemini_3a(directory: PathBuf, node_name: String) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            directory,
+            node: Node::builder()
+                .role(node::Role::Authority)
+                .network(
+                    node::NetworkBuilder::new()
+                        .listen_addresses(<span class="macro">vec!</span>[
+                            <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().unwrap(),
+                            <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().unwrap(),
+                        ])
+                        .name(node_name)
+                        .enable_mdns(<span class="bool-val">true</span>),
+                )
+                .rpc(
+                    node::RpcBuilder::new()
+                        .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().unwrap())
+                        .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().unwrap())
+                        .cors(<span class="macro">vec!</span>[
+                            <span class="string">&quot;http://localhost:*&quot;</span>.to_owned(),
+                            <span class="string">&quot;http://127.0.0.1:*&quot;</span>.to_owned(),
+                            <span class="string">&quot;https://localhost:*&quot;</span>.to_owned(),
+                            <span class="string">&quot;https://127.0.0.1:*&quot;</span>.to_owned(),
+                            <span class="string">&quot;https://polkadot.js.org&quot;</span>.to_owned(),
+                        ]),
+                )
+                .dsn(node::DsnBuilder::new().listen_addresses(<span class="macro">vec!</span>[
+                    <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().unwrap(),
+                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().unwrap(),
+                ]))
+                .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
+                .offchain_worker(node::OffchainWorkerBuilder::new().enabled(<span class="bool-val">true</span>))
+                .configuration(),
+        }
+    }
 }
 
 <span class="doccomment">/// structure for the `farmer` field of the config toml file
@@ -135,29 +267,59 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) plot_directory: PathBuf,
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) opencl: bool,
+    <span class="attr">#[serde(default)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) opencl: bool,
     <span class="kw">pub</span>(<span class="kw">crate</span>) cache: CacheDescription,
+    <span class="attr">#[serde(default, flatten)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) farmer: SdkFarmerConfig,
 }
 
-<span class="doccomment">/// structure for the `node` field of the config toml file
-</span><span class="attr">#[derive(Deserialize, Serialize)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeConfig {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) chain: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) execution: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) blocks_pruning: u32,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) state_pruning: u32,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) role: Role,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) name: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) listen_addresses: Vec&lt;Multiaddr&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) rpc_method: RpcMethods,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) force_authoring: bool,
+<span class="kw">impl </span>FarmerConfig {
+    <span class="kw">pub fn </span>gemini_3a(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            address,
+            plot_directory,
+            plot_size,
+            opencl: <span class="bool-val">false</span>,
+            cache,
+            farmer: Farmer::builder()
+                .dsn(farmer::DsnBuilder::new().listen_on(<span class="macro">vec!</span>[
+                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30533&quot;</span>.parse().expect(<span class="string">&quot;Valid multiaddr&quot;</span>),
+                ]))
+                .configuration(),
+        }
+    }
 }
 
-<span class="doccomment">/// structure for the `chain` field of the config toml file
-</span><span class="attr">#[derive(Deserialize, Serialize)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ChainConfig {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) dev: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) gemini_3a: String,
+<span class="attr">#[derive(Deserialize, Serialize, Default)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
+    <span class="attr">#[default]
+    </span>Gemini3a,
+}
+
+<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ChainConfig {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            ChainConfig::Gemini3a =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3a&quot;</span>),
+        }
+    }
+}
+
+<span class="kw">impl </span>FromStr <span class="kw">for </span>ChainConfig {
+    <span class="kw">type </span><span class="prelude-val">Err </span>= Report;
+
+    <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
+        <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3a&quot;</span>];
+        <span class="kw">match </span>s {
+            <span class="string">&quot;gemini-3a&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3a),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.&quot;</span>)),
+        }
+    }
 }
 
 <span class="doccomment">/// Creates a config file at the location
@@ -192,13 +354,13 @@
     <span class="kw">let </span>config = parse_config()<span class="question-mark">?</span>;
 
     <span class="comment">// validity checks
-    </span><span class="kw">if </span>config.farmer.plot_size &lt; ByteSize::gb(<span class="number">1</span>) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;plot size should be bigger than 1GB!&quot;</span>));
+    </span><span class="kw">if </span>config.farmer.plot_size &lt; MIN_PLOT_SIZE {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;plot size should be bigger than {MIN_PLOT_SIZE}!&quot;</span>));
     }
-    <span class="kw">if </span>chain_parser(<span class="kw-2">&amp;</span>config.node.chain).is_err() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;chain is not recognized!&quot;</span>));
-    }
-    <span class="kw">if </span>config.node.name.trim().is_empty() {
+    <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>name) = config.node.node.network.name <span class="kw">else </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;Node name was `None`&quot;</span>));
+    };
+    <span class="kw">if </span>name.trim().is_empty() {
         <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;Node nome is empty&quot;</span>));
     }
 

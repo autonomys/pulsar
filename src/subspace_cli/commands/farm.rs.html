@@ -218,9 +218,6 @@
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -228,36 +225,24 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>indicatif::{ProgressBar, ProgressStyle};
 <span class="kw">use </span>single_instance::SingleInstance;
-<span class="kw">use </span>subspace_sdk::node::{BlocksPruning, Constraints, NetworkBuilder, PruningMode, RpcBuilder};
+<span class="kw">use </span>subspace_sdk::node::SyncStatus;
 <span class="kw">use </span>tracing::instrument;
 
-<span class="kw">use </span>subspace_sdk::{
-    chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
-};
+<span class="kw">use </span>subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 
-<span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, NodeConfig};
+<span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, ChainConfig, Config};
 <span class="kw">use </span><span class="kw">crate</span>::summary::{create_summary_file, get_farmed_block_count, update_summary};
-<span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, node_directory_getter};
+<span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, raise_fd_limit};
 
 <span class="doccomment">/// allows us to detect multiple instances of the farmer and act on it
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SINGLE_INSTANCE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;.subspaceFarmer&quot;</span>;
-
-<span class="doccomment">/// necessary information for starting a farming instance
-</span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FarmingArgs {
-    reward_address: PublicKey,
-    node: Node,
-    plot: PlotDescription,
-    cache: CacheDescription,
-}
 
 <span class="doccomment">/// implementation of the `farm` command
 ///
 /// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
 ///
 /// first, checks for an existing farmer instance
-/// then prepares the necessary arguments for the farming [`FarmingArgs`]
-/// then starts the farming instance,
+/// then starts the farming and node instances,
 /// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
 </span><span class="attr">#[instrument]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>farm(is_verbose: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(Farmer, Node, SingleInstance)&gt; {
@@ -272,15 +257,88 @@
             <span class="string">&quot;It seems like there is already a farming instance running. Aborting...&quot;</span>,
         ));
     }
+    <span class="comment">// raise file limit
+    </span>raise_fd_limit();
 
     <span class="macro">println!</span>(<span class="string">&quot;Starting node ... (this might take up to couple of minutes)&quot;</span>);
-    <span class="kw">let </span>args = prepare_farming().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>Config {
+        chain,
+        farmer: farmer_config,
+        node: node_config,
+    } = validate_config()<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>chain = <span class="kw">match </span>chain {
+        ChainConfig::Gemini3a =&gt; {
+            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>)
+        }
+    };
+
+    <span class="kw">let </span>node = node_config
+        .node
+        .build(node_config.directory, chain)
+        .<span class="kw">await
+        </span>.expect(<span class="string">&quot;error building the node&quot;</span>);
+
     <span class="macro">println!</span>(<span class="string">&quot;Node started successfully!&quot;</span>);
 
-    create_summary_file(args.plot.space_pledged).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">if </span>!is_verbose {
+        <span class="kw">let </span>syncing_progress = node
+            .subscribe_syncing_progress()
+            .<span class="kw">await
+            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to subscribe to node syncing: {err}&quot;</span>))<span class="question-mark">?
+            </span>.then({
+                <span class="kw">let </span>node = node.clone();
+                <span class="kw">move </span>|status| {
+                    <span class="kw">let </span>node = node.clone();
+                    <span class="kw">async move </span>{
+                        <span class="kw">let </span>target = <span class="kw">match </span>status {
+                            SyncStatus::Importing { target } =&gt; target <span class="kw">as </span>u64,
+                            SyncStatus::Downloading { target } =&gt; target <span class="kw">as _</span>,
+                        };
+                        <span class="kw">let </span>current_block = node
+                            .get_info()
+                            .<span class="kw">await
+                            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to get node info: {err}&quot;</span>))<span class="question-mark">?
+                            </span>.best_block
+                            .<span class="number">1 </span><span class="kw">as </span>u64;
+                        <span class="kw">let </span>target = target.max(current_block + <span class="number">1</span>);
+                        <span class="prelude-val">Ok</span>::&lt;<span class="kw">_</span>, color_eyre::Report&gt;((target, current_block))
+                    }
+                }
+            });
+        <span class="kw">let </span><span class="kw-2">mut </span>syncing_progress = Box::pin(syncing_progress);
+        <span class="kw">let </span>(target_block, current_block) = syncing_progress.next().<span class="kw">await</span>.unwrap()<span class="question-mark">?</span>;
+        <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block <span class="kw">as _</span>, target_block);
+
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(result) = syncing_progress.next().<span class="kw">await </span>{
+            <span class="kw">let </span>(target_block, current_block) = result<span class="question-mark">?</span>;
+            syncing_progress_bar.set_position(current_block);
+            syncing_progress_bar.set_length(target_block);
+        }
+
+        syncing_progress_bar.finish_with_message(<span class="string">&quot;Syncing is done!&quot;</span>);
+    } <span class="kw">else </span>{
+        node.sync()
+            .<span class="kw">await
+            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Node syncing failed: {err}&quot;</span>))<span class="question-mark">?</span>;
+    }
+
+    create_summary_file(farmer_config.plot_size).<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="macro">println!</span>(<span class="string">&quot;Starting farmer ...&quot;</span>);
-    <span class="kw">let </span>(farmer, node) = start_farming(args).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>farmer = farmer_config
+        .farmer
+        .build(
+            farmer_config.address,
+            node.clone(),
+            <span class="kw-2">&amp;</span>[PlotDescription::new(
+                farmer_config.plot_directory,
+                farmer_config.plot_size,
+            )],
+            farmer_config.cache,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+
     <span class="macro">println!</span>(<span class="string">&quot;Farmer started successfully!&quot;</span>);
 
     <span class="kw">if </span>!is_verbose {
@@ -349,86 +407,6 @@
     <span class="prelude-val">Ok</span>((farmer, node, instance))
 }
 
-<span class="doccomment">/// Starts the farming instance
-</span><span class="attr">#[instrument]
-</span><span class="kw">async fn </span>start_farming(farming_args: FarmingArgs) -&gt; <span class="prelude-ty">Result</span>&lt;(Farmer, Node)&gt; {
-    <span class="kw">let </span>FarmingArgs {
-        reward_address,
-        node,
-        plot,
-        cache,
-    } = farming_args;
-
-    <span class="prelude-val">Ok</span>((
-        Farmer::builder()
-            .build(reward_address, node.clone(), <span class="kw-2">&amp;</span>[plot], cache)
-            .<span class="kw">await</span><span class="question-mark">?</span>,
-        node,
-    ))
-}
-
-<span class="doccomment">/// Prepares [`FarmingArgs`]
-///
-/// parses the config and gets the necessary information for both node and farmer
-/// then starts a node instance
-/// and returns a [`FarmingArgs`]
-</span><span class="attr">#[instrument]
-</span><span class="kw">async fn </span>prepare_farming() -&gt; <span class="prelude-ty">Result</span>&lt;FarmingArgs&gt; {
-    <span class="kw">let </span>config = validate_config()<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>node_config = config.node;
-    <span class="kw">let </span>NodeConfig {
-        chain,
-        execution: <span class="kw">_</span>,
-        blocks_pruning,
-        state_pruning,
-        role,
-        name,
-        listen_addresses,
-        rpc_method,
-        force_authoring,
-    } = node_config;
-
-    <span class="kw">let </span>chain = <span class="kw">match </span>chain.as_str() {
-        <span class="string">&quot;gemini-3a&quot; </span>=&gt; {
-            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>)
-        }
-        <span class="string">&quot;dev&quot; </span>=&gt; chain_spec::dev_config().expect(<span class="string">&quot;cannot extract the dev chain spec from SDK&quot;</span>),
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;there are no other valid chain-specs at the moment&quot;</span>),
-    };
-    <span class="kw">let </span>state_pruning = <span class="prelude-val">Some</span>(PruningMode::Constrained(Constraints {
-        max_blocks: <span class="prelude-val">Some</span>(state_pruning),
-        max_mem: <span class="prelude-val">None</span>,
-    }));
-    <span class="kw">let </span>blocks_pruning = BlocksPruning::Some(blocks_pruning);
-    <span class="kw">let </span>node_directory = node_directory_getter();
-
-    <span class="kw">let </span>node: Node = Node::builder()
-        .network(
-            NetworkBuilder::new()
-                .name(name)
-                .listen_addresses(listen_addresses),
-        )
-        .state_pruning(state_pruning)
-        .blocks_pruning(blocks_pruning)
-        .rpc(RpcBuilder::new().methods(rpc_method))
-        .force_authoring(force_authoring)
-        .role(role)
-        .build(node_directory, chain)
-        .<span class="kw">await
-        </span>.expect(<span class="string">&quot;error building the node&quot;</span>);
-
-    <span class="prelude-val">Ok</span>(FarmingArgs {
-        reward_address: config.farmer.address,
-        plot: PlotDescription {
-            directory: config.farmer.plot_directory,
-            space_pledged: config.farmer.plot_size,
-        },
-        node,
-        cache: config.farmer.cache,
-    })
-}
-
 <span class="doccomment">/// nice looking progress bar for the initial plotting :)
 </span><span class="kw">fn </span>plotting_progress_bar(total_size: u64) -&gt; ProgressBar {
     <span class="kw">let </span>pb = ProgressBar::new(total_size);
@@ -442,6 +420,22 @@
     );
     pb.set_message(<span class="string">&quot;plotting&quot;</span>);
 
+    pb
+}
+
+<span class="doccomment">/// nice looking progress bar for the syncing :)
+</span><span class="kw">fn </span>syncing_progress_bar(current_block: u64, total_blocks: u64) -&gt; ProgressBar {
+    <span class="kw">let </span>pb = ProgressBar::new(total_blocks);
+    pb.set_style(
+        ProgressStyle::with_template(
+            <span class="string">&quot;{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+      ({pos}/{len}) {blocks_per_second}, {msg}, ETA: {eta}&quot;</span>,
+        )
+        .unwrap()
+        .progress_chars(<span class="string">&quot;=&gt; &quot;</span>),
+    );
+    pb.set_message(<span class="string">&quot;syncing&quot;</span>);
+    pb.set_position(current_block);
     pb
 }
 </code></pre></div>

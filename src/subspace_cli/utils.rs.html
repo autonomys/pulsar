@@ -306,6 +306,15 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
@@ -323,8 +332,10 @@
 
 <span class="kw">use </span>subspace_sdk::PublicKey;
 
+<span class="kw">use </span><span class="kw">crate</span>::config::MIN_PLOT_SIZE;
+
 <span class="doccomment">/// for how long a log file should be valid
-</span><span class="kw">const </span>KEEP_LAST_N_DAYS: usize = <span class="number">7</span>;
+</span><span class="kw">const </span>KEEP_LAST_N_FILE: usize = <span class="number">7</span>;
 
 <span class="doccomment">/// &lt;3
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_ascii_art() {
@@ -415,23 +426,10 @@
     <span class="kw">let </span><span class="prelude-val">Ok</span>(size) = size.parse::&lt;ByteSize&gt;() <span class="kw">else </span>{
          <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not parse the value!&quot;</span>));
     };
-    <span class="kw">if </span>size &lt; ByteSize::gb(<span class="number">1</span>) {
+    <span class="kw">if </span>size &lt; MIN_PLOT_SIZE {
         <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;size could not be smaller than 1GB&quot;</span>))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
-    }
-}
-
-<span class="doccomment">/// user can only specify a valid chain
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>chain_parser(chain: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-    <span class="comment">// TODO: instead of a hardcoded list, get the chain names from telemetry
-    </span><span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;dev&quot;</span>, <span class="string">&quot;gemini-3a&quot;</span>];
-    <span class="kw">if </span>chain_list.contains(<span class="kw-2">&amp;</span>chain) {
-        <span class="prelude-val">Ok</span>(chain.to_string())
-    } <span class="kw">else </span>{
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
-            <span class="string">&quot;given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.&quot;
-        </span>))
     }
 }
 
@@ -479,14 +477,33 @@
     )
 }
 
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>raise_fd_limit() {
+    <span class="kw">match </span>std::panic::catch_unwind(fdlimit::raise_fd_limit) {
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(limit)) =&gt; {
+            <span class="macro">tracing::info!</span>(<span class="string">&quot;Increase file limit from soft to hard (limit is {limit})&quot;</span>)
+        }
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="macro">tracing::debug!</span>(<span class="string">&quot;Failed to increase file limit&quot;</span>),
+        <span class="prelude-val">Err</span>(err) =&gt; {
+            <span class="kw">let </span>err = <span class="kw">if let </span><span class="prelude-val">Some</span>(err) = err.downcast_ref::&lt;<span class="kw-2">&amp;</span>str&gt;() {
+                <span class="kw-2">*</span>err
+            } <span class="kw">else if let </span><span class="prelude-val">Some</span>(err) = err.downcast_ref::&lt;String&gt;() {
+                err
+            } <span class="kw">else </span>{
+                <span class="macro">unreachable!</span>(<span class="string">&quot;Should be unreachable as `fdlimit` uses panic macro, which should return either `&amp;str` or `String`.&quot;</span>)
+            };
+            <span class="macro">tracing::warn!</span>(<span class="string">&quot;Failed to increase file limit: {err}&quot;</span>)
+        }
+    }
+}
+
 <span class="doccomment">/// install a logger for the application
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>install_tracing(is_verbose: bool) {
     <span class="kw">let </span>log_dir = custom_log_dir();
     <span class="kw">let _ </span>= create_dir_all(<span class="kw-2">&amp;</span>log_dir);
 
     <span class="kw">let </span>file_appender = RollingFileAppender::builder()
-        .max_log_files(KEEP_LAST_N_DAYS)
-        .rotation(Rotation::DAILY)
+        .max_log_files(KEEP_LAST_N_FILE)
+        .rotation(Rotation::HOURLY)
         .filename_prefix(<span class="string">&quot;subspace-cli.log&quot;</span>)
         .build(log_dir)
         .expect(<span class="string">&quot;building should always succeed&quot;</span>);
@@ -497,7 +514,7 @@
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
             .add_directive(
-                <span class="string">&quot;subspace_cli=info&quot;
+                <span class="string">&quot;frame_executive=off&quot;
                     </span>.parse()
                     .expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
             )
@@ -531,6 +548,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::config::ChainConfig;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>node_name_checker() {
@@ -547,15 +565,15 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>size_checker() {
-        <span class="macro">assert!</span>(size_parser(<span class="string">&quot;800MB&quot;</span>).is_err());
+        <span class="macro">assert!</span>(size_parser(<span class="string">&quot;800MB&quot;</span>).is_ok());
         <span class="macro">assert!</span>(size_parser(<span class="string">&quot;103gjie&quot;</span>).is_err());
         <span class="macro">assert!</span>(size_parser(<span class="string">&quot;12GB&quot;</span>).is_ok());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>chain_checker() {
-        <span class="macro">assert!</span>(chain_parser(<span class="string">&quot;dev&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(chain_parser(<span class="string">&quot;devv&quot;</span>).is_err());
+        <span class="macro">assert!</span>(ChainConfig::from_str(<span class="string">&quot;gemini-3a&quot;</span>).is_ok());
+        <span class="macro">assert!</span>(ChainConfig::from_str(<span class="string">&quot;devv&quot;</span>).is_err());
     }
 
     <span class="attr">#[test]
