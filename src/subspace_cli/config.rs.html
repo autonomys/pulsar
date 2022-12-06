@@ -215,7 +215,7 @@
 </span><span class="attr">#[derive(Deserialize, Serialize)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) directory: PathBuf,
-    <span class="attr">#[serde(default, flatten)]
+    <span class="attr">#[serde(default)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) node: SdkNodeConfig,
 }
 
@@ -265,7 +265,7 @@
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
     <span class="kw">pub</span>(<span class="kw">crate</span>) cache: CacheDescription,
-    <span class="attr">#[serde(default, flatten)]
+    <span class="attr">#[serde(default)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) farmer: SdkFarmerConfig,
 }
 
