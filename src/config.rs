@@ -83,8 +83,6 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
-    #[serde(default)]
-    pub(crate) opencl: bool,
     pub(crate) cache: CacheDescription,
     #[serde(default, flatten)]
     pub(crate) farmer: SdkFarmerConfig,
@@ -101,7 +99,6 @@ impl FarmerConfig {
             address,
             plot_directory,
             plot_size,
-            opencl: false,
             cache,
             farmer: Farmer::builder()
                 .dsn(farmer::DsnBuilder::new().listen_on(vec![
