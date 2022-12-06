@@ -28,6 +28,7 @@ pub(crate) async fn wipe() -> Result<()> {
     };
 
     let _ = plot.wipe().await;
+    let _ = config.farmer.cache.wipe().await;
     println!("Farmer is wiped!");
 
     delete_summary().await;
