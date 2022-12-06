@@ -5,36 +5,24 @@ use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::{BlocksPruning, Constraints, NetworkBuilder, PruningMode, RpcBuilder};
+use subspace_sdk::node::SyncStatus;
 use tracing::instrument;
 
-use subspace_sdk::{
-    chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
-};
+use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 
-use crate::config::{validate_config, NodeConfig};
+use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
-use crate::utils::{install_tracing, node_directory_getter};
+use crate::utils::{install_tracing, raise_fd_limit};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
-
-/// necessary information for starting a farming instance
-#[derive(Debug)]
-pub(crate) struct FarmingArgs {
-    reward_address: PublicKey,
-    node: Node,
-    plot: PlotDescription,
-    cache: CacheDescription,
-}
 
 /// implementation of the `farm` command
 ///
 /// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
 ///
 /// first, checks for an existing farmer instance
-/// then prepares the necessary arguments for the farming [`FarmingArgs`]
-/// then starts the farming instance,
+/// then starts the farming and node instances,
 /// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
@@ -49,15 +37,88 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
             "It seems like there is already a farming instance running. Aborting...",
         ));
     }
+    // raise file limit
+    raise_fd_limit();
 
     println!("Starting node ... (this might take up to couple of minutes)");
-    let args = prepare_farming().await?;
+    let Config {
+        chain,
+        farmer: farmer_config,
+        node: node_config,
+    } = validate_config()?;
+
+    let chain = match chain {
+        ChainConfig::Gemini3a => {
+            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
+        }
+    };
+
+    let node = node_config
+        .node
+        .build(node_config.directory, chain)
+        .await
+        .expect("error building the node");
+
     println!("Node started successfully!");
 
-    create_summary_file(args.plot.space_pledged).await?;
+    if !is_verbose {
+        let syncing_progress = node
+            .subscribe_syncing_progress()
+            .await
+            .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
+            .then({
+                let node = node.clone();
+                move |status| {
+                    let node = node.clone();
+                    async move {
+                        let target = match status {
+                            SyncStatus::Importing { target } => target as u64,
+                            SyncStatus::Downloading { target } => target as _,
+                        };
+                        let current_block = node
+                            .get_info()
+                            .await
+                            .map_err(|err| eyre!("Failed to get node info: {err}"))?
+                            .best_block
+                            .1 as u64;
+                        let target = target.max(current_block + 1);
+                        Ok::<_, color_eyre::Report>((target, current_block))
+                    }
+                }
+            });
+        let mut syncing_progress = Box::pin(syncing_progress);
+        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
+        let syncing_progress_bar = syncing_progress_bar(current_block as _, target_block);
+
+        while let Some(result) = syncing_progress.next().await {
+            let (target_block, current_block) = result?;
+            syncing_progress_bar.set_position(current_block);
+            syncing_progress_bar.set_length(target_block);
+        }
+
+        syncing_progress_bar.finish_with_message("Syncing is done!");
+    } else {
+        node.sync()
+            .await
+            .map_err(|err| eyre!("Node syncing failed: {err}"))?;
+    }
+
+    create_summary_file(farmer_config.plot_size).await?;
 
     println!("Starting farmer ...");
-    let (farmer, node) = start_farming(args).await?;
+    let farmer = farmer_config
+        .farmer
+        .build(
+            farmer_config.address,
+            node.clone(),
+            &[PlotDescription::new(
+                farmer_config.plot_directory,
+                farmer_config.plot_size,
+            )],
+            farmer_config.cache,
+        )
+        .await?;
+
     println!("Farmer started successfully!");
 
     if !is_verbose {
@@ -126,86 +187,6 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     Ok((farmer, node, instance))
 }
 
-/// Starts the farming instance
-#[instrument]
-async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
-    let FarmingArgs {
-        reward_address,
-        node,
-        plot,
-        cache,
-    } = farming_args;
-
-    Ok((
-        Farmer::builder()
-            .build(reward_address, node.clone(), &[plot], cache)
-            .await?,
-        node,
-    ))
-}
-
-/// Prepares [`FarmingArgs`]
-///
-/// parses the config and gets the necessary information for both node and farmer
-/// then starts a node instance
-/// and returns a [`FarmingArgs`]
-#[instrument]
-async fn prepare_farming() -> Result<FarmingArgs> {
-    let config = validate_config()?;
-
-    let node_config = config.node;
-    let NodeConfig {
-        chain,
-        execution: _,
-        blocks_pruning,
-        state_pruning,
-        role,
-        name,
-        listen_addresses,
-        rpc_method,
-        force_authoring,
-    } = node_config;
-
-    let chain = match chain.as_str() {
-        "gemini-3a" => {
-            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
-        }
-        "dev" => chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
-        _ => unreachable!("there are no other valid chain-specs at the moment"),
-    };
-    let state_pruning = Some(PruningMode::Constrained(Constraints {
-        max_blocks: Some(state_pruning),
-        max_mem: None,
-    }));
-    let blocks_pruning = BlocksPruning::Some(blocks_pruning);
-    let node_directory = node_directory_getter();
-
-    let node: Node = Node::builder()
-        .network(
-            NetworkBuilder::new()
-                .name(name)
-                .listen_addresses(listen_addresses),
-        )
-        .state_pruning(state_pruning)
-        .blocks_pruning(blocks_pruning)
-        .rpc(RpcBuilder::new().methods(rpc_method))
-        .force_authoring(force_authoring)
-        .role(role)
-        .build(node_directory, chain)
-        .await
-        .expect("error building the node");
-
-    Ok(FarmingArgs {
-        reward_address: config.farmer.address,
-        plot: PlotDescription {
-            directory: config.farmer.plot_directory,
-            space_pledged: config.farmer.plot_size,
-        },
-        node,
-        cache: config.farmer.cache,
-    })
-}
-
 /// nice looking progress bar for the initial plotting :)
 fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
@@ -219,5 +200,21 @@ fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     );
     pb.set_message("plotting");
 
+    pb
+}
+
+/// nice looking progress bar for the syncing :)
+fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
+    let pb = ProgressBar::new(total_blocks);
+    pb.set_style(
+        ProgressStyle::with_template(
+            "{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+      ({pos}/{len}) {blocks_per_second}, {msg}, ETA: {eta}",
+        )
+        .unwrap()
+        .progress_chars("=> "),
+    );
+    pb.set_message("syncing");
+    pb.set_position(current_block);
     pb
 }

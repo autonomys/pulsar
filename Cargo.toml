@@ -9,7 +9,9 @@ bytesize = "1.1.0"
 bytesize-serde = "0.2.0"
 clap = { version = "4.0.18", features = ["derive"] }
 color-eyre = "0.6.2"
+derive_builder = "0.12.0"
 dirs = "4.0.0"
+fdlimit = "0.2"
 futures = "0.3.25"
 indicatif = "0.17.1"
 libp2p-core = "0.37.0"
@@ -26,7 +28,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1.2.3"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "dc78615fb530129f659c08952ee2de0c74d2def8" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "46e6e3c175bc9d69511dfc082fe096ee5fcbb33c" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies

@@ -2,6 +2,7 @@
 //! brings `farmer` and `node` together
 
 #![deny(missing_docs)]
+#![feature(concat_idents)]
 
 mod commands;
 mod config;

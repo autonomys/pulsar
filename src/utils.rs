@@ -15,8 +15,10 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 use subspace_sdk::PublicKey;
 
+use crate::config::MIN_PLOT_SIZE;
+
 /// for how long a log file should be valid
-const KEEP_LAST_N_DAYS: usize = 7;
+const KEEP_LAST_N_FILE: usize = 7;
 
 /// <3
 pub(crate) fn print_ascii_art() {
@@ -107,23 +109,10 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
          return Err(eyre!("could not parse the value!"));
     };
-    if size < ByteSize::gb(1) {
+    if size < MIN_PLOT_SIZE {
         Err(eyre!("size could not be smaller than 1GB"))
     } else {
         Ok(size)
-    }
-}
-
-/// user can only specify a valid chain
-pub(crate) fn chain_parser(chain: &str) -> Result<String> {
-    // TODO: instead of a hardcoded list, get the chain names from telemetry
-    let chain_list = vec!["dev", "gemini-3a"];
-    if chain_list.contains(&chain) {
-        Ok(chain.to_string())
-    } else {
-        Err(eyre!(
-            "given chain: `{chain}` is not recognized! Please enter a valid chain from this list: {chain_list:?}."
-        ))
     }
 }
 
@@ -171,14 +160,33 @@ pub(crate) fn support_message() -> String {
     )
 }
 
+pub(crate) fn raise_fd_limit() {
+    match std::panic::catch_unwind(fdlimit::raise_fd_limit) {
+        Ok(Some(limit)) => {
+            tracing::info!("Increase file limit from soft to hard (limit is {limit})")
+        }
+        Ok(None) => tracing::debug!("Failed to increase file limit"),
+        Err(err) => {
+            let err = if let Some(err) = err.downcast_ref::<&str>() {
+                *err
+            } else if let Some(err) = err.downcast_ref::<String>() {
+                err
+            } else {
+                unreachable!("Should be unreachable as `fdlimit` uses panic macro, which should return either `&str` or `String`.")
+            };
+            tracing::warn!("Failed to increase file limit: {err}")
+        }
+    }
+}
+
 /// install a logger for the application
 pub(crate) fn install_tracing(is_verbose: bool) {
     let log_dir = custom_log_dir();
     let _ = create_dir_all(&log_dir);
 
     let file_appender = RollingFileAppender::builder()
-        .max_log_files(KEEP_LAST_N_DAYS)
-        .rotation(Rotation::DAILY)
+        .max_log_files(KEEP_LAST_N_FILE)
+        .rotation(Rotation::HOURLY)
         .filename_prefix("subspace-cli.log")
         .build(log_dir)
         .expect("building should always succeed");
@@ -189,7 +197,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
             .add_directive(
-                "subspace_cli=info"
+                "frame_executive=off"
                     .parse()
                     .expect("hardcoded value is true"),
             )
@@ -223,6 +231,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ChainConfig;
 
     #[test]
     fn node_name_checker() {
@@ -239,15 +248,15 @@ mod tests {
 
     #[test]
     fn size_checker() {
-        assert!(size_parser("800MB").is_err());
+        assert!(size_parser("800MB").is_ok());
         assert!(size_parser("103gjie").is_err());
         assert!(size_parser("12GB").is_ok());
     }
 
     #[test]
     fn chain_checker() {
-        assert!(chain_parser("dev").is_ok());
-        assert!(chain_parser("devv").is_err());
+        assert!(ChainConfig::from_str("gemini-3a").is_ok());
+        assert!(ChainConfig::from_str("devv").is_err());
     }
 
     #[test]
