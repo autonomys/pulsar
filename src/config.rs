@@ -18,6 +18,10 @@ use subspace_sdk::{
     PublicKey,
 };
 
+/// defaults for the user config file
+pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
+pub(crate) const MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(32);
+
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
 pub(crate) struct Config {
@@ -166,8 +170,8 @@ pub(crate) fn validate_config() -> Result<Config> {
     let config = parse_config()?;
 
     // validity checks
-    if config.farmer.plot_size < ByteSize::gb(1) {
-        return Err(eyre!("plot size should be bigger than 1GB!"));
+    if config.farmer.plot_size < MIN_PLOT_SIZE {
+        return Err(eyre!("plot size should be bigger than {MIN_PLOT_SIZE}!"));
     }
     let Some(ref name) = config.node.node.network.name else {
         return Err(eyre!("Node name was `None`"));

@@ -15,6 +15,8 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 use subspace_sdk::PublicKey;
 
+use crate::config::MIN_PLOT_SIZE;
+
 /// for how long a log file should be valid
 const KEEP_LAST_N_FILE: usize = 7;
 
@@ -107,7 +109,7 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
          return Err(eyre!("could not parse the value!"));
     };
-    if size < ByteSize::gb(1) {
+    if size < MIN_PLOT_SIZE {
         Err(eyre!("size could not be smaller than 1GB"))
     } else {
         Ok(size)

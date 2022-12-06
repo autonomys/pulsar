@@ -3,6 +3,7 @@ use std::{io::Write, str::FromStr};
 use color_eyre::eyre::{Context, Result};
 use subspace_sdk::farmer::CacheDescription;
 
+use crate::config::DEFAULT_PLOT_SIZE;
 use crate::utils::{
     cache_directory_getter, get_user_input, node_name_parser, plot_directory_getter,
     plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
@@ -11,9 +12,6 @@ use crate::{
     config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig},
     utils::node_directory_getter,
 };
-
-/// defaults for the user config file
-const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
 
 /// implementation of the `init` command
 ///
