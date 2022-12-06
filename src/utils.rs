@@ -160,6 +160,25 @@ pub(crate) fn support_message() -> String {
     )
 }
 
+pub(crate) fn raise_fd_limit() {
+    match std::panic::catch_unwind(fdlimit::raise_fd_limit) {
+        Ok(Some(limit)) => {
+            tracing::info!("Increase file limit from soft to hard (limit is {limit})")
+        }
+        Ok(None) => tracing::debug!("Failed to increase file limit"),
+        Err(err) => {
+            let err = if let Some(err) = err.downcast_ref::<&str>() {
+                *err
+            } else if let Some(err) = err.downcast_ref::<String>() {
+                err
+            } else {
+                unreachable!("Should be unreachable as `fdlimit` uses panic macro, which should return either `&str` or `String`.")
+            };
+            tracing::warn!("Failed to increase file limit: {err}")
+        }
+    }
+}
+
 /// install a logger for the application
 pub(crate) fn install_tracing(is_verbose: bool) {
     let log_dir = custom_log_dir();
@@ -177,11 +196,6 @@ pub(crate) fn install_tracing(is_verbose: bool) {
         EnvFilter::builder()
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
-            .add_directive(
-                "subspace_cli=info"
-                    .parse()
-                    .expect("hardcoded value is true"),
-            )
             .add_directive(
                 "frame_executive=off"
                     .parse()
@@ -234,7 +248,7 @@ mod tests {
 
     #[test]
     fn size_checker() {
-        assert!(size_parser("800MB").is_err());
+        assert!(size_parser("800MB").is_ok());
         assert!(size_parser("103gjie").is_err());
         assert!(size_parser("12GB").is_ok());
     }

@@ -12,7 +12,7 @@ use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 
 use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
-use crate::utils::install_tracing;
+use crate::utils::{install_tracing, raise_fd_limit};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
@@ -37,6 +37,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
             "It seems like there is already a farming instance running. Aborting...",
         ));
     }
+    // raise file limit
+    raise_fd_limit();
 
     println!("Starting node ... (this might take up to couple of minutes)");
     let Config {
