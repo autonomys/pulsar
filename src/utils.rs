@@ -15,8 +15,6 @@ use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
 
 use subspace_sdk::PublicKey;
 
-use crate::config::ChainConfig;
-
 /// for how long a log file should be valid
 const KEEP_LAST_N_FILE: usize = 7;
 
@@ -114,11 +112,6 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     } else {
         Ok(size)
     }
-}
-
-/// user can only specify a valid chain
-pub(crate) fn chain_parser(chain: &str) -> Result<ChainConfig> {
-    ChainConfig::from_str(chain)
 }
 
 /// generates a plot path from the given path
@@ -222,6 +215,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ChainConfig;
 
     #[test]
     fn node_name_checker() {
@@ -245,8 +239,8 @@ mod tests {
 
     #[test]
     fn chain_checker() {
-        assert!(chain_parser("dev").is_ok());
-        assert!(chain_parser("devv").is_err());
+        assert!(ChainConfig::from_str("gemini-3a").is_ok());
+        assert!(ChainConfig::from_str("devv").is_err());
     }
 
     #[test]

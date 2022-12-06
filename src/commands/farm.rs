@@ -7,33 +7,21 @@ use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
 use tracing::instrument;
 
-use subspace_sdk::{
-    chain_spec, farmer::CacheDescription, Farmer, Node, PlotDescription, PublicKey,
-};
+use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 
-use crate::config::{validate_config, ChainConfig};
+use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{create_summary_file, get_farmed_block_count, update_summary};
-use crate::utils::{install_tracing, node_directory_getter};
+use crate::utils::install_tracing;
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
-
-/// necessary information for starting a farming instance
-#[derive(Debug)]
-pub(crate) struct FarmingArgs {
-    reward_address: PublicKey,
-    node: Node,
-    plot: PlotDescription,
-    cache: CacheDescription,
-}
 
 /// implementation of the `farm` command
 ///
 /// takes `is_verbose`, returns a [`Farmer`], [`Node`], and a [`SingleInstance`]
 ///
 /// first, checks for an existing farmer instance
-/// then prepares the necessary arguments for the farming [`FarmingArgs`]
-/// then starts the farming instance,
+/// then starts the farming and node instances,
 /// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
@@ -50,13 +38,42 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     }
 
     println!("Starting node ... (this might take up to couple of minutes)");
-    let args = prepare_farming().await?;
+    let Config {
+        chain,
+        farmer: farmer_config,
+        node: node_config,
+    } = validate_config()?;
+
+    let chain = match chain {
+        ChainConfig::Gemini3a => {
+            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
+        }
+    };
+
+    let node = node_config
+        .node
+        .build(node_config.directory, chain)
+        .await
+        .expect("error building the node");
+
     println!("Node started successfully!");
 
-    create_summary_file(args.plot.space_pledged).await?;
+    create_summary_file(farmer_config.plot_size).await?;
 
     println!("Starting farmer ...");
-    let (farmer, node) = start_farming(args).await?;
+    let farmer = farmer_config
+        .farmer
+        .build(
+            farmer_config.address,
+            node.clone(),
+            &[PlotDescription::new(
+                farmer_config.plot_directory,
+                farmer_config.plot_size,
+            )],
+            farmer_config.cache,
+        )
+        .await?;
+
     println!("Farmer started successfully!");
 
     if !is_verbose {
@@ -123,59 +140,6 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     }
 
     Ok((farmer, node, instance))
-}
-
-/// Starts the farming instance
-#[instrument]
-async fn start_farming(farming_args: FarmingArgs) -> Result<(Farmer, Node)> {
-    let FarmingArgs {
-        reward_address,
-        node,
-        plot,
-        cache,
-    } = farming_args;
-
-    Ok((
-        Farmer::builder()
-            .build(reward_address, node.clone(), &[plot], cache)
-            .await?,
-        node,
-    ))
-}
-
-/// Prepares [`FarmingArgs`]
-///
-/// parses the config and gets the necessary information for both node and farmer
-/// then starts a node instance
-/// and returns a [`FarmingArgs`]
-#[instrument]
-async fn prepare_farming() -> Result<FarmingArgs> {
-    let config = validate_config()?;
-
-    let chain = match config.chain {
-        ChainConfig::Gemini3a => {
-            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
-        }
-        ChainConfig::Dev => {
-            chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK")
-        }
-    };
-
-    let node_instance = config
-        .node
-        .build(node_directory_getter(), chain)
-        .await
-        .expect("error building the node");
-
-    Ok(FarmingArgs {
-        reward_address: config.farmer.address,
-        plot: PlotDescription {
-            directory: config.farmer.plot_directory,
-            space_pledged: config.farmer.plot_size,
-        },
-        node: node_instance,
-        cache: config.farmer.cache,
-    })
 }
 
 /// nice looking progress bar for the initial plotting :)
