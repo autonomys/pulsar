@@ -58,6 +58,14 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     println!("Node started successfully!");
 
+    // sync node as a background task
+    tokio::spawn({
+        let node_clone = node.clone();
+        async move {
+            let _ = node_clone.sync().await;
+        }
+    });
+
     create_summary_file(farmer_config.plot_size).await?;
 
     println!("Starting farmer ...");

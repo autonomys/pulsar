@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// defaults for the user config file
-const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(100);
+const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
 
 /// implementation of the `init` command
 ///
