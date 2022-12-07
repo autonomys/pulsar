@@ -179,3 +179,23 @@ pub(crate) fn validate_config() -> Result<Config> {
 
     Ok(config)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_serializable() {
+        toml::to_vec(&Config {
+            farmer: FarmerConfig::gemini_3a(
+                Default::default(),
+                "plot".into(),
+                ByteSize::gb(1),
+                CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
+            ),
+            node: NodeConfig::gemini_3a("node".into(), "serializable-node".to_owned()),
+            chain: ChainConfig::Gemini3a,
+        })
+        .unwrap();
+    }
+}
