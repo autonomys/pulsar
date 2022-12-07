@@ -218,6 +218,15 @@
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -381,21 +390,30 @@
 
         <span class="comment">// solution subscriber
         </span>tokio::spawn({
-            <span class="kw">let </span>farmer_clone = farmer.clone();
+            <span class="kw">let </span>farmer = farmer.clone();
 
-            <span class="kw">let </span>farmed_blocks = get_farmed_block_count()
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;couldn&#39;t read farmed blocks count from summary&quot;</span>);
-            <span class="kw">let </span>farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
             <span class="kw">async move </span>{
-                <span class="kw">for </span>plot <span class="kw">in </span>farmer_clone.iter_plots().<span class="kw">await </span>{
+                <span class="kw">let </span>farmed_blocks = get_farmed_block_count()
+                    .<span class="kw">await
+                    </span>.expect(<span class="string">&quot;couldn&#39;t read farmed blocks count from summary&quot;</span>);
+                <span class="kw">let </span>farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+                <span class="kw">for </span>plot <span class="kw">in </span>farmer.iter_plots().<span class="kw">await </span>{
                     plot.subscribe_new_solutions()
                         .<span class="kw">await
-                        </span>.for_each(|_solution| <span class="kw">async </span>{
-                            <span class="kw">let </span>total_farmed = farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
-                            <span class="kw">let _ </span>= update_summary(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
-                            </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
-                                <span class="macro">println!</span>(<span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;</span>);
+                        </span>.for_each(|solutions| {
+                            <span class="kw">let </span>farmed_block_count = <span class="kw-2">&amp;</span>farmed_block_count;
+                            <span class="kw">let </span>is_initial_progress_finished = <span class="kw-2">&amp;</span>is_initial_progress_finished;
+                            <span class="kw">async move </span>{
+                                <span class="kw">if </span>!solutions.solutions.is_empty() {
+                                    <span class="kw">let </span>total_farmed =
+                                        farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+                                    <span class="kw">let _ </span>= update_summary(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
+                                    </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
+                                        <span class="macro">println!</span>(
+                                            <span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;
+                                        </span>);
+                                    }
+                                }
                             }
                         })
                         .<span class="kw">await

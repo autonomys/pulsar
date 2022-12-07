@@ -34,6 +34,7 @@
 <a href="#34" id="34">34</a>
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::Result;
 
 <span class="kw">use </span>subspace_sdk::{Node, PlotDescription};
@@ -64,6 +65,7 @@
     };
 
     <span class="kw">let _ </span>= plot.wipe().<span class="kw">await</span>;
+    <span class="kw">let _ </span>= config.farmer.cache.wipe().<span class="kw">await</span>;
     <span class="macro">println!</span>(<span class="string">&quot;Farmer is wiped!&quot;</span>);
 
     delete_summary().<span class="kw">await</span>;

@@ -179,6 +179,26 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::{create_dir, File},
     path::PathBuf,
@@ -359,6 +379,26 @@
     }
 
     <span class="prelude-val">Ok</span>(config)
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_serializable() {
+        toml::to_vec(<span class="kw-2">&amp;</span>Config {
+            farmer: FarmerConfig::gemini_3a(
+                Default::default(),
+                <span class="string">&quot;plot&quot;</span>.into(),
+                ByteSize::gb(<span class="number">1</span>),
+                CacheDescription::new(<span class="string">&quot;cache&quot;</span>, ByteSize::gb(<span class="number">1</span>)).unwrap(),
+            ),
+            node: NodeConfig::gemini_3a(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned()),
+            chain: ChainConfig::Gemini3a,
+        })
+        .unwrap();
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="subspace_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (a00f8ba7f 2022-11-15)" data-search-js="search-df80cc3cb87b6482.js" data-settings-js="settings-7873449fa8c00e11.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
