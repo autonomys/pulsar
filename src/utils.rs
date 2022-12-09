@@ -196,11 +196,6 @@ pub(crate) fn install_tracing(is_verbose: bool) {
         EnvFilter::builder()
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
-            .add_directive(
-                "frame_executive=off"
-                    .parse()
-                    .expect("hardcoded value is true"),
-            )
             .add_directive("regalloc2=off".parse().expect("hardcoded value is true"))
     };
 
