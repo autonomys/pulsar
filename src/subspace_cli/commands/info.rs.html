@@ -45,9 +45,7 @@
 <span class="kw">use </span>single_instance::SingleInstance;
 
 <span class="kw">use </span><span class="kw">crate</span>::commands::farm::SINGLE_INSTANCE;
-<span class="kw">use </span><span class="kw">crate</span>::summary::{
-    get_farmed_block_count, get_initial_plotting_progress, get_user_space_pledged,
-};
+<span class="kw">use </span><span class="kw">crate</span>::summary::Summary;
 
 <span class="doccomment">/// implementation of the `init` command.
 ///
@@ -60,21 +58,23 @@
         <span class="macro">println!</span>(<span class="string">&quot;There is no active farmer instance...&quot;</span>);
     }
 
+    <span class="kw">let </span>summary = Summary::new(<span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+
     <span class="macro">println!</span>(
         <span class="string">&quot;You have pledged to the network: {}&quot;</span>,
-        get_user_space_pledged().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(
+        summary.get_user_space_pledged().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(
             <span class="string">&quot;Couldn&#39;t read the summary file, are you sure you ran the farm command?&quot;
         </span>))<span class="question-mark">?
     </span>);
 
     <span class="macro">println!</span>(
         <span class="string">&quot;Total farmed blocks: {}&quot;</span>,
-        get_farmed_block_count().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(
+        summary.get_farmed_block_count().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(
             <span class="string">&quot;Couldn&#39;t read the summary file, are you sure you ran the farm command?&quot;
         </span>))<span class="question-mark">?
     </span>);
 
-    <span class="kw">if </span>get_initial_plotting_progress().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| {
+    <span class="kw">if </span>summary.get_initial_plotting_progress().<span class="kw">await</span>.map_err(|<span class="kw">_</span>| {
         <span class="macro">eyre!</span>(<span class="string">&quot;Couldn&#39;t read the summary file, are you sure you ran the farm command?&quot;</span>)
     })<span class="question-mark">? </span>{
         <span class="macro">println!</span>(<span class="string">&quot;Initial plotting is finished!&quot;</span>);

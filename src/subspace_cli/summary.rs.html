@@ -128,12 +128,28 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial plotting progress,
 /// so that progress bar won&#39;t be affected with `println!`, and user will still know about them
 /// when initial plotting is finished.
-</span><span class="kw">use </span>std::path::PathBuf;
+</span><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{Report, <span class="prelude-ty">Result</span>};
@@ -141,6 +157,7 @@
 <span class="kw">use </span>tokio::{
     fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions},
     io::AsyncWriteExt,
+    sync::Mutex,
 };
 <span class="kw">use </span>tracing::instrument;
 
@@ -154,95 +171,110 @@
 }
 
 <span class="doccomment">/// utilizing persistent storage for the information to be displayed for the `info` command
-</span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>create_summary_file(user_space_pledged: ByteSize) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>summary_path = summary_path();
-    <span class="kw">let </span>summary_dir = dirs::data_local_dir()
-        .expect(<span class="string">&quot;couldn&#39;t get the default local data directory!&quot;</span>)
-        .join(<span class="string">&quot;subspace-cli&quot;</span>);
+</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
+    file: Arc&lt;Mutex&lt;PathBuf&gt;&gt;,
+}
 
-    <span class="comment">// File::create will truncate the existing file, so first
-    // check if the file exists, if not, `open` will return an error
-    // in this case, create the file and necessary directories
-    </span><span class="kw">if </span>File::open(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>.is_err() {
-        <span class="kw">let _ </span>= create_dir_all(<span class="kw-2">&amp;</span>summary_dir).<span class="kw">await</span>;
-        <span class="kw">let _ </span>= File::create(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>;
-        <span class="kw">let </span>initialization = FarmerSummary {
-            initial_plotting_finished: <span class="bool-val">false</span>,
-            farmed_block_count: <span class="number">0</span>,
-            user_space_pledged,
-        };
-        <span class="kw">let </span>summary = toml::to_string(<span class="kw-2">&amp;</span>initialization).map_err(Report::msg)<span class="question-mark">?</span>;
+<span class="kw">impl </span>Summary {
+    <span class="doccomment">/// creates new summary file
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(user_space_pledged: <span class="prelude-ty">Option</span>&lt;ByteSize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
+        <span class="kw">let </span>summary_path = summary_path();
+        <span class="kw">let </span>summary_dir = dirs::data_local_dir()
+            .expect(<span class="string">&quot;couldn&#39;t get the default local data directory!&quot;</span>)
+            .join(<span class="string">&quot;subspace-cli&quot;</span>);
+
+        <span class="comment">// providing `Some` value for `user_space_pledged` means, we are creating a new file
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(user_space_pledged) = user_space_pledged {
+            <span class="comment">// File::create will truncate the existing file, so first
+            // check if the file exists, if not, `open` will return an error
+            // in this case, create the file and necessary directories
+            </span><span class="kw">if </span>File::open(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>.is_err() {
+                <span class="kw">let _ </span>= create_dir_all(<span class="kw-2">&amp;</span>summary_dir).<span class="kw">await</span>;
+                <span class="kw">let _ </span>= File::create(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>;
+                <span class="kw">let </span>initialization = FarmerSummary {
+                    initial_plotting_finished: <span class="bool-val">false</span>,
+                    farmed_block_count: <span class="number">0</span>,
+                    user_space_pledged,
+                };
+                <span class="kw">let </span>summary_text = toml::to_string(<span class="kw-2">&amp;</span>initialization).map_err(Report::msg)<span class="question-mark">?</span>;
+                OpenOptions::new()
+                    .write(<span class="bool-val">true</span>)
+                    .truncate(<span class="bool-val">true</span>)
+                    .open(<span class="kw-2">&amp;</span>summary_path)
+                    .<span class="kw">await</span><span class="question-mark">?
+                    </span>.write_all(summary_text.as_bytes())
+                    .<span class="kw">await</span><span class="question-mark">?</span>;
+            }
+        }
+
+        <span class="prelude-val">Ok</span>(Summary {
+            file: Arc::new(Mutex::new(summary_path)),
+        })
+    }
+
+    <span class="doccomment">/// updates the summary file
+    ///
+    /// this function will be called by the farmer when
+    /// the status of the `plotting_finished`
+    /// or value of `farmed_block_count` changes
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>update(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        plotting_finished: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+        farmed_block_count: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(flag) = plotting_finished {
+            summary.initial_plotting_finished = flag;
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(count) = farmed_block_count {
+            summary.farmed_block_count = count;
+        }
+
+        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).map_err(Report::msg)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
         OpenOptions::new()
             .write(<span class="bool-val">true</span>)
             .truncate(<span class="bool-val">true</span>)
-            .open(summary_path)
+            .open(<span class="kw-2">&amp;*</span>guard)
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.write_all(summary.as_bytes())
+            </span>.write_all(new_summary.as_bytes())
             .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="doccomment">/// updates the summary file
-///
-/// this function will be called by the farmer when
-/// the status of the `plotting_finished`
-/// or value of `farmed_block_count` changes
-</span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>update_summary(
-    plotting_finished: <span class="prelude-ty">Option</span>&lt;bool&gt;,
-    farmed_block_count: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>summary_path = summary_path();
-    <span class="kw">let </span><span class="kw-2">mut </span>summary = parse_summary(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(flag) = plotting_finished {
-        summary.initial_plotting_finished = flag;
-    }
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(count) = farmed_block_count {
-        summary.farmed_block_count = count;
+    <span class="doccomment">/// retrives how much space has user pledged to the network from the summary file
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_user_space_pledged(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ByteSize&gt; {
+        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(summary.user_space_pledged)
     }
 
-    <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).map_err(Report::msg)<span class="question-mark">?</span>;
+    <span class="doccomment">/// retrieves how many blocks have been farmed, from the summary file
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_farmed_block_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
+        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(summary.farmed_block_count)
+    }
 
-    OpenOptions::new()
-        .write(<span class="bool-val">true</span>)
-        .truncate(<span class="bool-val">true</span>)
-        .open(summary_path)
-        .<span class="kw">await</span><span class="question-mark">?
-        </span>.write_all(new_summary.as_bytes())
-        .<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="doccomment">/// retrieves the status of the initial plotting, from the summary file
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_initial_plotting_progress(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(summary.initial_plotting_finished)
+    }
 
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="doccomment">/// retrives how much space has user pledged to the network from the summary file
-</span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_user_space_pledged() -&gt; <span class="prelude-ty">Result</span>&lt;ByteSize&gt; {
-    <span class="kw">let </span>summary = parse_summary(<span class="kw-2">&amp;</span>summary_path()).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(summary.user_space_pledged)
-}
-
-<span class="doccomment">/// retrieves how many blocks have been farmed, from the summary file
-</span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_farmed_block_count() -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
-    <span class="kw">let </span>summary = parse_summary(<span class="kw-2">&amp;</span>summary_path()).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(summary.farmed_block_count)
-}
-
-<span class="doccomment">/// retrieves the status of the initial plotting, from the summary file
-</span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_initial_plotting_progress() -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-    <span class="kw">let </span>summary = parse_summary(<span class="kw-2">&amp;</span>summary_path()).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(summary.initial_plotting_finished)
-}
-
-<span class="doccomment">/// parses the summary file and returns [`FarmerSummary`]
-</span><span class="attr">#[instrument]
-</span><span class="kw">async fn </span>parse_summary(path: <span class="kw-2">&amp;</span>PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;FarmerSummary&gt; {
-    <span class="kw">let </span>summary: FarmerSummary = toml::from_str(<span class="kw-2">&amp;</span>read_to_string(path).<span class="kw">await</span><span class="question-mark">?</span>)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(summary)
+    <span class="doccomment">/// parses the summary file and returns [`FarmerSummary`]
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">async fn </span>parse_summary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;FarmerSummary&gt; {
+        <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>summary: FarmerSummary = toml::from_str(<span class="kw-2">&amp;</span>read_to_string(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(summary)
+    }
 }
 
 <span class="doccomment">/// deletes the summary file

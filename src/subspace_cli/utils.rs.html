@@ -310,11 +310,6 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
@@ -513,11 +508,6 @@
         EnvFilter::builder()
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
-            .add_directive(
-                <span class="string">&quot;frame_executive=off&quot;
-                    </span>.parse()
-                    .expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-            )
             .add_directive(<span class="string">&quot;regalloc2=off&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
     };
 
