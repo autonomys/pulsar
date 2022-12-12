@@ -144,7 +144,12 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
         .expect("couldn't get the default config directory!")
         .join("subspace-cli");
 
-    let _ = create_dir(&config_path); // if folder already exists, ignore the error
+    if let Err(err) = create_dir(&config_path) {
+        // ignore the `AlreadyExists` error
+        if err.kind() != std::io::ErrorKind::AlreadyExists {
+            return Err(eyre!("could not create the directory, because: {err}"));
+        }
+    }
 
     let file = File::create(config_path.join("settings.toml"))?;
 
