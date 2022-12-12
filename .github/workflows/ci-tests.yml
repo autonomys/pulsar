@@ -32,7 +32,8 @@ jobs:
           - ubuntu-22.04
           - macos-12
           - windows-2022
-        run-all: ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
+        run-all: 
+          - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
         exclude:  # exclude macos-12 and windows-2022 when the condition is false
           - run-all: false
             os: macos-12
