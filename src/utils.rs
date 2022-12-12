@@ -1,19 +1,17 @@
-use std::{
-    fs::create_dir_all,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::fs::create_dir_all;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Report, Result};
+use subspace_sdk::PublicKey;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_error::ErrorLayer;
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::prelude::*;
-use tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
-
-use subspace_sdk::PublicKey;
+use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 use crate::config::MIN_PLOT_SIZE;
 
@@ -48,7 +46,8 @@ pub(crate) fn print_version() {
 /// `condition`: will be checked against for the user input,
 /// the user will be repeatedly prompted to provide a valid input
 ///
-/// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
+/// `error_msg`: will be displayed if user enters an input which does not
+/// satisfy the `condition`
 pub(crate) fn get_user_input<F, O, E>(
     prompt: &str,
     default_value: Option<O>,
@@ -98,9 +97,7 @@ pub(crate) fn plot_directory_parser(location: &str) -> Result<PathBuf> {
     if path.is_dir() {
         Ok(path)
     } else {
-        Err(eyre!(
-            "supplied directory does not exist! Please enter a valid path."
-        ))
+        Err(eyre!("supplied directory does not exist! Please enter a valid path."))
     }
 }
 
@@ -154,9 +151,7 @@ fn custom_log_dir() -> PathBuf {
 pub(crate) fn support_message() -> String {
     format!(
         "If you think this is a bug, please submit it to our forums: {}",
-        ansi_term::Style::new()
-            .underline()
-            .paint("https://forum.subspace.network")
+        ansi_term::Style::new().underline().paint("https://forum.subspace.network")
     )
 }
 
@@ -172,7 +167,10 @@ pub(crate) fn raise_fd_limit() {
             } else if let Some(err) = err.downcast_ref::<String>() {
                 err
             } else {
-                unreachable!("Should be unreachable as `fdlimit` uses panic macro, which should return either `&str` or `String`.")
+                unreachable!(
+                    "Should be unreachable as `fdlimit` uses panic macro, which should return \
+                     either `&str` or `String`."
+                )
             };
             tracing::warn!("Failed to increase file limit: {err}")
         }

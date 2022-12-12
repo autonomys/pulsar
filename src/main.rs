@@ -12,7 +12,10 @@ mod utils;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
 use color_eyre::Help;
-use commands::{farm::farm, info::info, init::init, wipe::wipe};
+use commands::farm::farm;
+use commands::info::info;
+use commands::init::init;
+use commands::wipe::wipe;
 use tokio::signal;
 use tracing::instrument;
 
@@ -31,9 +34,8 @@ struct Cli {
 /// Available commands for the CLI
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command(
-        about = "displays info about the farmer instance (i.e. total amount of rewards, and status of initial plotting)"
-    )]
+    #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
+                       and status of initial plotting)")]
     Info,
     #[command(about = "initializes the config file required for the farming")]
     Init,
@@ -61,7 +63,10 @@ async fn main() -> Result<(), Report> {
             let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
 
             signal::ctrl_c().await?;
-            println!("\nWill try to gracefully exit the application now. If you press ctrl+c again, it will try to forcefully close the app!");
+            println!(
+                "\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
+                 will try to forcefully close the app!"
+            );
             let handle = tokio::spawn(async {
                 let _ = farmer.close().await;
                 node.close().await;

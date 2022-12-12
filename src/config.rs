@@ -1,22 +1,15 @@
-use std::{
-    fs::{create_dir, File},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::fs::{create_dir, File};
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use bytesize::ByteSize;
-use color_eyre::{
-    eyre::{eyre, Result},
-    Report,
-};
+use color_eyre::eyre::{eyre, Result};
+use color_eyre::Report;
 use serde::{Deserialize, Serialize};
+use subspace_sdk::farmer::{self, CacheDescription, Config as SdkFarmerConfig, Farmer};
+use subspace_sdk::node::{self, Config as SdkNodeConfig, Node};
+use subspace_sdk::PublicKey;
 use tracing::instrument;
-
-use subspace_sdk::{
-    farmer::{self, CacheDescription, Config as SdkFarmerConfig, Farmer},
-    node::{self, Config as SdkNodeConfig, Node},
-    PublicKey,
-};
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
@@ -101,9 +94,11 @@ impl FarmerConfig {
             plot_size,
             cache,
             farmer: Farmer::builder()
-                .dsn(farmer::DsnBuilder::new().listen_on(vec![
-                    "/ip4/0.0.0.0/tcp/30533".parse().expect("Valid multiaddr"),
-                ]))
+                .dsn(
+                    farmer::DsnBuilder::new().listen_on(vec!["/ip4/0.0.0.0/tcp/30533"
+                        .parse()
+                        .expect("Valid multiaddr")]),
+                )
                 .configuration(),
         }
     }
@@ -130,7 +125,10 @@ impl FromStr for ChainConfig {
         let chain_list = vec!["gemini-3a"];
         match s {
             "gemini-3a" => Ok(ChainConfig::Gemini3a),
-            _ => Err(eyre!("given chain: `{s}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.")),
+            _ => Err(eyre!(
+                "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
+                 {chain_list:?}."
+            )),
         }
     }
 }

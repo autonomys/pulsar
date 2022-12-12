@@ -1,21 +1,20 @@
 /// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
-/// and also store the amount of potentially farmed blocks during the initial plotting progress,
-/// so that progress bar won't be affected with `println!`, and user will still know about them
-/// when initial plotting is finished.
+/// and also store the amount of potentially farmed blocks during the initial
+/// plotting progress, so that progress bar won't be affected with `println!`,
+/// and user will still know about them when initial plotting is finished.
 use std::{path::PathBuf, sync::Arc};
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Report, Result};
 use serde::{Deserialize, Serialize};
-use tokio::{
-    fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions},
-    io::AsyncWriteExt,
-    sync::Mutex,
-};
+use tokio::fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions};
+use tokio::io::AsyncWriteExt;
+use tokio::sync::Mutex;
 use tracing::instrument;
 
-/// Struct for holding the information of what to be displayed with the `info` command
+/// Struct for holding the information of what to be displayed with the `info`
+/// command
 #[derive(Deserialize, Serialize, Debug)]
 struct FarmerSummary {
     initial_plotting_finished: bool,
@@ -24,7 +23,8 @@ struct FarmerSummary {
     user_space_pledged: ByteSize,
 }
 
-/// utilizing persistent storage for the information to be displayed for the `info` command
+/// utilizing persistent storage for the information to be displayed for the
+/// `info` command
 #[derive(Debug, Clone)]
 pub(crate) struct Summary {
     file: Arc<Mutex<PathBuf>>,
@@ -39,7 +39,8 @@ impl Summary {
             .expect("couldn't get the default local data directory!")
             .join("subspace-cli");
 
-        // providing `Some` value for `user_space_pledged` means, we are creating a new file
+        // providing `Some` value for `user_space_pledged` means, we are creating a new
+        // file
         if let Some(user_space_pledged) = user_space_pledged {
             // File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
@@ -63,9 +64,7 @@ impl Summary {
             }
         }
 
-        Ok(Summary {
-            file: Arc::new(Mutex::new(summary_path)),
-        })
+        Ok(Summary { file: Arc::new(Mutex::new(summary_path)) })
     }
 
     /// updates the summary file
@@ -101,7 +100,8 @@ impl Summary {
         Ok(())
     }
 
-    /// retrives how much space has user pledged to the network from the summary file
+    /// retrives how much space has user pledged to the network from the summary
+    /// file
     #[instrument]
     pub(crate) async fn get_user_space_pledged(&self) -> Result<ByteSize> {
         let summary = self.parse_summary().await?;
