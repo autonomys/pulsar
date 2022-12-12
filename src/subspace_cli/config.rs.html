@@ -199,6 +199,11 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs::{create_dir, File},
     path::PathBuf,
@@ -345,9 +350,14 @@
         .expect(<span class="string">&quot;couldn&#39;t get the default config directory!&quot;</span>)
         .join(<span class="string">&quot;subspace-cli&quot;</span>);
 
-    <span class="kw">let _ </span>= create_dir(<span class="kw-2">&amp;</span>config_path); <span class="comment">// if folder already exists, ignore the error
+    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = create_dir(<span class="kw-2">&amp;</span>config_path) {
+        <span class="comment">// ignore the `AlreadyExists` error
+        </span><span class="kw">if </span>err.kind() != std::io::ErrorKind::AlreadyExists {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not create the directory, because: {err}&quot;</span>));
+        }
+    }
 
-    </span><span class="kw">let </span>file = File::create(config_path.join(<span class="string">&quot;settings.toml&quot;</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>file = File::create(config_path.join(<span class="string">&quot;settings.toml&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((file, config_path))
 }
