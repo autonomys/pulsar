@@ -1,5 +1,6 @@
 name: "ci tests"
 
+
 on:
   push:
     branches:
@@ -10,7 +11,13 @@ on:
     paths-ignore:
       - '**.md'
   workflow_dispatch:
-
+    inputs:
+      test-macos-and-windows:
+        description: 'run macOS and Windows tests'
+        required: true
+        default: false
+        type: boolean
+          
 env:
   # Not needed in CI, should make things a bit faster
   CARGO_INCREMENTAL: 0
@@ -25,6 +32,13 @@ jobs:
           - ubuntu-22.04
           - macos-12
           - windows-2022
+        run-all: 
+          - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
+        exclude:  # exclude macos-12 and windows-2022 when the condition is false
+          - run-all: false
+            os: macos-12
+          - run-all: false
+            os: windows-2022
 
     runs-on: ${{ matrix.os }}
     steps:

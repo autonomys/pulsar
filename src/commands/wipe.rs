@@ -1,5 +1,4 @@
 use color_eyre::eyre::Result;
-
 use subspace_sdk::{Node, PlotDescription};
 
 use crate::config::parse_config;
@@ -13,7 +12,10 @@ pub(crate) async fn wipe() -> Result<()> {
     let config = match parse_config() {
         Ok(args) => args,
         Err(_) => {
-            println!("could not read your config. You must have a valid config in order to wipe. Aborting...");
+            println!(
+                "could not read your config. You must have a valid config in order to wipe. \
+                 Aborting..."
+            );
             return Ok(());
         }
     };

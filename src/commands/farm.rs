@@ -6,9 +6,8 @@ use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
 use subspace_sdk::node::SyncStatus;
-use tracing::instrument;
-
 use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
+use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::Summary;
@@ -23,7 +22,8 @@ pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
 ///
 /// first, checks for an existing farmer instance
 /// then starts the farming and node instances,
-/// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
+/// lastly, depending on the verbosity, it subscribes to plotting progress and
+/// new solutions
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstance)> {
     install_tracing(is_verbose);
@@ -41,16 +41,11 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     raise_fd_limit();
 
     println!("Starting node ... (this might take up to couple of minutes)");
-    let Config {
-        chain,
-        farmer: farmer_config,
-        node: node_config,
-    } = validate_config()?;
+    let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
     let chain = match chain {
-        ChainConfig::Gemini3a => {
-            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK")
-        }
+        ChainConfig::Gemini3a =>
+            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK"),
     };
 
     let node = node_config
@@ -98,9 +93,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
         syncing_progress_bar.finish_with_message("Syncing is done!");
     } else {
-        node.sync()
-            .await
-            .map_err(|err| eyre!("Node syncing failed: {err}"))?;
+        node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
     }
 
     let summary = Summary::new(Some(farmer_config.plot_size)).await?;
@@ -111,10 +104,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
         .build(
             farmer_config.address,
             node.clone(),
-            &[PlotDescription::new(
-                farmer_config.plot_directory,
-                farmer_config.plot_size,
-            )],
+            &[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)],
             farmer_config.cache,
         )
         .await?;
