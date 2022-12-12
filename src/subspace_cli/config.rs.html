@@ -202,27 +202,18 @@
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::{
-    fs::{create_dir, File},
-    path::PathBuf,
-    str::FromStr,
-};
+</pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir, File};
+<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>bytesize::ByteSize;
-<span class="kw">use </span>color_eyre::{
-    eyre::{eyre, <span class="prelude-ty">Result</span>},
-    Report,
-};
+<span class="kw">use </span>color_eyre::eyre::{eyre, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>color_eyre::Report;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>subspace_sdk::farmer::{<span class="self">self</span>, CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
+<span class="kw">use </span>subspace_sdk::node::{<span class="self">self</span>, Config <span class="kw">as </span>SdkNodeConfig, Node};
+<span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::instrument;
-
-<span class="kw">use </span>subspace_sdk::{
-    farmer::{<span class="self">self</span>, CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer},
-    node::{<span class="self">self</span>, Config <span class="kw">as </span>SdkNodeConfig, Node},
-    PublicKey,
-};
 
 <span class="doccomment">/// defaults for the user config file
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(<span class="number">1</span>);
@@ -307,9 +298,11 @@
             plot_size,
             cache,
             farmer: Farmer::builder()
-                .dsn(farmer::DsnBuilder::new().listen_on(<span class="macro">vec!</span>[
-                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30533&quot;</span>.parse().expect(<span class="string">&quot;Valid multiaddr&quot;</span>),
-                ]))
+                .dsn(
+                    farmer::DsnBuilder::new().listen_on(<span class="macro">vec!</span>[<span class="string">&quot;/ip4/0.0.0.0/tcp/30533&quot;
+                        </span>.parse()
+                        .expect(<span class="string">&quot;Valid multiaddr&quot;</span>)]),
+                )
                 .configuration(),
         }
     }
@@ -336,7 +329,10 @@
         <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3a&quot;</span>];
         <span class="kw">match </span>s {
             <span class="string">&quot;gemini-3a&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3a),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: {chain_list:?}.&quot;</span>)),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
+                <span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
+                 {chain_list:?}.&quot;
+            </span>)),
         }
     }
 }

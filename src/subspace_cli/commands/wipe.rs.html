@@ -35,8 +35,9 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
 </pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::Result;
-
 <span class="kw">use </span>subspace_sdk::{Node, PlotDescription};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::parse_config;
@@ -50,7 +51,10 @@
     <span class="kw">let </span>config = <span class="kw">match </span>parse_config() {
         <span class="prelude-val">Ok</span>(args) =&gt; args,
         <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-            <span class="macro">println!</span>(<span class="string">&quot;could not read your config. You must have a valid config in order to wipe. Aborting...&quot;</span>);
+            <span class="macro">println!</span>(
+                <span class="string">&quot;could not read your config. You must have a valid config in order to wipe. \
+                 Aborting...&quot;
+            </span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
     };

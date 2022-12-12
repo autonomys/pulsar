@@ -104,21 +104,19 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::{io::Write, str::FromStr};
+</pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
+<span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
 
-<span class="kw">use </span><span class="kw">crate</span>::config::DEFAULT_PLOT_SIZE;
-<span class="kw">use </span><span class="kw">crate</span>::utils::{
-    cache_directory_getter, get_user_input, node_name_parser, plot_directory_getter,
-    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
+<span class="kw">use </span><span class="kw">crate</span>::config::{
+    create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
 };
-<span class="kw">use crate</span>::{
-    config::{create_config, ChainConfig, Config, FarmerConfig, NodeConfig},
-    utils::node_directory_getter,
+<span class="kw">use </span><span class="kw">crate</span>::utils::{
+    cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
+    plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
+    reward_address_parser, size_parser,
 };
 
 <span class="doccomment">/// implementation of the `init` command
@@ -133,17 +131,10 @@
     <span class="macro">println!</span>(<span class="string">&quot;Configuration creation process has started...&quot;</span>);
     <span class="kw">let </span>config = get_config_from_user_inputs()<span class="question-mark">?</span>;
     config_file
-        .write_all(
-            toml::to_string_pretty(<span class="kw-2">&amp;</span>config)
-                .wrap_err(<span class="string">&quot;Failed to write config&quot;</span>)<span class="question-mark">?
-                </span>.as_ref(),
-        )
+        .write_all(toml::to_string_pretty(<span class="kw-2">&amp;</span>config).wrap_err(<span class="string">&quot;Failed to write config&quot;</span>)<span class="question-mark">?</span>.as_ref())
         .wrap_err(<span class="string">&quot;Failed to write config&quot;</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">println!</span>(
-        <span class="string">&quot;Configuration has been generated at {}&quot;</span>,
-        config_path.display()
-    );
+    <span class="macro">println!</span>(<span class="string">&quot;Configuration has been generated at {}&quot;</span>, config_path.display());
 
     <span class="macro">println!</span>(<span class="string">&quot;Ready for lift off! Run the follow command to begin:&quot;</span>);
     <span class="macro">println!</span>(<span class="string">&quot;`./subspace-cli farm`&quot;</span>);
@@ -151,20 +142,21 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="doccomment">/// gets the necessary information from user, and writes them to the given configuration file
+<span class="doccomment">/// gets the necessary information from user, and writes them to the given
+/// configuration file
 </span><span class="kw">fn </span>get_config_from_user_inputs() -&gt; <span class="prelude-ty">Result</span>&lt;Config&gt; {
     <span class="comment">// GET USER INPUTS...
     // get reward address
-    </span><span class="kw">let </span>reward_address = get_user_input(
-        <span class="string">&quot;Enter your farmer/reward address: &quot;</span>,
-        <span class="prelude-val">None</span>,
-        reward_address_parser,
-    )<span class="question-mark">?</span>;
+    </span><span class="kw">let </span>reward_address =
+        get_user_input(<span class="string">&quot;Enter your farmer/reward address: &quot;</span>, <span class="prelude-val">None</span>, reward_address_parser)<span class="question-mark">?</span>;
 
     <span class="comment">// get node name
     </span><span class="kw">let </span>default_node_name = whoami::username();
     <span class="kw">let </span>node_name = get_user_input(
-        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Enter your node name to be identified on the network(defaults to `{default_node_name}`, press enter to use the default): &quot;</span>),
+        <span class="kw-2">&amp;</span><span class="macro">format!</span>(
+            <span class="string">&quot;Enter your node name to be identified on the network(defaults to \
+             `{default_node_name}`, press enter to use the default): &quot;
+        </span>),
         <span class="prelude-val">Some</span>(default_node_name),
         node_name_parser,
     )<span class="question-mark">?</span>;
@@ -182,7 +174,9 @@
     <span class="comment">// get plot size
     </span><span class="kw">let </span>plot_size = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the default): &quot;</span>),
+            <span class="string">&quot;Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the \
+             default): &quot;
+        </span>),
         <span class="prelude-val">Some</span>(DEFAULT_PLOT_SIZE),
         size_parser,
     )<span class="question-mark">?</span>;
@@ -191,7 +185,9 @@
     </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3a;
     <span class="kw">let </span>chain = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the default): &quot;</span>),
+            <span class="string">&quot;Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the \
+             default): &quot;
+        </span>),
         <span class="prelude-val">Some</span>(<span class="kw">crate</span>::config::ChainConfig::Gemini3a),
         ChainConfig::from_str,
     )<span class="question-mark">?</span>;

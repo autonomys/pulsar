@@ -146,22 +146,21 @@
 <a href="#146" id="146">146</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
-/// and also store the amount of potentially farmed blocks during the initial plotting progress,
-/// so that progress bar won&#39;t be affected with `println!`, and user will still know about them
-/// when initial plotting is finished.
+/// and also store the amount of potentially farmed blocks during the initial
+/// plotting progress, so that progress bar won&#39;t be affected with `println!`,
+/// and user will still know about them when initial plotting is finished.
 </span><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{Report, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>tokio::{
-    fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions},
-    io::AsyncWriteExt,
-    sync::Mutex,
-};
+<span class="kw">use </span>tokio::fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions};
+<span class="kw">use </span>tokio::io::AsyncWriteExt;
+<span class="kw">use </span>tokio::sync::Mutex;
 <span class="kw">use </span>tracing::instrument;
 
-<span class="doccomment">/// Struct for holding the information of what to be displayed with the `info` command
+<span class="doccomment">/// Struct for holding the information of what to be displayed with the `info`
+/// command
 </span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
 </span><span class="kw">struct </span>FarmerSummary {
     initial_plotting_finished: bool,
@@ -170,7 +169,8 @@
     </span>user_space_pledged: ByteSize,
 }
 
-<span class="doccomment">/// utilizing persistent storage for the information to be displayed for the `info` command
+<span class="doccomment">/// utilizing persistent storage for the information to be displayed for the
+/// `info` command
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
     file: Arc&lt;Mutex&lt;PathBuf&gt;&gt;,
@@ -185,7 +185,8 @@
             .expect(<span class="string">&quot;couldn&#39;t get the default local data directory!&quot;</span>)
             .join(<span class="string">&quot;subspace-cli&quot;</span>);
 
-        <span class="comment">// providing `Some` value for `user_space_pledged` means, we are creating a new file
+        <span class="comment">// providing `Some` value for `user_space_pledged` means, we are creating a new
+        // file
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(user_space_pledged) = user_space_pledged {
             <span class="comment">// File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
@@ -209,9 +210,7 @@
             }
         }
 
-        <span class="prelude-val">Ok</span>(Summary {
-            file: Arc::new(Mutex::new(summary_path)),
-        })
+        <span class="prelude-val">Ok</span>(Summary { file: Arc::new(Mutex::new(summary_path)) })
     }
 
     <span class="doccomment">/// updates the summary file
@@ -247,7 +246,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// retrives how much space has user pledged to the network from the summary file
+    <span class="doccomment">/// retrives how much space has user pledged to the network from the summary
+    /// file
     </span><span class="attr">#[instrument]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_user_space_pledged(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ByteSize&gt; {
         <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;

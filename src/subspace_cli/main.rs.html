@@ -78,6 +78,11 @@
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -92,7 +97,10 @@
 <span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>color_eyre::eyre::Report;
 <span class="kw">use </span>color_eyre::Help;
-<span class="kw">use </span>commands::{farm::farm, info::info, init::init, wipe::wipe};
+<span class="kw">use </span>commands::farm::farm;
+<span class="kw">use </span>commands::info::info;
+<span class="kw">use </span>commands::init::init;
+<span class="kw">use </span>commands::wipe::wipe;
 <span class="kw">use </span>tokio::signal;
 <span class="kw">use </span>tracing::instrument;
 
@@ -111,9 +119,8 @@
 <span class="doccomment">/// Available commands for the CLI
 </span><span class="attr">#[derive(Debug, Subcommand)]
 </span><span class="kw">enum </span>Commands {
-    <span class="attr">#[command(
-        about = <span class="string">&quot;displays info about the farmer instance (i.e. total amount of rewards, and status of initial plotting)&quot;
-    </span>)]
+    <span class="attr">#[command(about = <span class="string">&quot;displays info about the farmer instance (i.e. total amount of rewards, \
+                       and status of initial plotting)&quot;</span>)]
     </span>Info,
     <span class="attr">#[command(about = <span class="string">&quot;initializes the config file required for the farming&quot;</span>)]
     </span>Init,
@@ -141,7 +148,10 @@
             <span class="kw">let </span>(farmer, node, _instance) = farm(verbose).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
 
             signal::ctrl_c().<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;\nWill try to gracefully exit the application now. If you press ctrl+c again, it will try to forcefully close the app!&quot;</span>);
+            <span class="macro">println!</span>(
+                <span class="string">&quot;\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
+                 will try to forcefully close the app!&quot;
+            </span>);
             <span class="kw">let </span>handle = tokio::spawn(<span class="kw">async </span>{
                 <span class="kw">let _ </span>= farmer.close().<span class="kw">await</span>;
                 node.close().<span class="kw">await</span>;

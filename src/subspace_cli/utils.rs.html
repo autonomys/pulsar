@@ -308,24 +308,20 @@
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::{
-    fs::create_dir_all,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+</pre><pre class="rust"><code><span class="kw">use </span>std::fs::create_dir_all;
+<span class="kw">use </span>std::path::{Path, PathBuf};
+<span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::level_filters::LevelFilter;
 <span class="kw">use </span>tracing_appender::rolling::{RollingFileAppender, Rotation};
 <span class="kw">use </span>tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 <span class="kw">use </span>tracing_error::ErrorLayer;
+<span class="kw">use </span>tracing_subscriber::fmt::format::FmtSpan;
 <span class="kw">use </span>tracing_subscriber::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>tracing_subscriber::{fmt, fmt::format::FmtSpan, EnvFilter, Layer};
-
-<span class="kw">use </span>subspace_sdk::PublicKey;
+<span class="kw">use </span>tracing_subscriber::{fmt, EnvFilter, Layer};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MIN_PLOT_SIZE;
 
@@ -360,7 +356,8 @@
 /// `condition`: will be checked against for the user input,
 /// the user will be repeatedly prompted to provide a valid input
 ///
-/// `error_msg`: will be displayed if user enters an input which does not satisfy the `condition`
+/// `error_msg`: will be displayed if user enters an input which does not
+/// satisfy the `condition`
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_user_input&lt;F, O, E&gt;(
     prompt: <span class="kw-2">&amp;</span>str,
     default_value: <span class="prelude-ty">Option</span>&lt;O&gt;,
@@ -410,9 +407,7 @@
     <span class="kw">if </span>path.is_dir() {
         <span class="prelude-val">Ok</span>(path)
     } <span class="kw">else </span>{
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
-            <span class="string">&quot;supplied directory does not exist! Please enter a valid path.&quot;
-        </span>))
+        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;supplied directory does not exist! Please enter a valid path.&quot;</span>))
     }
 }
 
@@ -466,9 +461,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>support_message() -&gt; String {
     <span class="macro">format!</span>(
         <span class="string">&quot;If you think this is a bug, please submit it to our forums: {}&quot;</span>,
-        ansi_term::Style::new()
-            .underline()
-            .paint(<span class="string">&quot;https://forum.subspace.network&quot;</span>)
+        ansi_term::Style::new().underline().paint(<span class="string">&quot;https://forum.subspace.network&quot;</span>)
     )
 }
 
@@ -484,7 +477,10 @@
             } <span class="kw">else if let </span><span class="prelude-val">Some</span>(err) = err.downcast_ref::&lt;String&gt;() {
                 err
             } <span class="kw">else </span>{
-                <span class="macro">unreachable!</span>(<span class="string">&quot;Should be unreachable as `fdlimit` uses panic macro, which should return either `&amp;str` or `String`.&quot;</span>)
+                <span class="macro">unreachable!</span>(
+                    <span class="string">&quot;Should be unreachable as `fdlimit` uses panic macro, which should return \
+                     either `&amp;str` or `String`.&quot;
+                </span>)
             };
             <span class="macro">tracing::warn!</span>(<span class="string">&quot;Failed to increase file limit: {err}&quot;</span>)
         }

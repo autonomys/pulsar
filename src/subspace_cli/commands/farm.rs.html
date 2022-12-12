@@ -222,16 +222,6 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -240,9 +230,8 @@
 <span class="kw">use </span>indicatif::{ProgressBar, ProgressStyle};
 <span class="kw">use </span>single_instance::SingleInstance;
 <span class="kw">use </span>subspace_sdk::node::SyncStatus;
-<span class="kw">use </span>tracing::instrument;
-
 <span class="kw">use </span>subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
+<span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, ChainConfig, Config};
 <span class="kw">use </span><span class="kw">crate</span>::summary::Summary;
@@ -257,7 +246,8 @@
 ///
 /// first, checks for an existing farmer instance
 /// then starts the farming and node instances,
-/// lastly, depending on the verbosity, it subscribes to plotting progress and new solutions
+/// lastly, depending on the verbosity, it subscribes to plotting progress and
+/// new solutions
 </span><span class="attr">#[instrument]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>farm(is_verbose: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(Farmer, Node, SingleInstance)&gt; {
     install_tracing(is_verbose);
@@ -275,16 +265,11 @@
     </span>raise_fd_limit();
 
     <span class="macro">println!</span>(<span class="string">&quot;Starting node ... (this might take up to couple of minutes)&quot;</span>);
-    <span class="kw">let </span>Config {
-        chain,
-        farmer: farmer_config,
-        node: node_config,
-    } = validate_config()<span class="question-mark">?</span>;
+    <span class="kw">let </span>Config { chain, farmer: farmer_config, node: node_config } = validate_config()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>chain = <span class="kw">match </span>chain {
-        ChainConfig::Gemini3a =&gt; {
-            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>)
-        }
+        ChainConfig::Gemini3a =&gt;
+            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>),
     };
 
     <span class="kw">let </span>node = node_config
@@ -332,9 +317,7 @@
 
         syncing_progress_bar.finish_with_message(<span class="string">&quot;Syncing is done!&quot;</span>);
     } <span class="kw">else </span>{
-        node.sync()
-            .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Node syncing failed: {err}&quot;</span>))<span class="question-mark">?</span>;
+        node.sync().<span class="kw">await</span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Node syncing failed: {err}&quot;</span>))<span class="question-mark">?</span>;
     }
 
     <span class="kw">let </span>summary = Summary::new(<span class="prelude-val">Some</span>(farmer_config.plot_size)).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -345,10 +328,7 @@
         .build(
             farmer_config.address,
             node.clone(),
-            <span class="kw-2">&amp;</span>[PlotDescription::new(
-                farmer_config.plot_directory,
-                farmer_config.plot_size,
-            )],
+            <span class="kw-2">&amp;</span>[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)],
             farmer_config.cache,
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
