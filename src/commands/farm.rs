@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
@@ -104,7 +104,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
         .build(
             farmer_config.address,
             node.clone(),
-            &[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)],
+            &[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)
+                .wrap_err("Plot size is too low")?],
             farmer_config.cache,
         )
         .await?;
