@@ -212,24 +212,14 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>, WrapErr};
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>indicatif::{ProgressBar, ProgressStyle};
 <span class="kw">use </span>single_instance::SingleInstance;
-<span class="kw">use </span>subspace_sdk::node::SyncStatus;
+<span class="kw">use </span>subspace_sdk::node::SyncingProgress;
 <span class="kw">use </span>subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 <span class="kw">use </span>tracing::instrument;
 
@@ -264,7 +254,7 @@
     <span class="comment">// raise file limit
     </span>raise_fd_limit();
 
-    <span class="macro">println!</span>(<span class="string">&quot;Starting node ... (this might take up to couple of minutes)&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">&quot;Starting node ...&quot;</span>);
     <span class="kw">let </span>Config { chain, farmer: farmer_config, node: node_config } = validate_config()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>chain = <span class="kw">match </span>chain {
@@ -281,36 +271,15 @@
     <span class="macro">println!</span>(<span class="string">&quot;Node started successfully!&quot;</span>);
 
     <span class="kw">if </span>!is_verbose {
-        <span class="kw">let </span>syncing_progress = node
+        <span class="kw">let </span><span class="kw-2">mut </span>syncing_progress = node
             .subscribe_syncing_progress()
             .<span class="kw">await
             </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to subscribe to node syncing: {err}&quot;</span>))<span class="question-mark">?
-            </span>.then({
-                <span class="kw">let </span>node = node.clone();
-                <span class="kw">move </span>|status| {
-                    <span class="kw">let </span>node = node.clone();
-                    <span class="kw">async move </span>{
-                        <span class="kw">let </span>target = <span class="kw">match </span>status {
-                            SyncStatus::Importing { target } =&gt; target <span class="kw">as </span>u64,
-                            SyncStatus::Downloading { target } =&gt; target <span class="kw">as _</span>,
-                        };
-                        <span class="kw">let </span>current_block = node
-                            .get_info()
-                            .<span class="kw">await
-                            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to get node info: {err}&quot;</span>))<span class="question-mark">?
-                            </span>.best_block
-                            .<span class="number">1 </span><span class="kw">as </span>u64;
-                        <span class="kw">let </span>target = target.max(current_block + <span class="number">1</span>);
-                        <span class="prelude-val">Ok</span>::&lt;<span class="kw">_</span>, color_eyre::Report&gt;((target, current_block))
-                    }
-                }
-            });
-        <span class="kw">let </span><span class="kw-2">mut </span>syncing_progress = Box::pin(syncing_progress);
-        <span class="kw">let </span>(target_block, current_block) = syncing_progress.next().<span class="kw">await</span>.unwrap()<span class="question-mark">?</span>;
-        <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block <span class="kw">as _</span>, target_block);
+            </span>.map(<span class="kw">move </span>|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>));
+        <span class="kw">let </span>(target_block, current_block) = syncing_progress.next().<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(result) = syncing_progress.next().<span class="kw">await </span>{
-            <span class="kw">let </span>(target_block, current_block) = result<span class="question-mark">?</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>((target_block, current_block)) = syncing_progress.next().<span class="kw">await </span>{
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
@@ -328,7 +297,8 @@
         .build(
             farmer_config.address,
             node.clone(),
-            <span class="kw-2">&amp;</span>[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)],
+            <span class="kw-2">&amp;</span>[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)
+                .wrap_err(<span class="string">&quot;Plot size is too low&quot;</span>)<span class="question-mark">?</span>],
             farmer_config.cache,
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -418,29 +388,39 @@
 <span class="doccomment">/// nice looking progress bar for the initial plotting :)
 </span><span class="kw">fn </span>plotting_progress_bar(total_size: u64) -&gt; ProgressBar {
     <span class="kw">let </span>pb = ProgressBar::new(total_size);
+    pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
     pb.set_style(
         ProgressStyle::with_template(
-            <span class="string">&quot;{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-      ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta}&quot;</span>,
+            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
+             {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
         )
         .unwrap()
-        .progress_chars(<span class="string">&quot;=&gt; &quot;</span>),
+        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
     );
     pb.set_message(<span class="string">&quot;plotting&quot;</span>);
-
     pb
 }
 
 <span class="doccomment">/// nice looking progress bar for the syncing :)
 </span><span class="kw">fn </span>syncing_progress_bar(current_block: u64, total_blocks: u64) -&gt; ProgressBar {
     <span class="kw">let </span>pb = ProgressBar::new(total_blocks);
+    pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
     pb.set_style(
         ProgressStyle::with_template(
-            <span class="string">&quot;{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-      ({pos}/{len}) {blocks_per_second}, {msg}, ETA: {eta}&quot;</span>,
+            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
+             {bps}, {msg}, ETA: {eta_precise} &quot;</span>,
         )
         .unwrap()
-        .progress_chars(<span class="string">&quot;=&gt; &quot;</span>),
+        .with_key(<span class="string">&quot;bps&quot;</span>, |state: <span class="kw-2">&amp;</span>indicatif::ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>std::fmt::Write| {
+            <span class="macro">write!</span>(w, <span class="string">&quot;{:.2}bps&quot;</span>, state.per_sec()).unwrap()
+        })
+        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
     );
     pb.set_message(<span class="string">&quot;syncing&quot;</span>);
     pb.set_position(current_block);

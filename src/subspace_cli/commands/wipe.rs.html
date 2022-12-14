@@ -37,6 +37,7 @@
 <a href="#37" id="37">37</a>
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::Result;
 <span class="kw">use </span>subspace_sdk::{Node, PlotDescription};
 
@@ -63,12 +64,13 @@
     <span class="macro">println!</span>(<span class="string">&quot;Node is wiped!&quot;</span>);
 
     <span class="comment">// TODO: modify here when supporting multi-plot
-    </span><span class="kw">let </span>plot = PlotDescription {
-        directory: config.farmer.plot_directory,
-        space_pledged: config.farmer.plot_size,
-    };
+    </span><span class="kw">match </span>PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size) {
+        <span class="prelude-val">Ok</span>(plot) =&gt; {
+            <span class="kw">let _ </span>= plot.wipe().<span class="kw">await</span>;
+        }
+        <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">println!</span>(<span class="string">&quot;Skipping wiping plot. Got error while constructing it: {err}&quot;</span>),
+    }
 
-    <span class="kw">let _ </span>= plot.wipe().<span class="kw">await</span>;
     <span class="kw">let _ </span>= config.farmer.cache.wipe().<span class="kw">await</span>;
     <span class="macro">println!</span>(<span class="string">&quot;Farmer is wiped!&quot;</span>);
 
