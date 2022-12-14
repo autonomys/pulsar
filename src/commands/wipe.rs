@@ -24,12 +24,13 @@ pub(crate) async fn wipe() -> Result<()> {
     println!("Node is wiped!");
 
     // TODO: modify here when supporting multi-plot
-    let plot = PlotDescription {
-        directory: config.farmer.plot_directory,
-        space_pledged: config.farmer.plot_size,
-    };
+    match PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size) {
+        Ok(plot) => {
+            let _ = plot.wipe().await;
+        }
+        Err(err) => println!("Skipping wiping plot. Got error while constructing it: {err}"),
+    }
 
-    let _ = plot.wipe().await;
     let _ = config.farmer.cache.wipe().await;
     println!("Farmer is wiped!");
 

@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use single_instance::SingleInstance;
-use subspace_sdk::node::SyncStatus;
+use subspace_sdk::node::SyncingProgress;
 use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 use tracing::instrument;
 
@@ -40,7 +40,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     // raise file limit
     raise_fd_limit();
 
-    println!("Starting node ... (this might take up to couple of minutes)");
+    println!("Starting node ...");
     let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
     let chain = match chain {
@@ -57,36 +57,15 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     println!("Node started successfully!");
 
     if !is_verbose {
-        let syncing_progress = node
+        let mut syncing_progress = node
             .subscribe_syncing_progress()
             .await
             .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
-            .then({
-                let node = node.clone();
-                move |status| {
-                    let node = node.clone();
-                    async move {
-                        let target = match status {
-                            SyncStatus::Importing { target } => target as u64,
-                            SyncStatus::Downloading { target } => target as _,
-                        };
-                        let current_block = node
-                            .get_info()
-                            .await
-                            .map_err(|err| eyre!("Failed to get node info: {err}"))?
-                            .best_block
-                            .1 as u64;
-                        let target = target.max(current_block + 1);
-                        Ok::<_, color_eyre::Report>((target, current_block))
-                    }
-                }
-            });
-        let mut syncing_progress = Box::pin(syncing_progress);
-        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
-        let syncing_progress_bar = syncing_progress_bar(current_block as _, target_block);
+            .map(move |SyncingProgress { at, target, status: _ }| (target as _, at as _));
+        let (target_block, current_block) = syncing_progress.next().await.unwrap();
+        let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
-        while let Some(result) = syncing_progress.next().await {
-            let (target_block, current_block) = result?;
+        while let Some((target_block, current_block)) = syncing_progress.next().await {
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
@@ -104,7 +83,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
         .build(
             farmer_config.address,
             node.clone(),
-            &[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)],
+            &[PlotDescription::new(farmer_config.plot_directory, farmer_config.plot_size)
+                .wrap_err("Plot size is too low")?],
             farmer_config.cache,
         )
         .await?;
@@ -194,29 +174,39 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 /// nice looking progress bar for the initial plotting :)
 fn plotting_progress_bar(total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
     pb.set_style(
         ProgressStyle::with_template(
-            "{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-      ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta}",
+            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
+             {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
         )
         .unwrap()
-        .progress_chars("=> "),
+        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
+        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        .progress_chars("█▉▊▋▌▍▎▏  "),
     );
     pb.set_message("plotting");
-
     pb
 }
 
 /// nice looking progress bar for the syncing :)
 fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_blocks);
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
     pb.set_style(
         ProgressStyle::with_template(
-            "{spinner:.green} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-      ({pos}/{len}) {blocks_per_second}, {msg}, ETA: {eta}",
+            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
+             {bps}, {msg}, ETA: {eta_precise} ",
         )
         .unwrap()
-        .progress_chars("=> "),
+        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
+            write!(w, "{:.2}bps", state.per_sec()).unwrap()
+        })
+        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
+        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        .progress_chars("█▉▊▋▌▍▎▏  "),
     );
     pb.set_message("syncing");
     pb.set_position(current_block);

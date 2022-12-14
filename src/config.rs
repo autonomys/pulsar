@@ -6,7 +6,7 @@ use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Result};
 use color_eyre::Report;
 use serde::{Deserialize, Serialize};
-use subspace_sdk::farmer::{self, CacheDescription, Config as SdkFarmerConfig, Farmer};
+use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::{self, Config as SdkNodeConfig, Node};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
@@ -93,13 +93,7 @@ impl FarmerConfig {
             plot_directory,
             plot_size,
             cache,
-            farmer: Farmer::builder()
-                .dsn(
-                    farmer::DsnBuilder::new().listen_on(vec!["/ip4/0.0.0.0/tcp/30533"
-                        .parse()
-                        .expect("Valid multiaddr")]),
-                )
-                .configuration(),
+            farmer: Farmer::builder().configuration(),
         }
     }
 }
