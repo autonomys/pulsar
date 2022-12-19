@@ -44,8 +44,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
     let chain = match chain {
-        ChainConfig::Gemini3a =>
-            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK"),
+        ChainConfig::Gemini3b =>
+            chain_spec::gemini_3b().expect("cannot extract the gemini3b chain spec from SDK"),
     };
 
     let node = node_config
@@ -61,11 +61,14 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
             .subscribe_syncing_progress()
             .await
             .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
-            .map(move |SyncingProgress { at, target, status: _ }| (target as _, at as _));
-        let (target_block, current_block) = syncing_progress.next().await.unwrap();
+            .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
+            .map_err(|err| eyre!("Sync failed because: {err}"));
+
+        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
         let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
-        while let Some((target_block, current_block)) = syncing_progress.next().await {
+        while let Some(stream_result) = syncing_progress.next().await {
+            let (target_block, current_block) = stream_result?;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
