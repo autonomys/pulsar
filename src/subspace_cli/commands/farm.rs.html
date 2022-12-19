@@ -212,6 +212,9 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -258,8 +261,8 @@
     <span class="kw">let </span>Config { chain, farmer: farmer_config, node: node_config } = validate_config()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>chain = <span class="kw">match </span>chain {
-        ChainConfig::Gemini3a =&gt;
-            chain_spec::gemini_3a().expect(<span class="string">&quot;cannot extract the gemini3a chain spec from SDK&quot;</span>),
+        ChainConfig::Gemini3b =&gt;
+            chain_spec::gemini_3b().expect(<span class="string">&quot;cannot extract the gemini3b chain spec from SDK&quot;</span>),
     };
 
     <span class="kw">let </span>node = node_config
@@ -275,11 +278,14 @@
             .subscribe_syncing_progress()
             .<span class="kw">await
             </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to subscribe to node syncing: {err}&quot;</span>))<span class="question-mark">?
-            </span>.map(<span class="kw">move </span>|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>));
-        <span class="kw">let </span>(target_block, current_block) = syncing_progress.next().<span class="kw">await</span>.unwrap();
+            </span>.map_ok(|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>))
+            .map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Sync failed because: {err}&quot;</span>));
+
+        <span class="kw">let </span>(target_block, current_block) = syncing_progress.next().<span class="kw">await</span>.unwrap()<span class="question-mark">?</span>;
         <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
-        <span class="kw">while let </span><span class="prelude-val">Some</span>((target_block, current_block)) = syncing_progress.next().<span class="kw">await </span>{
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(stream_result) = syncing_progress.next().<span class="kw">await </span>{
+            <span class="kw">let </span>(target_block, current_block) = stream_result<span class="question-mark">?</span>;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }

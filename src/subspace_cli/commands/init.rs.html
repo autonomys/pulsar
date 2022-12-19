@@ -182,25 +182,25 @@
     )<span class="question-mark">?</span>;
 
     <span class="comment">// get chain
-    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3a;
+    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3b;
     <span class="kw">let </span>chain = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
             <span class="string">&quot;Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the \
              default): &quot;
         </span>),
-        <span class="prelude-val">Some</span>(<span class="kw">crate</span>::config::ChainConfig::Gemini3a),
+        <span class="prelude-val">Some</span>(<span class="kw">crate</span>::config::ChainConfig::Gemini3b),
         ChainConfig::from_str,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>(farmer, node) = <span class="kw">match </span>chain {
-        ChainConfig::Gemini3a =&gt; (
-            FarmerConfig::gemini_3a(
+        ChainConfig::Gemini3b =&gt; (
+            FarmerConfig::gemini_3b(
                 reward_address,
                 plot_directory,
                 plot_size,
                 CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(<span class="number">1</span>))<span class="question-mark">?</span>,
             ),
-            NodeConfig::gemini_3a(node_directory_getter(), node_name),
+            NodeConfig::gemini_3b(node_directory_getter(), node_name),
         ),
     };
 
