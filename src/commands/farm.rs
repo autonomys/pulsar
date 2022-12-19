@@ -58,17 +58,17 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     if !is_verbose {
         let mut syncing_progress = node
-            .subscribe_syncing_progress()
-            .await
-            .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
-            .map(move |x| {
-                let SyncingProgress { at, target, status: _ } = x.expect("SDK never sends `Err` value");
-                (target as _, at as _)
-            });
-        let (target_block, current_block) = syncing_progress.next().await.unwrap();
+        .subscribe_syncing_progress()
+        .await
+        .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
+        .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
+        .map_err(|err| eyre!("Sync failed because: {err}"));
+
+        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
         let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
-        while let Some((target_block, current_block)) = syncing_progress.next().await {
+        while let Some(stream_result) = syncing_progress.next().await {
+            let (target_block, current_block) = stream_result?;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
