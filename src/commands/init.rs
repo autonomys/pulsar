@@ -76,25 +76,25 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get chain
-    let default_chain = ChainConfig::Gemini3a;
+    let default_chain = ChainConfig::Gemini3b;
     let chain = get_user_input(
         &format!(
             "Specify the chain to farm(defaults to `{default_chain:}`, press enter to use the \
              default): "
         ),
-        Some(crate::config::ChainConfig::Gemini3a),
+        Some(crate::config::ChainConfig::Gemini3b),
         ChainConfig::from_str,
     )?;
 
     let (farmer, node) = match chain {
-        ChainConfig::Gemini3a => (
-            FarmerConfig::gemini_3a(
+        ChainConfig::Gemini3b => (
+            FarmerConfig::gemini_3b(
                 reward_address,
                 plot_directory,
                 plot_size,
                 CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
             ),
-            NodeConfig::gemini_3a(node_directory_getter(), node_name),
+            NodeConfig::gemini_3b(node_directory_getter(), node_name),
         ),
     };
 

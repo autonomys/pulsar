@@ -44,8 +44,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
     let chain = match chain {
-        ChainConfig::Gemini3a =>
-            chain_spec::gemini_3a().expect("cannot extract the gemini3a chain spec from SDK"),
+        ChainConfig::Gemini3b =>
+            chain_spec::gemini_3b().expect("cannot extract the gemini3b chain spec from SDK"),
     };
 
     let node = node_config
