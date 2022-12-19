@@ -1,0 +1,47 @@
+name: Bug Report
+description: If something is not working as expected... 
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - ozgunozerk 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: if you want, you can include screenshots as well :) 
+    validations:
+      required: true
+  - type: input  
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: platform
+      description: On which operating system did this bug emerged?
+      options:
+        - linux 
+        - windows
+        - macos
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead? What was the expected behavior?
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com) # TODO: fix this link
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
