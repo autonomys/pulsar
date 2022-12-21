@@ -1,19 +1,19 @@
-name: Feature Request 
-description: If you have a great thing on your mind  
-title: "[Feature Request]: "
+name: 🎁 Feature Request
+description: If you have a great thing on your mind ⚡️
+title: "🎁 [Feature Request]: "
 labels: ["enhancement"]
 assignees:
-  - ozgunozerk 
+  - ozgunozerk
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill this feature request! 
+        Thanks for taking the time to fill this feature request!
   - type: textarea
-    id: feature 
+    id: feature
     attributes:
-      label: What is the feature you would like to see? 
-      description: please explain all the details :) 
+      label: What is the feature you would like to see?
+      description: please explain all the details :)
     validations:
       required: true
   - type: checkboxes

@@ -1,9 +1,9 @@
-name: Bug Report
-description: If something is not working as expected... 
-title: "[Bug]: "
+name: 🐞 Bug Report
+description: If something is not working as expected...🔍
+title: "🐞 [Bug]: "
 labels: ["bug"]
 assignees:
-  - ozgunozerk 
+  - ozgunozerk
 body:
   - type: markdown
     attributes:
@@ -13,10 +13,10 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: if you want, you can include screenshots as well :) 
+      description: if you want, you can include screenshots as well :)
     validations:
       required: true
-  - type: input  
+  - type: input
     id: version
     attributes:
       label: Version
@@ -29,7 +29,7 @@ body:
       label: platform
       description: On which operating system did this bug emerged?
       options:
-        - linux 
+        - linux
         - windows
         - macos
   - type: textarea
