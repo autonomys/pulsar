@@ -40,16 +40,16 @@ impl NodeConfig {
                 .network(
                     node::NetworkBuilder::new()
                         .listen_addresses(vec![
-                            "/ip6/::/tcp/30333".parse().unwrap(),
-                            "/ip4/0.0.0.0/tcp/30333".parse().unwrap(),
+                            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+                            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
                         ])
                         .name(node_name)
                         .enable_mdns(true),
                 )
                 .rpc(
                     node::RpcBuilder::new()
-                        .http("127.0.0.1:9933".parse().unwrap())
-                        .ws("127.0.0.1:9944".parse().unwrap())
+                        .http("127.0.0.1:9933".parse().expect("hardcoded value is true"))
+                        .ws("127.0.0.1:9944".parse().expect("hardcoded value is true"))
                         .cors(vec![
                             "http://localhost:*".to_owned(),
                             "http://127.0.0.1:*".to_owned(),
@@ -59,8 +59,8 @@ impl NodeConfig {
                         ]),
                 )
                 .dsn(node::DsnBuilder::new().listen_addresses(vec![
-                    "/ip6/::/tcp/30433".parse().unwrap(),
-                    "/ip4/0.0.0.0/tcp/30433".parse().unwrap(),
+                    "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
+                    "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
                 ]))
                 .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
                 .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true))

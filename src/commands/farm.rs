@@ -125,7 +125,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
                             "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
                   ({bytes}/{total_bytes}) {msg}",
                         )
-                        .unwrap()
+                        .expect("hardcoded template is correct")
                         .progress_chars("=> "),
                     );
                     progress_bar.finish_with_message("Initial plotting finished!");
@@ -183,7 +183,7 @@ fn plotting_progress_bar(total_size: u64) -> ProgressBar {
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
              {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
         )
-        .unwrap()
+        .expect("hardcoded template is correct")
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
         // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
@@ -202,10 +202,10 @@ fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
              {bps}, {msg}, ETA: {eta_precise} ",
         )
-        .unwrap()
-        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
-            write!(w, "{:.2}bps", state.per_sec()).unwrap()
-        })
+        .expect("hardcoded template is correct")
+        // .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
+        //     write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
+        // })
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
         // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
