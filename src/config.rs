@@ -27,7 +27,7 @@ pub(crate) struct Config {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
-    #[serde(default)]
+    #[serde(flatten)]
     pub(crate) node: SdkNodeConfig,
 }
 
@@ -76,9 +76,9 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
-    pub(crate) cache: CacheDescription,
-    #[serde(default)]
+    #[serde(flatten)]
     pub(crate) farmer: SdkFarmerConfig,
+    pub(crate) cache: CacheDescription,
 }
 
 impl FarmerConfig {
@@ -166,12 +166,6 @@ pub(crate) fn validate_config() -> Result<Config> {
     // validity checks
     if config.farmer.plot_size < MIN_PLOT_SIZE {
         return Err(eyre!("plot size should be bigger than {MIN_PLOT_SIZE}!"));
-    }
-    let Some(ref name) = config.node.node.network.name else {
-        return Err(eyre!("Node name was `None`"));
-    };
-    if name.trim().is_empty() {
-        return Err(eyre!("Node nome is empty"));
     }
 
     Ok(config)
