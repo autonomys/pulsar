@@ -115,17 +115,21 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
 
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("plots")
+    data_dir_getter().join("plots")
 }
 
 /// generates a cache path from the given path
 pub(crate) fn cache_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("cache")
+    data_dir_getter().join("cache")
 }
 
 /// generates a node path from the given path
 pub(crate) fn node_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("node")
+    data_dir_getter().join("node")
+}
+
+fn data_dir_getter() -> PathBuf {
+    dirs::data_dir().expect("data folder must be present in every major OS").join("subspace-cli")
 }
 
 /// returns OS specific log directory
