@@ -308,6 +308,10 @@
 <a href="#308" id="308">308</a>
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>std::str::FromStr;
@@ -425,17 +429,21 @@
 
 <span class="doccomment">/// generates a plot path from the given path
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>plot_directory_getter() -&gt; PathBuf {
-    dirs::data_dir().unwrap().join(<span class="string">&quot;subspace-cli&quot;</span>).join(<span class="string">&quot;plots&quot;</span>)
+    data_dir_getter().join(<span class="string">&quot;plots&quot;</span>)
 }
 
 <span class="doccomment">/// generates a cache path from the given path
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cache_directory_getter() -&gt; PathBuf {
-    dirs::data_dir().unwrap().join(<span class="string">&quot;subspace-cli&quot;</span>).join(<span class="string">&quot;cache&quot;</span>)
+    data_dir_getter().join(<span class="string">&quot;cache&quot;</span>)
 }
 
 <span class="doccomment">/// generates a node path from the given path
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>node_directory_getter() -&gt; PathBuf {
-    dirs::data_dir().unwrap().join(<span class="string">&quot;subspace-cli&quot;</span>).join(<span class="string">&quot;node&quot;</span>)
+    data_dir_getter().join(<span class="string">&quot;node&quot;</span>)
+}
+
+<span class="kw">fn </span>data_dir_getter() -&gt; PathBuf {
+    dirs::data_dir().expect(<span class="string">&quot;data folder must be present in every major OS&quot;</span>).join(<span class="string">&quot;subspace-cli&quot;</span>)
 }
 
 <span class="doccomment">/// returns OS specific log directory

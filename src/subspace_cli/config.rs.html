@@ -232,16 +232,16 @@
                 .network(
                     node::NetworkBuilder::new()
                         .listen_addresses(<span class="macro">vec!</span>[
-                            <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().unwrap(),
-                            <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().unwrap(),
+                            <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+                            <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
                         ])
                         .name(node_name)
                         .enable_mdns(<span class="bool-val">true</span>),
                 )
                 .rpc(
                     node::RpcBuilder::new()
-                        .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().unwrap())
-                        .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().unwrap())
+                        .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
+                        .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
                         .cors(<span class="macro">vec!</span>[
                             <span class="string">&quot;http://localhost:*&quot;</span>.to_owned(),
                             <span class="string">&quot;http://127.0.0.1:*&quot;</span>.to_owned(),
@@ -251,8 +251,8 @@
                         ]),
                 )
                 .dsn(node::DsnBuilder::new().listen_addresses(<span class="macro">vec!</span>[
-                    <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().unwrap(),
-                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().unwrap(),
+                    <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
                 ]))
                 .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
                 .offchain_worker(node::OffchainWorkerBuilder::new().enabled(<span class="bool-val">true</span>))
