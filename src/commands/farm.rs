@@ -64,7 +64,10 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
             .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
             .map_err(|err| eyre!("Sync failed because: {err}"));
 
-        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
+        let Some(syncing_result) = syncing_progress.next().await else {
+            return Err(eyre!("backoff mechanism timed out for node syncing on the SDK side"));
+        };
+        let (target_block, current_block) = syncing_result?;
         let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
         while let Some(stream_result) = syncing_progress.next().await {
