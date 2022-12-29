@@ -129,7 +129,6 @@ async fn subscribe_to_plotting_progress(
     sector_size_bytes: u64,
 ) {
     tokio::spawn({
-        let summary = summary.clone();
         async move {
             for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
                 println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
