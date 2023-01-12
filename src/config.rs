@@ -7,8 +7,9 @@ use color_eyre::eyre::{eyre, Result};
 use color_eyre::Report;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
-use subspace_sdk::node::{self, Config as SdkNodeConfig, Node};
-use subspace_sdk::PublicKey;
+use subspace_sdk::node::domains::core::ConfigBuilder;
+use subspace_sdk::node::{self, domains, Config as SdkNodeConfig, Node};
+use subspace_sdk::{chain_spec, PublicKey};
 use tracing::instrument;
 
 /// defaults for the user config file
@@ -32,40 +33,45 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn gemini_3b(directory: PathBuf, node_name: String) -> Self {
-        Self {
-            directory,
-            node: Node::builder()
-                .role(node::Role::Authority)
-                .network(
-                    node::NetworkBuilder::new()
-                        .listen_addresses(vec![
-                            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-                        ])
-                        .name(node_name)
-                        .enable_mdns(true),
-                )
-                .rpc(
-                    node::RpcBuilder::new()
-                        .http("127.0.0.1:9933".parse().expect("hardcoded value is true"))
-                        .ws("127.0.0.1:9944".parse().expect("hardcoded value is true"))
-                        .cors(vec![
-                            "http://localhost:*".to_owned(),
-                            "http://127.0.0.1:*".to_owned(),
-                            "https://localhost:*".to_owned(),
-                            "https://127.0.0.1:*".to_owned(),
-                            "https://polkadot.js.org".to_owned(),
-                        ]),
-                )
-                .dsn(node::DsnBuilder::new().listen_addresses(vec![
-                    "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-                    "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-                ]))
-                .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
-                .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true))
-                .configuration(),
+    pub fn gemini_3b(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
+        let mut node = Node::builder()
+            .role(node::Role::Authority)
+            .network(
+                node::NetworkBuilder::new()
+                    .listen_addresses(vec![
+                        "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+                        "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
+                    ])
+                    .name(node_name)
+                    .enable_mdns(true),
+            )
+            .rpc(
+                node::RpcBuilder::new()
+                    .http("127.0.0.1:9933".parse().expect("hardcoded value is true"))
+                    .ws("127.0.0.1:9944".parse().expect("hardcoded value is true"))
+                    .cors(vec![
+                        "http://localhost:*".to_owned(),
+                        "http://127.0.0.1:*".to_owned(),
+                        "https://localhost:*".to_owned(),
+                        "https://127.0.0.1:*".to_owned(),
+                        "https://polkadot.js.org".to_owned(),
+                    ]),
+            )
+            .dsn(node::DsnBuilder::new().listen_addresses(vec![
+                "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
+                "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
+            ]))
+            .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
+            .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true));
+
+        if is_executor {
+            node =
+                node.system_domain(domains::ConfigBuilder::new().core(
+                    ConfigBuilder::new().build(chain_spec::core_payments::gemini_3b_config()),
+                ));
         }
+
+        Self { directory, node: node.configuration() }
     }
 }
 
@@ -184,7 +190,7 @@ mod test {
                 ByteSize::gb(1),
                 CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
             ),
-            node: NodeConfig::gemini_3b("node".into(), "serializable-node".to_owned()),
+            node: NodeConfig::gemini_3b("node".into(), "serializable-node".to_owned(), false),
             chain: ChainConfig::Gemini3b,
         })
         .unwrap();
