@@ -10,7 +10,7 @@ use crate::config::{
 use crate::utils::{
     cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
     plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser,
+    reward_address_parser, size_parser, yes_or_no_parser,
 };
 
 /// implementation of the `init` command
@@ -86,6 +86,12 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ChainConfig::from_str,
     )?;
 
+    let is_executor = get_user_input(
+        "Do you want to be an executor? y/n (defaults to no): ",
+        Some(false),
+        yes_or_no_parser,
+    )?;
+
     let (farmer, node) = match chain {
         ChainConfig::Gemini3b => (
             FarmerConfig::gemini_3b(
@@ -94,7 +100,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
                 plot_size,
                 CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
             ),
-            NodeConfig::gemini_3b(node_directory_getter(), node_name),
+            NodeConfig::gemini_3b(node_directory_getter(), node_name, is_executor),
         ),
     };
 
