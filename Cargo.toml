@@ -28,7 +28,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1.2.3"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "182914ed5beeda9e75c603ac7aeb697d3bf05edc" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ec490c16505cbfb9f706ccd42b59a48383b6a3a5" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies

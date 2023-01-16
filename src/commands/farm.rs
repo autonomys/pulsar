@@ -47,7 +47,6 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
         ChainConfig::Gemini3b =>
             chain_spec::gemini_3b().expect("cannot extract the gemini3b chain spec from SDK"),
     };
-    println!("testing");
     let node = node_config
         .node
         .build(node_config.directory, chain)

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
 use subspace_sdk::node::{self, domains, Config as SdkNodeConfig, Node};
-use subspace_sdk::{chain_spec, PublicKey};
+use subspace_sdk::PublicKey;
 use tracing::instrument;
 
 /// defaults for the user config file
@@ -65,10 +65,8 @@ impl NodeConfig {
             .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true));
 
         if is_executor {
-            node =
-                node.system_domain(domains::ConfigBuilder::new().core(
-                    ConfigBuilder::new().build(chain_spec::core_payments::gemini_3b_config()),
-                ));
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
         Self { directory, node: node.configuration() }

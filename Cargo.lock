@@ -7927,7 +7927,7 @@ dependencies = [
 [[package]]
 name = "sc-subspace-chain-specs"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace?rev=1b9431371104b156f68f3a416084b9ea8f3a812f#1b9431371104b156f68f3a416084b9ea8f3a812f"
+source = "git+https://github.com/subspace/subspace?rev=a2bf9956d6093a51440a16ab72f60d4a4ef71a0a#a2bf9956d6093a51440a16ab72f60d4a4ef71a0a"
 dependencies = [
  "sc-chain-spec",
  "sc-service",
@@ -9672,7 +9672,7 @@ dependencies = [
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=182914ed5beeda9e75c603ac7aeb697d3bf05edc#182914ed5beeda9e75c603ac7aeb697d3bf05edc"
+source = "git+https://github.com/subspace/subspace-sdk?rev=ec490c16505cbfb9f706ccd42b59a48383b6a3a5#ec490c16505cbfb9f706ccd42b59a48383b6a3a5"
 dependencies = [
  "anyhow",
  "async-trait",
