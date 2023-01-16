@@ -104,6 +104,12 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
@@ -116,7 +122,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::utils::{
     cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
     plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser,
+    reward_address_parser, size_parser, yes_or_no_parser,
 };
 
 <span class="doccomment">/// implementation of the `init` command
@@ -192,6 +198,12 @@
         ChainConfig::from_str,
     )<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>is_executor = get_user_input(
+        <span class="string">&quot;Do you want to be an executor? y/n (defaults to no): &quot;</span>,
+        <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+        yes_or_no_parser,
+    )<span class="question-mark">?</span>;
+
     <span class="kw">let </span>(farmer, node) = <span class="kw">match </span>chain {
         ChainConfig::Gemini3b =&gt; (
             FarmerConfig::gemini_3b(
@@ -200,7 +212,7 @@
                 plot_size,
                 CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(<span class="number">1</span>))<span class="question-mark">?</span>,
             ),
-            NodeConfig::gemini_3b(node_directory_getter(), node_name),
+            NodeConfig::gemini_3b(node_directory_getter(), node_name, is_executor),
         ),
     };
 

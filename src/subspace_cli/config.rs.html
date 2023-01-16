@@ -190,6 +190,10 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -199,7 +203,8 @@
 <span class="kw">use </span>color_eyre::Report;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
-<span class="kw">use </span>subspace_sdk::node::{<span class="self">self</span>, Config <span class="kw">as </span>SdkNodeConfig, Node};
+<span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
+<span class="kw">use </span>subspace_sdk::node::{<span class="self">self</span>, domains, Config <span class="kw">as </span>SdkNodeConfig, Node};
 <span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::instrument;
 
@@ -224,40 +229,43 @@
 }
 
 <span class="kw">impl </span>NodeConfig {
-    <span class="kw">pub fn </span>gemini_3b(directory: PathBuf, node_name: String) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            directory,
-            node: Node::builder()
-                .role(node::Role::Authority)
-                .network(
-                    node::NetworkBuilder::new()
-                        .listen_addresses(<span class="macro">vec!</span>[
-                            <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                            <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                        ])
-                        .name(node_name)
-                        .enable_mdns(<span class="bool-val">true</span>),
-                )
-                .rpc(
-                    node::RpcBuilder::new()
-                        .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
-                        .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
-                        .cors(<span class="macro">vec!</span>[
-                            <span class="string">&quot;http://localhost:*&quot;</span>.to_owned(),
-                            <span class="string">&quot;http://127.0.0.1:*&quot;</span>.to_owned(),
-                            <span class="string">&quot;https://localhost:*&quot;</span>.to_owned(),
-                            <span class="string">&quot;https://127.0.0.1:*&quot;</span>.to_owned(),
-                            <span class="string">&quot;https://polkadot.js.org&quot;</span>.to_owned(),
-                        ]),
-                )
-                .dsn(node::DsnBuilder::new().listen_addresses(<span class="macro">vec!</span>[
-                    <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                    <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                ]))
-                .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
-                .offchain_worker(node::OffchainWorkerBuilder::new().enabled(<span class="bool-val">true</span>))
-                .configuration(),
+    <span class="kw">pub fn </span>gemini_3b(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::builder()
+            .role(node::Role::Authority)
+            .network(
+                node::NetworkBuilder::new()
+                    .listen_addresses(<span class="macro">vec!</span>[
+                        <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+                        <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+                    ])
+                    .name(node_name)
+                    .enable_mdns(<span class="bool-val">true</span>),
+            )
+            .rpc(
+                node::RpcBuilder::new()
+                    .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
+                    .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
+                    .cors(<span class="macro">vec!</span>[
+                        <span class="string">&quot;http://localhost:*&quot;</span>.to_owned(),
+                        <span class="string">&quot;http://127.0.0.1:*&quot;</span>.to_owned(),
+                        <span class="string">&quot;https://localhost:*&quot;</span>.to_owned(),
+                        <span class="string">&quot;https://127.0.0.1:*&quot;</span>.to_owned(),
+                        <span class="string">&quot;https://polkadot.js.org&quot;</span>.to_owned(),
+                    ]),
+            )
+            .dsn(node::DsnBuilder::new().listen_addresses(<span class="macro">vec!</span>[
+                <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+                <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+            ]))
+            .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
+            .offchain_worker(node::OffchainWorkerBuilder::new().enabled(<span class="bool-val">true</span>));
+
+        <span class="kw">if </span>is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+
+        <span class="self">Self </span>{ directory, node: node.configuration() }
     }
 }
 
@@ -376,7 +384,7 @@
                 ByteSize::gb(<span class="number">1</span>),
                 CacheDescription::new(<span class="string">&quot;cache&quot;</span>, ByteSize::gb(<span class="number">1</span>)).unwrap(),
             ),
-            node: NodeConfig::gemini_3b(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned()),
+            node: NodeConfig::gemini_3b(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned(), <span class="bool-val">false</span>),
             chain: ChainConfig::Gemini3b,
         })
         .unwrap();
