@@ -113,6 +113,14 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     }
 }
 
+pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
+    match answer.to_lowercase().as_str() {
+        "y" | "yes" => Ok(true),
+        "n" | "no" => Ok(false),
+        _ => Err(eyre!("could not interpret your answer. Please provide `y` or `n`.")),
+    }
+}
+
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
     data_dir_getter().join("plots")
