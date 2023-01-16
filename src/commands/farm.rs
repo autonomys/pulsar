@@ -40,14 +40,13 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     // raise file limit
     raise_fd_limit();
 
-    println!("Starting node ...");
     let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
+    println!("Starting node ...");
     let chain = match chain {
         ChainConfig::Gemini3b =>
             chain_spec::gemini_3b().expect("cannot extract the gemini3b chain spec from SDK"),
     };
-
     let node = node_config
         .node
         .build(node_config.directory, chain)
@@ -57,23 +56,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     println!("Node started successfully!");
 
     if !is_verbose {
-        let mut syncing_progress = node
-            .subscribe_syncing_progress()
-            .await
-            .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
-            .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
-            .map_err(|err| eyre!("Sync failed because: {err}"));
-
-        let (target_block, current_block) = syncing_progress.next().await.unwrap()?;
-        let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
-
-        while let Some(stream_result) = syncing_progress.next().await {
-            let (target_block, current_block) = stream_result?;
-            syncing_progress_bar.set_position(current_block);
-            syncing_progress_bar.set_length(target_block);
-        }
-
-        syncing_progress_bar.finish_with_message("Syncing is done!");
+        subscribe_to_node_syncing(node.clone()).await?;
     } else {
         node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
     }
@@ -97,81 +80,122 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     if !is_verbose {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
-        let farmer_clone = farmer.clone();
-        let finished_flag = is_initial_progress_finished.clone();
-
-        // initial plotting progress subscriber
-        tokio::spawn({
-            let summary = summary.clone();
-            async move {
-                for (plot_id, plot) in farmer_clone.iter_plots().await.enumerate() {
-                    println!(
-                        "Initial plotting for plot: #{plot_id} ({})",
-                        plot.directory().display()
-                    );
-                    let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
-                    plot.subscribe_initial_plotting_progress()
-                        .await
-                        .for_each(|progress| {
-                            let pb_clone = progress_bar.clone();
-                            async move {
-                                let current_bytes = progress.current_sector * sector_size_bytes;
-                                pb_clone.set_position(current_bytes);
-                            }
-                        })
-                        .await;
-                    progress_bar.set_style(
-                        ProgressStyle::with_template(
-                            "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-                  ({bytes}/{total_bytes}) {msg}",
-                        )
-                        .unwrap()
-                        .progress_chars("=> "),
-                    );
-                    progress_bar.finish_with_message("Initial plotting finished!");
-                    finished_flag.store(true, Ordering::Relaxed);
-                    let _ = summary.update(Some(true), None).await; // ignore the error, since we will abandon this mechanism soon
-                }
-            }
-        });
-
-        // solution subscriber
-        tokio::spawn({
-            let farmer = farmer.clone();
-            let summary = summary.clone();
-            async move {
-                let farmed_blocks = summary
-                    .get_farmed_block_count()
-                    .await
-                    .expect("couldn't read farmed blocks count from summary");
-                let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
-                for plot in farmer.iter_plots().await {
-                    plot.subscribe_new_solutions()
-                        .await
-                        .for_each(|solutions| {
-                            let farmed_block_count = &farmed_block_count;
-                            let is_initial_progress_finished = &is_initial_progress_finished;
-                            let summary = summary.clone();
-                            async move {
-                                if !solutions.solutions.is_empty() {
-                                    let total_farmed =
-                                        farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                                    let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
-                                    if is_initial_progress_finished.load(Ordering::Relaxed) {
-                                        println!(
-                                            "You have farmed {total_farmed} block(s) in total!"
-                                        );
-                                    }
-                                }
-                            }
-                        })
-                        .await
-                }
-            }
-        });
+        subscribe_to_plotting_progress(
+            summary.clone(),
+            farmer.clone(),
+            is_initial_progress_finished.clone(),
+            sector_size_bytes,
+        )
+        .await;
+        subscribe_to_solutions(
+            summary.clone(),
+            farmer.clone(),
+            is_initial_progress_finished.clone(),
+        )
+        .await;
     }
 
     Ok((farmer, node, instance))
+}
+
+async fn subscribe_to_node_syncing(node: Node) -> Result<()> {
+    let mut syncing_progress = node
+        .subscribe_syncing_progress()
+        .await
+        .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
+        .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
+        .map_err(|err| eyre!("Sync failed because: {err}"));
+
+    if let Some(syncing_result) = syncing_progress.next().await {
+        let (target_block, current_block) = syncing_result?;
+        let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
+
+        while let Some(stream_result) = syncing_progress.next().await {
+            let (target_block, current_block) = stream_result?;
+            syncing_progress_bar.set_position(current_block);
+            syncing_progress_bar.set_length(target_block);
+        }
+
+        syncing_progress_bar.finish_with_message("Syncing is done!");
+    }
+    Ok(())
+}
+
+async fn subscribe_to_plotting_progress(
+    summary: Summary,
+    farmer: Farmer,
+    is_initial_progress_finished: Arc<AtomicBool>,
+    sector_size_bytes: u64,
+) {
+    tokio::spawn({
+        async move {
+            for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+                println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
+                let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
+                plot.subscribe_initial_plotting_progress()
+                    .await
+                    .for_each(|progress| {
+                        let pb_clone = progress_bar.clone();
+                        async move {
+                            let current_bytes = progress.current_sector * sector_size_bytes;
+                            pb_clone.set_position(current_bytes);
+                        }
+                    })
+                    .await;
+                progress_bar.set_style(
+                    ProgressStyle::with_template(
+                        "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
+                  ({bytes}/{total_bytes}) {msg}",
+                    )
+                    .expect("hardcoded template is correct")
+                    .progress_chars("=> "),
+                );
+                progress_bar.finish_with_message("Initial plotting finished!");
+                is_initial_progress_finished.store(true, Ordering::Relaxed);
+                let _ = summary.update(Some(true), None).await; // ignore the
+                                                                // error, since
+                                                                // we will abandon
+                                                                // this mechanism
+                                                                // soon
+            }
+        }
+    });
+}
+
+async fn subscribe_to_solutions(
+    summary: Summary,
+    farmer: Farmer,
+    is_initial_progress_finished: Arc<AtomicBool>,
+) {
+    tokio::spawn({
+        async move {
+            let farmed_blocks = summary
+                .get_farmed_block_count()
+                .await
+                .expect("couldn't read farmed blocks count from summary");
+            let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+            for plot in farmer.iter_plots().await {
+                plot.subscribe_new_solutions()
+                    .await
+                    .for_each(|solutions| {
+                        let farmed_block_count = &farmed_block_count;
+                        let is_initial_progress_finished = &is_initial_progress_finished;
+                        let summary = summary.clone();
+                        async move {
+                            if !solutions.solutions.is_empty() {
+                                let total_farmed =
+                                    farmed_block_count.fetch_add(1, Ordering::Relaxed);
+                                let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
+                                if is_initial_progress_finished.load(Ordering::Relaxed) {
+                                    println!("You have farmed {total_farmed} block(s) in total!");
+                                }
+                            }
+                        }
+                    })
+                    .await
+            }
+        }
+    });
 }
 
 /// nice looking progress bar for the initial plotting :)
@@ -183,7 +207,7 @@ fn plotting_progress_bar(total_size: u64) -> ProgressBar {
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
              {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
         )
-        .unwrap()
+        .expect("hardcoded template is correct")
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
         // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
@@ -202,9 +226,9 @@ fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
              {bps}, {msg}, ETA: {eta_precise} ",
         )
-        .unwrap()
+        .expect("hardcoded template is correct")
         .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
-            write!(w, "{:.2}bps", state.per_sec()).unwrap()
+            write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
         })
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])

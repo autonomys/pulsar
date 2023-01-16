@@ -113,19 +113,31 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     }
 }
 
+pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
+    match answer.to_lowercase().as_str() {
+        "y" | "yes" => Ok(true),
+        "n" | "no" => Ok(false),
+        _ => Err(eyre!("could not interpret your answer. Please provide `y` or `n`.")),
+    }
+}
+
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("plots")
+    data_dir_getter().join("plots")
 }
 
 /// generates a cache path from the given path
 pub(crate) fn cache_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("cache")
+    data_dir_getter().join("cache")
 }
 
 /// generates a node path from the given path
 pub(crate) fn node_directory_getter() -> PathBuf {
-    dirs::data_dir().unwrap().join("subspace-cli").join("node")
+    data_dir_getter().join("node")
+}
+
+fn data_dir_getter() -> PathBuf {
+    dirs::data_dir().expect("data folder must be present in every major OS").join("subspace-cli")
 }
 
 /// returns OS specific log directory
