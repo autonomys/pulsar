@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["wipe","implementation of the `wipe` command"]]};
+window.SIDEBAR_ITEMS = {"fn":[["wipe","implementation of the `wipe` command"]],"opaque":[["",""]]};

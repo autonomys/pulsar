@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Commands","Available commands for the CLI"]],"fn":[["main",""]],"mod":[["commands",""],["config",""],["summary",""],["utils",""]],"struct":[["Cli",""]]};
+window.SIDEBAR_ITEMS = {"constant":[["BRANCHES",""]],"enum":[["Commands","Available commands for the CLI"]],"fn":[["main",""]],"mod":[["commands",""],["config",""],["summary",""],["utils",""]],"static":[["CALLSITE",""],["META",""]],"struct":[["Cli",""]]};
