@@ -44,8 +44,8 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     println!("Starting node ...");
     let chain = match chain {
-        ChainConfig::Gemini3b =>
-            chain_spec::gemini_3b().expect("cannot extract the gemini3b chain spec from SDK"),
+        ChainConfig::Gemini3c =>
+            chain_spec::gemini_3c().expect("cannot extract the gemini3c chain spec from SDK"),
     };
     let node = node_config
         .node

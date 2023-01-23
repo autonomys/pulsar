@@ -33,7 +33,7 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn gemini_3b(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
+    pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
         let mut node = Node::builder()
             .role(node::Role::Authority)
             .network(
@@ -86,7 +86,7 @@ pub(crate) struct FarmerConfig {
 }
 
 impl FarmerConfig {
-    pub fn gemini_3b(
+    pub fn gemini_3c(
         address: PublicKey,
         plot_directory: PathBuf,
         plot_size: ByteSize,
@@ -105,13 +105,13 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3b,
+    Gemini3c,
 }
 
 impl std::fmt::Display for ChainConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            ChainConfig::Gemini3b => write!(f, "gemini-3b"),
+            ChainConfig::Gemini3c => write!(f, "gemini-3c"),
         }
     }
 }
@@ -120,9 +120,9 @@ impl FromStr for ChainConfig {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let chain_list = vec!["gemini-3b"];
+        let chain_list = vec!["gemini-3c"];
         match s {
-            "gemini-3b" => Ok(ChainConfig::Gemini3b),
+            "gemini-3c" => Ok(ChainConfig::Gemini3c),
             _ => Err(eyre!(
                 "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}."
@@ -182,14 +182,14 @@ mod test {
     #[test]
     fn test_serializable() {
         toml::to_vec(&Config {
-            farmer: FarmerConfig::gemini_3b(
+            farmer: FarmerConfig::gemini_3c(
                 Default::default(),
                 "plot".into(),
                 ByteSize::gb(1),
                 CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
             ),
-            node: NodeConfig::gemini_3b("node".into(), "serializable-node".to_owned(), false),
-            chain: ChainConfig::Gemini3b,
+            node: NodeConfig::gemini_3c("node".into(), "serializable-node".to_owned(), false),
+            chain: ChainConfig::Gemini3c,
         })
         .unwrap();
     }
