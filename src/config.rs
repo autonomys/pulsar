@@ -33,7 +33,12 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
+    pub fn gemini_3c(
+        directory: PathBuf,
+        chain: &ChainConfig,
+        node_name: String,
+        is_executor: bool,
+    ) -> Self {
         let mut node = Node::builder()
             .role(node::Role::Authority)
             .network(
@@ -67,6 +72,10 @@ impl NodeConfig {
         if is_executor {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        if matches!(chain, ChainConfig::Dev) {
+            node = node.force_authoring(true);
         }
 
         Self { directory, node: node.configuration() }
@@ -106,12 +115,14 @@ impl FarmerConfig {
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
+    Dev,
 }
 
 impl std::fmt::Display for ChainConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             ChainConfig::Gemini3c => write!(f, "gemini-3c"),
+            ChainConfig::Dev => write!(f, "dev-chain"),
         }
     }
 }
@@ -123,6 +134,7 @@ impl FromStr for ChainConfig {
         let chain_list = vec!["gemini-3c"];
         match s {
             "gemini-3c" => Ok(ChainConfig::Gemini3c),
+            "dev" => Ok(ChainConfig::Dev),
             _ => Err(eyre!(
                 "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}."
@@ -188,7 +200,12 @@ mod test {
                 ByteSize::gb(1),
                 CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
             ),
-            node: NodeConfig::gemini_3c("node".into(), "serializable-node".to_owned(), false),
+            node: NodeConfig::gemini_3c(
+                "node".into(),
+                &ChainConfig::Gemini3c,
+                "serializable-node".to_owned(),
+                false,
+            ),
             chain: ChainConfig::Gemini3c,
         })
         .unwrap();

@@ -100,7 +100,16 @@ fn get_config_from_user_inputs() -> Result<Config> {
                 plot_size,
                 CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
             ),
-            NodeConfig::gemini_3c(node_directory_getter(), node_name, is_executor),
+            NodeConfig::gemini_3c(node_directory_getter(), &chain, node_name, is_executor),
+        ),
+        ChainConfig::Dev => (
+            FarmerConfig::gemini_3c(
+                reward_address,
+                plot_directory,
+                plot_size,
+                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
+            ),
+            NodeConfig::gemini_3c(node_directory_getter(), &chain, node_name, is_executor),
         ),
     };
 
