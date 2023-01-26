@@ -65,7 +65,7 @@ where
         let user_input = input.trim().to_string();
 
         // Allow this unwrap cause
-        #[allow(clippy::unnecessary_unwrap)]
+        #[allow(clippy::unnecessary_unwrap, clippy::unwrap_used)]
         if default_value.is_some() && user_input.is_empty() {
             return Ok(default_value.unwrap());
         }
