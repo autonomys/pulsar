@@ -54,6 +54,13 @@ codegen-units = 1
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
+ark-bls12-381 = { opt-level = 3 }
+ark-ec = { opt-level = 3 }
+ark-ff = { opt-level = 3 }
+ark-ff-asm = { opt-level = 3 }
+ark-poly = { opt-level = 3 }
+ark-serialize = { opt-level = 3 }
+ark-std = { opt-level = 3 }
 blake2 = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }
 chacha20poly1305 = { opt-level = 3 }
@@ -65,7 +72,7 @@ crypto-mac = { opt-level = 3 }
 curve25519-dalek = { opt-level = 3 }
 dusk-bls12_381 = { opt-level = 3 }
 dusk-plonk = { opt-level = 3 }
-ed25519-dalek = { opt-level = 3 }
+ed25519-zebra = { opt-level = 3 }
 flate2 = { opt-level = 3 }
 futures-channel = { opt-level = 3 }
 hashbrown = { opt-level = 3 }
@@ -73,6 +80,7 @@ hash-db = { opt-level = 3 }
 hmac = { opt-level = 3 }
 httparse = { opt-level = 3 }
 integer-sqrt = { opt-level = 3 }
+k256 = { opt-level = 3}
 keccak = { opt-level = 3 }
 libm = { opt-level = 3 }
 libsecp256k1 = { opt-level = 3 }
@@ -87,6 +95,7 @@ primitive-types = { opt-level = 3 }
 reed-solomon-erasure = { opt-level = 3 }
 ring = { opt-level = 3 }
 rustls = { opt-level = 3 }
+secp256k1 = { opt-level = 3 }
 sha2 = { opt-level = 3 }
 sha3 = { opt-level = 3 }
 smallvec = { opt-level = 3 }
@@ -99,3 +108,4 @@ wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
+
