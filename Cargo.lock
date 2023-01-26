@@ -9742,7 +9742,7 @@ dependencies = [
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=3e5a2b321d118787f4876eb9bb96fe6b8e89423c#3e5a2b321d118787f4876eb9bb96fe6b8e89423c"
+source = "git+https://github.com/subspace/subspace-sdk?rev=cf243c4de6cc0ba8dc07147cf9e1f48a59b528fb#cf243c4de6cc0ba8dc07147cf9e1f48a59b528fb"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -75,7 +75,16 @@ impl NodeConfig {
         }
 
         if matches!(chain, ChainConfig::Dev) {
-            node = node.force_authoring(true);
+            node = node
+                .dsn(
+                    node::DsnBuilder::new()
+                        .listen_addresses(vec![
+                            "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
+                            "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
+                        ])
+                        .allow_non_global_addresses_in_dht(true),
+                )
+                .force_authoring(true);
         }
 
         Self { directory, node: node.configuration() }
