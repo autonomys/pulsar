@@ -1,7 +1,7 @@
 //! CLI application for farming
 //! brings `farmer` and `node` together
 
-#![deny(missing_docs)]
+#![deny(missing_docs, clippy::unwrap_used)]
 #![feature(concat_idents)]
 
 mod commands;
