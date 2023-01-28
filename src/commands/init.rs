@@ -107,7 +107,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
                 reward_address,
                 plot_directory,
                 plot_size,
-                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
+                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::mb(10))?,
             ),
             NodeConfig::gemini_3c(node_directory_getter(), &chain, node_name, is_executor),
         ),

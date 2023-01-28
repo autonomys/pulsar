@@ -43,7 +43,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     let Config { chain, farmer: farmer_config, node: node_config } = validate_config()?;
 
     println!("Starting node ...");
-    let chain = match chain {
+    let chain_spec = match chain {
         ChainConfig::Gemini3c =>
             chain_spec::gemini_3c().expect("cannot extract the gemini3c chain spec from SDK"),
         ChainConfig::Dev =>
@@ -51,16 +51,18 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     };
     let node = node_config
         .node
-        .build(node_config.directory, chain)
+        .build(node_config.directory, chain_spec)
         .await
         .expect("error building the node");
 
     println!("Node started successfully!");
 
-    if !is_verbose {
-        subscribe_to_node_syncing(node.clone()).await?;
-    } else {
-        node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
+    if !matches!(chain, ChainConfig::Dev) {
+        if !is_verbose {
+            subscribe_to_node_syncing(node.clone()).await?;
+        } else {
+            node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
+        }
     }
 
     let summary = Summary::new(Some(farmer_config.plot_size)).await?;
