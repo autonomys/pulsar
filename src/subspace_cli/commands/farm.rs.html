@@ -285,8 +285,8 @@
 
     <span class="macro">println!</span>(<span class="string">&quot;Starting node ...&quot;</span>);
     <span class="kw">let </span>chain = <span class="kw">match </span>chain {
-        ChainConfig::Gemini3b =&gt;
-            chain_spec::gemini_3b().expect(<span class="string">&quot;cannot extract the gemini3b chain spec from SDK&quot;</span>),
+        ChainConfig::Gemini3c =&gt;
+            chain_spec::gemini_3c().expect(<span class="string">&quot;cannot extract the gemini3c chain spec from SDK&quot;</span>),
     };
     <span class="kw">let </span>node = node_config
         .node

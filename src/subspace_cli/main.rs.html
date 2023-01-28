@@ -86,7 +86,7 @@
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
-</span><span class="attr">#![deny(missing_docs)]
+</span><span class="attr">#![deny(missing_docs, clippy::unwrap_used)]
 #![feature(concat_idents)]
 
 </span><span class="kw">mod </span>commands;

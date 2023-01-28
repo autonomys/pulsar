@@ -229,7 +229,7 @@
 }
 
 <span class="kw">impl </span>NodeConfig {
-    <span class="kw">pub fn </span>gemini_3b(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>node = Node::builder()
             .role(node::Role::Authority)
             .network(
@@ -282,7 +282,7 @@
 }
 
 <span class="kw">impl </span>FarmerConfig {
-    <span class="kw">pub fn </span>gemini_3b(
+    <span class="kw">pub fn </span>gemini_3c(
         address: PublicKey,
         plot_directory: PathBuf,
         plot_size: ByteSize,
@@ -301,13 +301,13 @@
 <span class="attr">#[derive(Deserialize, Serialize, Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
     <span class="attr">#[default]
-    </span>Gemini3b,
+    </span>Gemini3c,
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ChainConfig {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            ChainConfig::Gemini3b =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3b&quot;</span>),
+            ChainConfig::Gemini3c =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3c&quot;</span>),
         }
     }
 }
@@ -316,9 +316,9 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= Report;
 
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
-        <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3b&quot;</span>];
+        <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3c&quot;</span>];
         <span class="kw">match </span>s {
-            <span class="string">&quot;gemini-3b&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3b),
+            <span class="string">&quot;gemini-3c&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3c),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
                 <span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}.&quot;
@@ -378,14 +378,14 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_serializable() {
         toml::to_vec(<span class="kw-2">&amp;</span>Config {
-            farmer: FarmerConfig::gemini_3b(
+            farmer: FarmerConfig::gemini_3c(
                 Default::default(),
                 <span class="string">&quot;plot&quot;</span>.into(),
                 ByteSize::gb(<span class="number">1</span>),
                 CacheDescription::new(<span class="string">&quot;cache&quot;</span>, ByteSize::gb(<span class="number">1</span>)).unwrap(),
             ),
-            node: NodeConfig::gemini_3b(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned(), <span class="bool-val">false</span>),
-            chain: ChainConfig::Gemini3b,
+            node: NodeConfig::gemini_3c(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned(), <span class="bool-val">false</span>),
+            chain: ChainConfig::Gemini3c,
         })
         .unwrap();
     }

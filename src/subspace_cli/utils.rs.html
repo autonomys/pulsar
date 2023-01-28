@@ -387,7 +387,7 @@
         <span class="kw">let </span>user_input = input.trim().to_string();
 
         <span class="comment">// Allow this unwrap cause
-        </span><span class="attr">#[allow(clippy::unnecessary_unwrap)]
+        </span><span class="attr">#[allow(clippy::unnecessary_unwrap, clippy::unwrap_used)]
         </span><span class="kw">if </span>default_value.is_some() &amp;&amp; user_input.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(default_value.unwrap());
         }
@@ -582,7 +582,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>chain_checker() {
-        <span class="macro">assert!</span>(ChainConfig::from_str(<span class="string">&quot;gemini-3b&quot;</span>).is_ok());
+        <span class="macro">assert!</span>(ChainConfig::from_str(<span class="string">&quot;gemini-3c&quot;</span>).is_ok());
         <span class="macro">assert!</span>(ChainConfig::from_str(<span class="string">&quot;devv&quot;</span>).is_err());
     }
 
