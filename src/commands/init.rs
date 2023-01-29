@@ -92,24 +92,19 @@ fn get_config_from_user_inputs() -> Result<Config> {
         yes_or_no_parser,
     )?;
 
+    let cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?;
     let (farmer, node) = match chain {
         ChainConfig::Gemini3c => (
-            FarmerConfig::gemini_3c(
-                reward_address,
-                plot_directory,
-                plot_size,
-                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?,
-            ),
-            NodeConfig::gemini_3c(node_directory_getter(), &chain, node_name, is_executor),
+            FarmerConfig::gemini_3c(reward_address, plot_directory, plot_size, cache),
+            NodeConfig::gemini_3c(node_directory_getter(), node_name, is_executor),
         ),
         ChainConfig::Dev => (
-            FarmerConfig::gemini_3c(
-                reward_address,
-                plot_directory,
-                plot_size,
-                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::mb(10))?,
-            ),
-            NodeConfig::gemini_3c(node_directory_getter(), &chain, node_name, is_executor),
+            FarmerConfig::dev(reward_address, plot_directory, plot_size, cache),
+            NodeConfig::dev(node_directory_getter(), is_executor),
+        ),
+        ChainConfig::DevNet => (
+            FarmerConfig::devnet(reward_address, plot_directory, plot_size, cache),
+            NodeConfig::devnet(node_directory_getter(), node_name, is_executor),
         ),
     };
 

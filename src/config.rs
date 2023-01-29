@@ -33,12 +33,7 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub fn gemini_3c(
-        directory: PathBuf,
-        chain: &ChainConfig,
-        node_name: String,
-        is_executor: bool,
-    ) -> Self {
+    pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
         let mut node = Node::builder()
             .role(node::Role::Authority)
             .network(
@@ -74,20 +69,21 @@ impl NodeConfig {
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
-        if matches!(chain, ChainConfig::Dev) {
+        Self { directory, node: node.configuration() }
+    }
+
+    pub fn dev(directory: PathBuf, is_executor: bool) -> Self {
+        let mut node = Node::dev();
+        if is_executor {
             node = node
-                .dsn(
-                    node::DsnBuilder::new()
-                        .listen_addresses(vec![
-                            "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-                            "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-                        ])
-                        .allow_non_global_addresses_in_dht(true),
-                )
-                .force_authoring(true);
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
         Self { directory, node: node.configuration() }
+    }
+
+    pub fn devnet(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
+        Self::gemini_3c(directory, node_name, is_executor)
     }
 }
 
@@ -118,6 +114,24 @@ impl FarmerConfig {
             farmer: Farmer::builder().configuration(),
         }
     }
+
+    pub fn dev(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self::gemini_3c(address, plot_directory, plot_size, cache)
+    }
+
+    pub fn devnet(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self::gemini_3c(address, plot_directory, plot_size, cache)
+    }
 }
 
 #[derive(Deserialize, Serialize, Default)]
@@ -125,6 +139,7 @@ pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
     Dev,
+    DevNet,
 }
 
 impl std::fmt::Display for ChainConfig {
@@ -132,6 +147,7 @@ impl std::fmt::Display for ChainConfig {
         match *self {
             ChainConfig::Gemini3c => write!(f, "gemini-3c"),
             ChainConfig::Dev => write!(f, "dev-chain"),
+            ChainConfig::DevNet => write!(f, "devnet"),
         }
     }
 }
@@ -144,6 +160,7 @@ impl FromStr for ChainConfig {
         match s {
             "gemini-3c" => Ok(ChainConfig::Gemini3c),
             "dev" => Ok(ChainConfig::Dev),
+            "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!(
                 "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}."
@@ -209,12 +226,7 @@ mod test {
                 ByteSize::gb(1),
                 CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
             ),
-            node: NodeConfig::gemini_3c(
-                "node".into(),
-                &ChainConfig::Gemini3c,
-                "serializable-node".to_owned(),
-                false,
-            ),
+            node: NodeConfig::gemini_3c("node".into(), "serializable-node".to_owned(), false),
             chain: ChainConfig::Gemini3c,
         })
         .unwrap();
