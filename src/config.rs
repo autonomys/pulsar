@@ -8,7 +8,7 @@ use color_eyre::Report;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{self, domains, Config as SdkNodeConfig, Node};
+use subspace_sdk::node::{domains, Config as SdkNodeConfig, NetworkBuilder, Node};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
 
@@ -34,35 +34,7 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::builder()
-            .role(node::Role::Authority)
-            .network(
-                node::NetworkBuilder::new()
-                    .listen_addresses(vec![
-                        "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                        "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-                    ])
-                    .name(node_name)
-                    .enable_mdns(true),
-            )
-            .rpc(
-                node::RpcBuilder::new()
-                    .http("127.0.0.1:9933".parse().expect("hardcoded value is true"))
-                    .ws("127.0.0.1:9944".parse().expect("hardcoded value is true"))
-                    .cors(vec![
-                        "http://localhost:*".to_owned(),
-                        "http://127.0.0.1:*".to_owned(),
-                        "https://localhost:*".to_owned(),
-                        "https://127.0.0.1:*".to_owned(),
-                        "https://polkadot.js.org".to_owned(),
-                    ]),
-            )
-            .dsn(node::DsnBuilder::new().listen_addresses(vec![
-                "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-            ]))
-            .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
-            .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true));
+        let mut node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(node_name));
 
         if is_executor {
             node = node
@@ -83,7 +55,14 @@ impl NodeConfig {
     }
 
     pub fn devnet(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        Self::gemini_3c(directory, node_name, is_executor)
+        let mut node = Node::devnet().network(NetworkBuilder::devnet().name(node_name));
+
+        if is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        Self { directory, node: node.configuration() }
     }
 }
 
