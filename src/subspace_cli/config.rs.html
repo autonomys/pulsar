@@ -194,6 +194,23 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -204,7 +221,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
 <span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
-<span class="kw">use </span>subspace_sdk::node::{<span class="self">self</span>, domains, Config <span class="kw">as </span>SdkNodeConfig, Node};
+<span class="kw">use </span>subspace_sdk::node::{domains, Config <span class="kw">as </span>SdkNodeConfig, NetworkBuilder, Node};
 <span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::instrument;
 
@@ -230,35 +247,28 @@
 
 <span class="kw">impl </span>NodeConfig {
     <span class="kw">pub fn </span>gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::builder()
-            .role(node::Role::Authority)
-            .network(
-                node::NetworkBuilder::new()
-                    .listen_addresses(<span class="macro">vec!</span>[
-                        <span class="string">&quot;/ip6/::/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                        <span class="string">&quot;/ip4/0.0.0.0/tcp/30333&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                    ])
-                    .name(node_name)
-                    .enable_mdns(<span class="bool-val">true</span>),
-            )
-            .rpc(
-                node::RpcBuilder::new()
-                    .http(<span class="string">&quot;127.0.0.1:9933&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
-                    .ws(<span class="string">&quot;127.0.0.1:9944&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
-                    .cors(<span class="macro">vec!</span>[
-                        <span class="string">&quot;http://localhost:*&quot;</span>.to_owned(),
-                        <span class="string">&quot;http://127.0.0.1:*&quot;</span>.to_owned(),
-                        <span class="string">&quot;https://localhost:*&quot;</span>.to_owned(),
-                        <span class="string">&quot;https://127.0.0.1:*&quot;</span>.to_owned(),
-                        <span class="string">&quot;https://polkadot.js.org&quot;</span>.to_owned(),
-                    ]),
-            )
-            .dsn(node::DsnBuilder::new().listen_addresses(<span class="macro">vec!</span>[
-                <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-                <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-            ]))
-            .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
-            .offchain_worker(node::OffchainWorkerBuilder::new().enabled(<span class="bool-val">true</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(node_name));
+
+        <span class="kw">if </span>is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        <span class="self">Self </span>{ directory, node: node.configuration() }
+    }
+
+    <span class="kw">pub fn </span>dev(directory: PathBuf, is_executor: bool) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::dev();
+        <span class="kw">if </span>is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        <span class="self">Self </span>{ directory, node: node.configuration() }
+    }
+
+    <span class="kw">pub fn </span>devnet(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::devnet().network(NetworkBuilder::devnet().name(node_name));
 
         <span class="kw">if </span>is_executor {
             node = node
@@ -296,18 +306,40 @@
             farmer: Farmer::builder().configuration(),
         }
     }
+
+    <span class="kw">pub fn </span>dev(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::gemini_3c(address, plot_directory, plot_size, cache)
+    }
+
+    <span class="kw">pub fn </span>devnet(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::gemini_3c(address, plot_directory, plot_size, cache)
+    }
 }
 
 <span class="attr">#[derive(Deserialize, Serialize, Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
     <span class="attr">#[default]
     </span>Gemini3c,
+    Dev,
+    DevNet,
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ChainConfig {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             ChainConfig::Gemini3c =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3c&quot;</span>),
+            ChainConfig::Dev =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;dev-chain&quot;</span>),
+            ChainConfig::DevNet =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;devnet&quot;</span>),
         }
     }
 }
@@ -319,6 +351,8 @@
         <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3c&quot;</span>];
         <span class="kw">match </span>s {
             <span class="string">&quot;gemini-3c&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3c),
+            <span class="string">&quot;dev&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Dev),
+            <span class="string">&quot;devnet&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::DevNet),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
                 <span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}.&quot;

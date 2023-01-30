@@ -110,6 +110,10 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
@@ -204,15 +208,19 @@
         yes_or_no_parser,
     )<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(<span class="number">1</span>))<span class="question-mark">?</span>;
     <span class="kw">let </span>(farmer, node) = <span class="kw">match </span>chain {
         ChainConfig::Gemini3c =&gt; (
-            FarmerConfig::gemini_3c(
-                reward_address,
-                plot_directory,
-                plot_size,
-                CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(<span class="number">1</span>))<span class="question-mark">?</span>,
-            ),
+            FarmerConfig::gemini_3c(reward_address, plot_directory, plot_size, cache),
             NodeConfig::gemini_3c(node_directory_getter(), node_name, is_executor),
+        ),
+        ChainConfig::Dev =&gt; (
+            FarmerConfig::dev(reward_address, plot_directory, plot_size, cache),
+            NodeConfig::dev(node_directory_getter(), is_executor),
+        ),
+        ChainConfig::DevNet =&gt; (
+            FarmerConfig::devnet(reward_address, plot_directory, plot_size, cache),
+            NodeConfig::devnet(node_directory_getter(), node_name, is_executor),
         ),
     };
 
