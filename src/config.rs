@@ -8,7 +8,7 @@ use color_eyre::Report;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{self, domains, Config as SdkNodeConfig, Node};
+use subspace_sdk::node::{domains, Config as SdkNodeConfig, NetworkBuilder, Node};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
 
@@ -34,35 +34,28 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::builder()
-            .role(node::Role::Authority)
-            .network(
-                node::NetworkBuilder::new()
-                    .listen_addresses(vec![
-                        "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                        "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-                    ])
-                    .name(node_name)
-                    .enable_mdns(true),
-            )
-            .rpc(
-                node::RpcBuilder::new()
-                    .http("127.0.0.1:9933".parse().expect("hardcoded value is true"))
-                    .ws("127.0.0.1:9944".parse().expect("hardcoded value is true"))
-                    .cors(vec![
-                        "http://localhost:*".to_owned(),
-                        "http://127.0.0.1:*".to_owned(),
-                        "https://localhost:*".to_owned(),
-                        "https://127.0.0.1:*".to_owned(),
-                        "https://polkadot.js.org".to_owned(),
-                    ]),
-            )
-            .dsn(node::DsnBuilder::new().listen_addresses(vec![
-                "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-            ]))
-            .execution_strategy(node::ExecutionStrategy::AlwaysWasm)
-            .offchain_worker(node::OffchainWorkerBuilder::new().enabled(true));
+        let mut node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(node_name));
+
+        if is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        Self { directory, node: node.configuration() }
+    }
+
+    pub fn dev(directory: PathBuf, is_executor: bool) -> Self {
+        let mut node = Node::dev();
+        if is_executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        }
+
+        Self { directory, node: node.configuration() }
+    }
+
+    pub fn devnet(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
+        let mut node = Node::devnet().network(NetworkBuilder::devnet().name(node_name));
 
         if is_executor {
             node = node
@@ -100,18 +93,40 @@ impl FarmerConfig {
             farmer: Farmer::builder().configuration(),
         }
     }
+
+    pub fn dev(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self::gemini_3c(address, plot_directory, plot_size, cache)
+    }
+
+    pub fn devnet(
+        address: PublicKey,
+        plot_directory: PathBuf,
+        plot_size: ByteSize,
+        cache: CacheDescription,
+    ) -> Self {
+        Self::gemini_3c(address, plot_directory, plot_size, cache)
+    }
 }
 
 #[derive(Deserialize, Serialize, Default)]
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
+    Dev,
+    DevNet,
 }
 
 impl std::fmt::Display for ChainConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             ChainConfig::Gemini3c => write!(f, "gemini-3c"),
+            ChainConfig::Dev => write!(f, "dev-chain"),
+            ChainConfig::DevNet => write!(f, "devnet"),
         }
     }
 }
@@ -123,6 +138,8 @@ impl FromStr for ChainConfig {
         let chain_list = vec!["gemini-3c"];
         match s {
             "gemini-3c" => Ok(ChainConfig::Gemini3c),
+            "dev" => Ok(ChainConfig::Dev),
+            "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!(
                 "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
                  {chain_list:?}."
