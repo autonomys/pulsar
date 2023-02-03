@@ -8,9 +8,11 @@ use color_eyre::Report;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{domains, Config as SdkNodeConfig, NetworkBuilder, Node};
+use subspace_sdk::node::{domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
+
+use crate::utils::provider_storage_dir_getter;
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
@@ -34,7 +36,9 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(node_name));
+        let mut node = Node::gemini_3c()
+            .network(NetworkBuilder::gemini_3c().name(node_name))
+            .dsn(DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()));
 
         if is_executor {
             node = node
@@ -55,7 +59,9 @@ impl NodeConfig {
     }
 
     pub fn devnet(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::devnet().network(NetworkBuilder::devnet().name(node_name));
+        let mut node = Node::devnet()
+            .network(NetworkBuilder::devnet().name(node_name))
+            .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
 
         if is_executor {
             node = node
