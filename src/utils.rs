@@ -136,7 +136,7 @@ pub(crate) fn node_directory_getter() -> PathBuf {
     data_dir_getter().join("node")
 }
 
-pub(crate) fn provider_storage_getter() -> PathBuf {
+pub(crate) fn provider_storage_dir_getter() -> PathBuf {
     node_directory_getter().join("provider-storage")
 }
 
