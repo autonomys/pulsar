@@ -1,4 +1,4 @@
-use std::fs::{create_dir, File};
+use std::fs::{create_dir_all, File};
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -163,11 +163,9 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
         .expect("couldn't get the default config directory!")
         .join("subspace-cli");
 
-    if let Err(err) = create_dir(&config_path) {
-        // ignore the `AlreadyExists` error
-        if err.kind() != std::io::ErrorKind::AlreadyExists {
-            return Err(eyre!("could not create the directory, because: {err}"));
-        }
+    if let Err(err) = create_dir_all(&config_path) {
+        let config_path = config_path.to_str().expect("couldn't get subspace-cli config path!");
+        return Err(eyre!("could not create the directory: `{config_path}`, because: {err}"));
     }
 
     let file = File::create(config_path.join("settings.toml"))?;
