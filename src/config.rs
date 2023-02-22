@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node};
+use subspace_sdk::node::{
+    domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node, Role,
+};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
 
@@ -55,6 +57,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
