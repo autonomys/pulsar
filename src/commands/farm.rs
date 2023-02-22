@@ -122,7 +122,6 @@ async fn subscribe_to_node_syncing(node: Node) -> Result<()> {
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
-
         syncing_progress_bar.finish_with_message("Syncing is done!");
     }
     Ok(())
@@ -134,39 +133,26 @@ async fn subscribe_to_plotting_progress(
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) {
-    tokio::spawn({
-        async move {
-            for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
-                println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
-                let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
-                plot.subscribe_initial_plotting_progress()
-                    .await
-                    .for_each(|progress| {
-                        let pb_clone = progress_bar.clone();
-                        async move {
-                            let current_bytes = progress.current_sector * sector_size_bytes;
-                            pb_clone.set_position(current_bytes);
-                        }
-                    })
-                    .await;
-                progress_bar.set_style(
-                    ProgressStyle::with_template(
-                        "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-                  ({bytes}/{total_bytes}) {msg}",
-                    )
-                    .expect("hardcoded template is correct")
-                    .progress_chars("=> "),
-                );
-                progress_bar.finish_with_message("Initial plotting finished!");
-                is_initial_progress_finished.store(true, Ordering::Relaxed);
-                let _ = summary.update(Some(true), None).await; // ignore the
-                                                                // error, since
-                                                                // we will abandon
-                                                                // this mechanism
-                                                                // soon
+    for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+        println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
+
+        let mut plotting_progress = plot.subscribe_initial_plotting_progress().await;
+
+        if let Some(plotting_result) = plotting_progress.next().await {
+            let current_size = plotting_result.current_sector * sector_size_bytes;
+            let progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+
+            while let Some(stream_result) = plotting_progress.next().await {
+                let current_size = stream_result.current_sector * sector_size_bytes;
+                progress_bar.set_position(current_size);
             }
+            progress_bar.finish_with_message("Initial plotting finished!");
         }
-    });
+    }
+    is_initial_progress_finished.store(true, Ordering::Relaxed);
+    let _ = summary.update(Some(true), None).await; // ignore the error, since
+                                                    // we will abandon this
+                                                    // mechanism soon
 }
 
 async fn subscribe_to_solutions(
@@ -206,21 +192,25 @@ async fn subscribe_to_solutions(
 }
 
 /// nice looking progress bar for the initial plotting :)
-fn plotting_progress_bar(total_size: u64) -> ProgressBar {
+fn plotting_progress_bar(current_size: u64, total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
     pb.enable_steady_tick(std::time::Duration::from_millis(100));
     pb.set_style(
         ProgressStyle::with_template(
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
-             {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
+             {bps}, {msg}, ETA: {eta_precise} ",
         )
         .expect("hardcoded template is correct")
+        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
+            write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
+        })
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
         // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
         .progress_chars("█▉▊▋▌▍▎▏  "),
     );
     pb.set_message("plotting");
+    pb.set_position(current_size);
     pb
 }
 

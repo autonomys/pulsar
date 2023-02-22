@@ -204,7 +204,7 @@ mod test {
 
     #[test]
     fn test_serializable() {
-        toml::to_vec(&Config {
+        toml::to_string(&Config {
             farmer: FarmerConfig::gemini_3c(
                 Default::default(),
                 "plot".into(),
