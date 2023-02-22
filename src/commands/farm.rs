@@ -198,12 +198,9 @@ fn plotting_progress_bar(current_size: u64, total_size: u64) -> ProgressBar {
     pb.set_style(
         ProgressStyle::with_template(
             " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
-             {bps}, {msg}, ETA: {eta_precise} ",
+             {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
         )
         .expect("hardcoded template is correct")
-        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
-            write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
-        })
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
         .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
         // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10

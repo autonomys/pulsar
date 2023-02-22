@@ -264,7 +264,7 @@ mod tests {
 
     #[test]
     fn chain_checker() {
-        assert!(ChainConfig::from_str("gemini-3c").is_ok());
+        assert!(ChainConfig::from_str("gemini3c").is_ok());
         assert!(ChainConfig::from_str("devv").is_err());
     }
 
