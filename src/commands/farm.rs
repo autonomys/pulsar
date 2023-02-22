@@ -87,18 +87,18 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     if !is_verbose {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
-        subscribe_to_plotting_progress(
+        let _ = tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
-        )
+        ))
         .await;
-        subscribe_to_solutions(
+        let _ = tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
-        )
+        ))
         .await;
     }
 
@@ -133,40 +133,38 @@ async fn subscribe_to_plotting_progress(
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) {
-    tokio::spawn(async move {
-        for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
-            println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
+    for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+        println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
 
-            let mut plotting_progress = plot.subscribe_initial_plotting_progress().await;
-            let progress_bar;
+        let mut plotting_progress = plot.subscribe_initial_plotting_progress().await;
+        let progress_bar;
 
-            if let Some(plotting_result) = plotting_progress.next().await {
-                let current_size = plotting_result.current_sector * sector_size_bytes;
-                progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+        if let Some(plotting_result) = plotting_progress.next().await {
+            let current_size = plotting_result.current_sector * sector_size_bytes;
+            progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
 
-                while let Some(stream_result) = plotting_progress.next().await {
-                    let current_size = stream_result.current_sector * sector_size_bytes;
-                    progress_bar.set_position(current_size);
-                }
-            } else {
-                // means initial plotting was already finished
-                progress_bar = plotting_progress_bar(
-                    plot.allocated_space().as_u64(),
-                    plot.allocated_space().as_u64(),
-                );
+            while let Some(stream_result) = plotting_progress.next().await {
+                let current_size = stream_result.current_sector * sector_size_bytes;
+                progress_bar.set_position(current_size);
             }
-            progress_bar.set_style(
-                ProgressStyle::with_template(
-                    "[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
-                     {msg}",
-                )
-                .expect("hardcoded template is correct"),
+        } else {
+            // means initial plotting was already finished
+            progress_bar = plotting_progress_bar(
+                plot.allocated_space().as_u64(),
+                plot.allocated_space().as_u64(),
             );
-            progress_bar.finish_with_message("Initial plotting finished!");
         }
-        is_initial_progress_finished.store(true, Ordering::Relaxed);
-        let _ = summary.update(Some(true), None).await; // ignore the error,
-    });
+        progress_bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
+                 {msg}",
+            )
+            .expect("hardcoded template is correct"),
+        );
+        progress_bar.finish_with_message("Initial plotting finished!");
+    }
+    is_initial_progress_finished.store(true, Ordering::Relaxed);
+    let _ = summary.update(Some(true), None).await; // ignore the error,
 }
 
 async fn subscribe_to_solutions(
@@ -174,32 +172,30 @@ async fn subscribe_to_solutions(
     farmer: Farmer,
     is_initial_progress_finished: Arc<AtomicBool>,
 ) {
-    tokio::spawn(async move {
-        let farmed_blocks = summary
-            .get_farmed_block_count()
+    let farmed_blocks = summary
+        .get_farmed_block_count()
+        .await
+        .expect("couldn't read farmed blocks count from summary");
+    let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+    for plot in farmer.iter_plots().await {
+        plot.subscribe_new_solutions()
             .await
-            .expect("couldn't read farmed blocks count from summary");
-        let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
-        for plot in farmer.iter_plots().await {
-            plot.subscribe_new_solutions()
-                .await
-                .for_each(|solutions| {
-                    let farmed_block_count = &farmed_block_count;
-                    let is_initial_progress_finished = &is_initial_progress_finished;
-                    let summary = summary.clone();
-                    async move {
-                        if !solutions.solutions.is_empty() {
-                            let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                            let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
-                            if is_initial_progress_finished.load(Ordering::Relaxed) {
-                                println!("You have farmed {total_farmed} block(s) in total!");
-                            }
+            .for_each(|solutions| {
+                let farmed_block_count = &farmed_block_count;
+                let is_initial_progress_finished = &is_initial_progress_finished;
+                let summary = summary.clone();
+                async move {
+                    if !solutions.solutions.is_empty() {
+                        let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
+                        let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
+                        if is_initial_progress_finished.load(Ordering::Relaxed) {
+                            println!("You have farmed {total_farmed} block(s) in total!");
                         }
                     }
-                })
-                .await
-        }
-    });
+                }
+            })
+            .await;
+    }
 }
 
 /// nice looking progress bar for the initial plotting :)
