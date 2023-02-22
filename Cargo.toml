@@ -5,30 +5,30 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
-bytesize = "1.1.0"
-bytesize-serde = "0.2.0"
+bytesize = "1.1"
+bytesize-serde = "0.2"
 clap = { version = "4.1.1", features = ["derive"] }
 color-eyre = "0.6.2"
 derive_builder = "0.12.0"
 dirs = "4.0.0"
 fdlimit = "0.2"
-futures = "0.3.25"
+futures = "0.3"
 indicatif = { version = "0.17.1", features = ["improved_unicode"] }
-libp2p-core = "0.37.0"
-serde = "1.0.147"
-serde_derive = "1.0.147"
+libp2p-core = "0.38"
+serde = "1"
+serde_derive = "1"
 single-instance = "0.3.3"
-thiserror = "1.0.35"
-toml = "0.5.9"
-tokio = { version = "1.23.1", features = ["macros", "rt-multi-thread"] }
+thiserror = "1"
+toml = "0.7"
+tokio = { version = "1.25", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.37"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.4"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
-whoami = "1.2.3"
+whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "0e9b21e562b629ce15c8cd986cf9e9e752d11f33" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "712964ff0325b2914e4ffcf200bea8d6307f3830" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
