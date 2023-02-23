@@ -6,7 +6,7 @@ use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Result};
 use color_eyre::Report;
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumIter;
+// use strum_macros::EnumIter; // uncomment this when gemini3d releases
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
 use subspace_sdk::node::{
@@ -123,7 +123,7 @@ impl FarmerConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Default, EnumIter, Debug)]
+#[derive(Deserialize, Serialize, Default, Debug)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
@@ -136,7 +136,7 @@ impl FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3c" => Ok(ChainConfig::Gemini3c),
+            "gemini-3c" => Ok(ChainConfig::Gemini3c),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),

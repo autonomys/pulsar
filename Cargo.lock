@@ -9550,8 +9550,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "single-instance",
- "strum",
- "strum_macros",
  "subspace-sdk",
  "thiserror",
  "tokio",

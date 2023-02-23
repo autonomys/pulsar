@@ -18,6 +18,8 @@ libp2p-core = "0.38"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
+# strum = "0.24.1"
+# strum_macros = "0.24.3"
 thiserror = "1"
 toml = "0.7"
 tokio = { version = "1.25", features = ["macros", "rt-multi-thread"] }
@@ -29,9 +31,6 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
 subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "712964ff0325b2914e4ffcf200bea8d6307f3830" }
-strum = "0.24.1"
-strum_macros = "0.24.3"
-
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
 chacha20poly1305 = { git = "https://github.com/RustCrypto/AEADs", rev = "06dbfb5571687fd1bbe9d3c9b2193a1ba17f8e99" }
