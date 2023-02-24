@@ -241,11 +241,6 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
@@ -335,18 +330,18 @@
     <span class="kw">if </span>!is_verbose {
         <span class="kw">let </span>is_initial_progress_finished = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
         <span class="kw">let </span>sector_size_bytes = farmer.get_info().<span class="kw">await</span>.map_err(Report::msg)<span class="question-mark">?</span>.sector_size;
-        subscribe_to_plotting_progress(
+        <span class="kw">let _ </span>= tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
-        )
+        ))
         .<span class="kw">await</span>;
-        subscribe_to_solutions(
+        <span class="kw">let _ </span>= tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
-        )
+        ))
         .<span class="kw">await</span>;
     }
 
@@ -370,7 +365,6 @@
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
-
         syncing_progress_bar.finish_with_message(<span class="string">&quot;Syncing is done!&quot;</span>);
     }
     <span class="prelude-val">Ok</span>(())
@@ -382,85 +376,80 @@
     is_initial_progress_finished: Arc&lt;AtomicBool&gt;,
     sector_size_bytes: u64,
 ) {
-    tokio::spawn({
-        <span class="kw">async move </span>{
-            <span class="kw">for </span>(plot_id, plot) <span class="kw">in </span>farmer.iter_plots().<span class="kw">await</span>.enumerate() {
-                <span class="macro">println!</span>(<span class="string">&quot;Initial plotting for plot: #{plot_id} ({})&quot;</span>, plot.directory().display());
-                <span class="kw">let </span>progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
-                plot.subscribe_initial_plotting_progress()
-                    .<span class="kw">await
-                    </span>.for_each(|progress| {
-                        <span class="kw">let </span>pb_clone = progress_bar.clone();
-                        <span class="kw">async move </span>{
-                            <span class="kw">let </span>current_bytes = progress.current_sector * sector_size_bytes;
-                            pb_clone.set_position(current_bytes);
-                        }
-                    })
-                    .<span class="kw">await</span>;
-                progress_bar.set_style(
-                    ProgressStyle::with_template(
-                        <span class="string">&quot;{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-                  ({bytes}/{total_bytes}) {msg}&quot;</span>,
-                    )
-                    .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
-                    .progress_chars(<span class="string">&quot;=&gt; &quot;</span>),
-                );
-                progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!&quot;</span>);
-                is_initial_progress_finished.store(<span class="bool-val">true</span>, Ordering::Relaxed);
-                <span class="kw">let _ </span>= summary.update(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">None</span>).<span class="kw">await</span>; <span class="comment">// ignore the
-                                                                // error, since
-                                                                // we will abandon
-                                                                // this mechanism
-                                                                // soon
-            </span>}
+    <span class="kw">for </span>(plot_id, plot) <span class="kw">in </span>farmer.iter_plots().<span class="kw">await</span>.enumerate() {
+        <span class="macro">println!</span>(<span class="string">&quot;Initial plotting for plot: #{plot_id} ({})&quot;</span>, plot.directory().display());
+
+        <span class="kw">let </span><span class="kw-2">mut </span>plotting_progress = plot.subscribe_initial_plotting_progress().<span class="kw">await</span>;
+        <span class="kw">let </span>progress_bar;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(plotting_result) = plotting_progress.next().<span class="kw">await </span>{
+            <span class="kw">let </span>current_size = plotting_result.current_sector * sector_size_bytes;
+            progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(stream_result) = plotting_progress.next().<span class="kw">await </span>{
+                <span class="kw">let </span>current_size = stream_result.current_sector * sector_size_bytes;
+                progress_bar.set_position(current_size);
+            }
+        } <span class="kw">else </span>{
+            <span class="comment">// means initial plotting was already finished
+            </span>progress_bar = plotting_progress_bar(
+                plot.allocated_space().as_u64(),
+                plot.allocated_space().as_u64(),
+            );
         }
-    });
-}
+        progress_bar.set_style(
+            ProgressStyle::with_template(
+                <span class="string">&quot;[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
+                 {msg}&quot;</span>,
+            )
+            .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>),
+        );
+        progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!&quot;</span>);
+    }
+    is_initial_progress_finished.store(<span class="bool-val">true</span>, Ordering::Relaxed);
+    <span class="kw">let _ </span>= summary.update(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">None</span>).<span class="kw">await</span>; <span class="comment">// ignore the error,
+</span>}
 
 <span class="kw">async fn </span>subscribe_to_solutions(
     summary: Summary,
     farmer: Farmer,
     is_initial_progress_finished: Arc&lt;AtomicBool&gt;,
 ) {
-    tokio::spawn({
-        <span class="kw">async move </span>{
-            <span class="kw">let </span>farmed_blocks = summary
-                .get_farmed_block_count()
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;couldn&#39;t read farmed blocks count from summary&quot;</span>);
-            <span class="kw">let </span>farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
-            <span class="kw">for </span>plot <span class="kw">in </span>farmer.iter_plots().<span class="kw">await </span>{
-                plot.subscribe_new_solutions()
-                    .<span class="kw">await
-                    </span>.for_each(|solutions| {
-                        <span class="kw">let </span>farmed_block_count = <span class="kw-2">&amp;</span>farmed_block_count;
-                        <span class="kw">let </span>is_initial_progress_finished = <span class="kw-2">&amp;</span>is_initial_progress_finished;
-                        <span class="kw">let </span>summary = summary.clone();
-                        <span class="kw">async move </span>{
-                            <span class="kw">if </span>!solutions.solutions.is_empty() {
-                                <span class="kw">let </span>total_farmed =
-                                    farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
-                                <span class="kw">let _ </span>= summary.update(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
-                                </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
-                                    <span class="macro">println!</span>(<span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;</span>);
-                                }
-                            }
+    <span class="kw">let </span>farmed_blocks = summary
+        .get_farmed_block_count()
+        .<span class="kw">await
+        </span>.expect(<span class="string">&quot;couldn&#39;t read farmed blocks count from summary&quot;</span>);
+    <span class="kw">let </span>farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+    <span class="kw">for </span>plot <span class="kw">in </span>farmer.iter_plots().<span class="kw">await </span>{
+        plot.subscribe_new_solutions()
+            .<span class="kw">await
+            </span>.for_each(|solutions| {
+                <span class="kw">let </span>farmed_block_count = <span class="kw-2">&amp;</span>farmed_block_count;
+                <span class="kw">let </span>is_initial_progress_finished = <span class="kw-2">&amp;</span>is_initial_progress_finished;
+                <span class="kw">let </span>summary = summary.clone();
+                <span class="kw">async move </span>{
+                    <span class="kw">if </span>!solutions.solutions.is_empty() {
+                        <span class="kw">let </span>total_farmed = farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+                        <span class="kw">let _ </span>= summary.update(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
+                        </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
+                            <span class="macro">println!</span>(<span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;</span>);
                         }
-                    })
-                    .<span class="kw">await
-            </span>}
-        }
-    });
+                    }
+                }
+            })
+            .<span class="kw">await</span>;
+    }
 }
 
 <span class="doccomment">/// nice looking progress bar for the initial plotting :)
-</span><span class="kw">fn </span>plotting_progress_bar(total_size: u64) -&gt; ProgressBar {
+</span><span class="kw">fn </span>plotting_progress_bar(current_size: u64, total_size: u64) -&gt; ProgressBar {
     <span class="kw">let </span>pb = ProgressBar::new(total_size);
-    pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
-    pb.set_style(
+    <span class="comment">// pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
+    // uncomment this when plotting is considerably faster
+    </span>pb.set_style(
         ProgressStyle::with_template(
-            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
-             {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
+            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
+             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
         )
         .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
         <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
@@ -469,6 +458,7 @@
         </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
     );
     pb.set_message(<span class="string">&quot;plotting&quot;</span>);
+    pb.set_position(current_size);
     pb
 }
 

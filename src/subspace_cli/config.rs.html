@@ -187,34 +187,6 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -223,9 +195,12 @@
 <span class="kw">use </span>color_eyre::eyre::{eyre, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>color_eyre::Report;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
+<span class="comment">// use strum_macros::EnumIter; // uncomment this when gemini3d releases
+</span><span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
 <span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
-<span class="kw">use </span>subspace_sdk::node::{domains, Config <span class="kw">as </span>SdkNodeConfig, DsnBuilder, NetworkBuilder, Node};
+<span class="kw">use </span>subspace_sdk::node::{
+    domains, Config <span class="kw">as </span>SdkNodeConfig, DsnBuilder, NetworkBuilder, Node, Role,
+};
 <span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::instrument;
 
@@ -261,6 +236,7 @@
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         <span class="self">Self </span>{ directory, node: node.configuration() }
     }
@@ -271,6 +247,7 @@
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         <span class="self">Self </span>{ directory, node: node.configuration() }
     }
@@ -284,6 +261,7 @@
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         <span class="self">Self </span>{ directory, node: node.configuration() }
     }
@@ -336,7 +314,7 @@
     }
 }
 
-<span class="attr">#[derive(Deserialize, Serialize, Default)]
+<span class="attr">#[derive(Deserialize, Serialize, Default, Debug)] </span><span class="comment">// TODO: add `EnumIter` when gemini3d releases
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
     <span class="attr">#[default]
     </span>Gemini3c,
@@ -344,29 +322,15 @@
     DevNet,
 }
 
-<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ChainConfig {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            ChainConfig::Gemini3c =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3c&quot;</span>),
-            ChainConfig::Dev =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;dev-chain&quot;</span>),
-            ChainConfig::DevNet =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;devnet&quot;</span>),
-        }
-    }
-}
-
 <span class="kw">impl </span>FromStr <span class="kw">for </span>ChainConfig {
     <span class="kw">type </span><span class="prelude-val">Err </span>= Report;
 
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
-        <span class="kw">let </span>chain_list = <span class="macro">vec!</span>[<span class="string">&quot;gemini-3c&quot;</span>];
-        <span class="kw">match </span>s {
+        <span class="kw">match </span>s.to_lowercase().as_str() {
             <span class="string">&quot;gemini-3c&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Gemini3c),
             <span class="string">&quot;dev&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::Dev),
             <span class="string">&quot;devnet&quot; </span>=&gt; <span class="prelude-val">Ok</span>(ChainConfig::DevNet),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
-                <span class="string">&quot;given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
-                 {chain_list:?}.&quot;
-            </span>)),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;given chain: `{s}` is not recognized!&quot;</span>)),
         }
     }
 }
@@ -411,26 +375,6 @@
     }
 
     <span class="prelude-val">Ok</span>(config)
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>test {
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_serializable() {
-        toml::to_vec(<span class="kw-2">&amp;</span>Config {
-            farmer: FarmerConfig::gemini_3c(
-                Default::default(),
-                <span class="string">&quot;plot&quot;</span>.into(),
-                ByteSize::gb(<span class="number">1</span>),
-                CacheDescription::new(<span class="string">&quot;cache&quot;</span>, ByteSize::gb(<span class="number">1</span>)).unwrap(),
-            ),
-            node: NodeConfig::gemini_3c(<span class="string">&quot;node&quot;</span>.into(), <span class="string">&quot;serializable-node&quot;</span>.to_owned(), <span class="bool-val">false</span>),
-            chain: ChainConfig::Gemini3c,
-        })
-        .unwrap();
-    }
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="subspace_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (afaf3e07a 2023-01-14)" data-search-js="search-181581080540673f.js" data-settings-js="settings-a2afdefbb7c817f1.js" data-settings-css="settings-84508a86fe805444.css" ></div></body></html>

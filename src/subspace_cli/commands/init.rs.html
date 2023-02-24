@@ -114,11 +114,15 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
+<span class="comment">// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
+</span><span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{
     create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
@@ -195,8 +199,10 @@
     </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3c;
     <span class="kw">let </span>chain = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify the chain to farm (defaults to `{default_chain:}`, press enter to use the \
-             default): &quot;
+            <span class="string">&quot;Specify the chain to farm (defaults to `{default_chain:?}`, press enter to use the \
+             default):&quot; </span><span class="comment">/* TODO: uncomment this when gemini3d releases: ` Available options are
+                         * {:?}: &quot;,` TODO: uncomment this when gemini3d
+                         * releases: `ChainConfig::iter().collect::&lt;Vec&lt;_&gt;&gt;()` */
         </span>),
         <span class="prelude-val">Some</span>(<span class="kw">crate</span>::config::ChainConfig::Gemini3c),
         ChainConfig::from_str,
