@@ -13,8 +13,7 @@ pub(crate) async fn wipe() -> Result<()> {
         Ok(args) => Some(args),
         Err(_) => {
             println!(
-                "could not read your config. There could have been a breaking change, or you may \
-                 have an ill-formed config file. Wipe will continue... \n{}",
+                "could not read your config. Wipe will still continue... \n{}",
                 ansi_term::Style::new().underline().paint(
                     "However, if you have set a custom location for your plots, you will need to \
                      manually delete your plots!"
