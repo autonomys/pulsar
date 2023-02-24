@@ -47,6 +47,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
@@ -71,6 +72,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
