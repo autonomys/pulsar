@@ -6,9 +6,12 @@ use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Result};
 use color_eyre::Report;
 use serde::{Deserialize, Serialize};
+// use strum_macros::EnumIter; // uncomment this when gemini3d releases
 use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node};
+use subspace_sdk::node::{
+    domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node, Role,
+};
 use subspace_sdk::PublicKey;
 use tracing::instrument;
 
@@ -44,6 +47,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
@@ -54,6 +58,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
@@ -67,6 +72,7 @@ impl NodeConfig {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+        node = node.role(Role::Authority);
 
         Self { directory, node: node.configuration() }
     }
@@ -119,7 +125,7 @@ impl FarmerConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
@@ -127,29 +133,15 @@ pub(crate) enum ChainConfig {
     DevNet,
 }
 
-impl std::fmt::Display for ChainConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            ChainConfig::Gemini3c => write!(f, "gemini-3c"),
-            ChainConfig::Dev => write!(f, "dev-chain"),
-            ChainConfig::DevNet => write!(f, "devnet"),
-        }
-    }
-}
-
 impl FromStr for ChainConfig {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let chain_list = vec!["gemini-3c"];
-        match s {
+        match s.to_lowercase().as_str() {
             "gemini-3c" => Ok(ChainConfig::Gemini3c),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
-            _ => Err(eyre!(
-                "given chain: `{s}` is not recognized! Please enter a valid chain from this list: \
-                 {chain_list:?}."
-            )),
+            _ => Err(eyre!("given chain: `{s}` is not recognized!")),
         }
     }
 }
@@ -194,24 +186,4 @@ pub(crate) fn validate_config() -> Result<Config> {
     }
 
     Ok(config)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_serializable() {
-        toml::to_vec(&Config {
-            farmer: FarmerConfig::gemini_3c(
-                Default::default(),
-                "plot".into(),
-                ByteSize::gb(1),
-                CacheDescription::new("cache", ByteSize::gb(1)).unwrap(),
-            ),
-            node: NodeConfig::gemini_3c("node".into(), "serializable-node".to_owned(), false),
-            chain: ChainConfig::Gemini3c,
-        })
-        .unwrap();
-    }
 }

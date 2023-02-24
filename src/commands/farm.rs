@@ -87,18 +87,18 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
     if !is_verbose {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
-        subscribe_to_plotting_progress(
+        let _ = tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
-        )
+        ))
         .await;
-        subscribe_to_solutions(
+        let _ = tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
-        )
+        ))
         .await;
     }
 
@@ -122,7 +122,6 @@ async fn subscribe_to_node_syncing(node: Node) -> Result<()> {
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
-
         syncing_progress_bar.finish_with_message("Syncing is done!");
     }
     Ok(())
@@ -134,39 +133,38 @@ async fn subscribe_to_plotting_progress(
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) {
-    tokio::spawn({
-        async move {
-            for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
-                println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
-                let progress_bar = plotting_progress_bar(plot.allocated_space().as_u64());
-                plot.subscribe_initial_plotting_progress()
-                    .await
-                    .for_each(|progress| {
-                        let pb_clone = progress_bar.clone();
-                        async move {
-                            let current_bytes = progress.current_sector * sector_size_bytes;
-                            pb_clone.set_position(current_bytes);
-                        }
-                    })
-                    .await;
-                progress_bar.set_style(
-                    ProgressStyle::with_template(
-                        "{spinner} [{elapsed_precise}] {percent}% [{bar:40.cyan/blue}]
-                  ({bytes}/{total_bytes}) {msg}",
-                    )
-                    .expect("hardcoded template is correct")
-                    .progress_chars("=> "),
-                );
-                progress_bar.finish_with_message("Initial plotting finished!");
-                is_initial_progress_finished.store(true, Ordering::Relaxed);
-                let _ = summary.update(Some(true), None).await; // ignore the
-                                                                // error, since
-                                                                // we will abandon
-                                                                // this mechanism
-                                                                // soon
+    for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
+        println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
+
+        let mut plotting_progress = plot.subscribe_initial_plotting_progress().await;
+        let progress_bar;
+
+        if let Some(plotting_result) = plotting_progress.next().await {
+            let current_size = plotting_result.current_sector * sector_size_bytes;
+            progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+
+            while let Some(stream_result) = plotting_progress.next().await {
+                let current_size = stream_result.current_sector * sector_size_bytes;
+                progress_bar.set_position(current_size);
             }
+        } else {
+            // means initial plotting was already finished
+            progress_bar = plotting_progress_bar(
+                plot.allocated_space().as_u64(),
+                plot.allocated_space().as_u64(),
+            );
         }
-    });
+        progress_bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
+                 {msg}",
+            )
+            .expect("hardcoded template is correct"),
+        );
+        progress_bar.finish_with_message("Initial plotting finished!");
+    }
+    is_initial_progress_finished.store(true, Ordering::Relaxed);
+    let _ = summary.update(Some(true), None).await; // ignore the error,
 }
 
 async fn subscribe_to_solutions(
@@ -174,45 +172,41 @@ async fn subscribe_to_solutions(
     farmer: Farmer,
     is_initial_progress_finished: Arc<AtomicBool>,
 ) {
-    tokio::spawn({
-        async move {
-            let farmed_blocks = summary
-                .get_farmed_block_count()
-                .await
-                .expect("couldn't read farmed blocks count from summary");
-            let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
-            for plot in farmer.iter_plots().await {
-                plot.subscribe_new_solutions()
-                    .await
-                    .for_each(|solutions| {
-                        let farmed_block_count = &farmed_block_count;
-                        let is_initial_progress_finished = &is_initial_progress_finished;
-                        let summary = summary.clone();
-                        async move {
-                            if !solutions.solutions.is_empty() {
-                                let total_farmed =
-                                    farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                                let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
-                                if is_initial_progress_finished.load(Ordering::Relaxed) {
-                                    println!("You have farmed {total_farmed} block(s) in total!");
-                                }
-                            }
+    let farmed_blocks = summary
+        .get_farmed_block_count()
+        .await
+        .expect("couldn't read farmed blocks count from summary");
+    let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+    for plot in farmer.iter_plots().await {
+        plot.subscribe_new_solutions()
+            .await
+            .for_each(|solutions| {
+                let farmed_block_count = &farmed_block_count;
+                let is_initial_progress_finished = &is_initial_progress_finished;
+                let summary = summary.clone();
+                async move {
+                    if !solutions.solutions.is_empty() {
+                        let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
+                        let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
+                        if is_initial_progress_finished.load(Ordering::Relaxed) {
+                            println!("You have farmed {total_farmed} block(s) in total!");
                         }
-                    })
-                    .await
-            }
-        }
-    });
+                    }
+                }
+            })
+            .await;
+    }
 }
 
 /// nice looking progress bar for the initial plotting :)
-fn plotting_progress_bar(total_size: u64) -> ProgressBar {
+fn plotting_progress_bar(current_size: u64, total_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(total_size);
-    pb.enable_steady_tick(std::time::Duration::from_millis(100));
+    // pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
+    // uncomment this when plotting is considerably faster
     pb.set_style(
         ProgressStyle::with_template(
-            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.yellow}] ({pos}/{len}) \
-             {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
+            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
+             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
         )
         .expect("hardcoded template is correct")
         // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
@@ -221,6 +215,7 @@ fn plotting_progress_bar(total_size: u64) -> ProgressBar {
         .progress_chars("█▉▊▋▌▍▎▏  "),
     );
     pb.set_message("plotting");
+    pb.set_position(current_size);
     pb
 }
 
