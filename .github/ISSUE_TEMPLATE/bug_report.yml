@@ -23,15 +23,18 @@ body:
       description: What version of our software are you running?
     validations:
       required: true
-  - type: dropdown
+  - type: checkboxes 
     id: platform
     attributes:
       label: platform
       description: On which operating system did this bug emerged?
       options:
-        - linux
-        - windows
-        - macos
+        - label: linux
+          required: false
+        - label: windows
+          required: false
+        - label: macos
+          required: false
   - type: textarea
     id: expected
     attributes:
