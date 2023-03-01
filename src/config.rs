@@ -125,12 +125,23 @@ impl FarmerConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Default, Debug)] // TODO: add `EnumIter` when gemini3d releases
+#[derive(Deserialize, Serialize, Default)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,
     Dev,
     DevNet,
+}
+
+// TODO: delete this when gemini3d releases
+impl std::fmt::Display for ChainConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            ChainConfig::Gemini3c => write!(f, "gemini-3c"),
+            ChainConfig::Dev => write!(f, "dev-chain"),
+            ChainConfig::DevNet => write!(f, "devnet"),
+        }
+    }
 }
 
 impl FromStr for ChainConfig {

@@ -80,7 +80,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     let default_chain = ChainConfig::Gemini3c;
     let chain = get_user_input(
         &format!(
-            "Specify the chain to farm (defaults to `{default_chain:?}`, press enter to use the \
+            "Specify the chain to farm (defaults to `{default_chain}`, press enter to use the \
              default):" /* TODO: uncomment this when gemini3d releases: ` Available options are
                          * {:?}: ",` TODO: uncomment this when gemini3d
                          * releases: `ChainConfig::iter().collect::<Vec<_>>()` */
