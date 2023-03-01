@@ -187,6 +187,17 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -314,12 +325,23 @@
     }
 }
 
-<span class="attr">#[derive(Deserialize, Serialize, Default, Debug)] </span><span class="comment">// TODO: add `EnumIter` when gemini3d releases
+<span class="attr">#[derive(Deserialize, Serialize, Default)] </span><span class="comment">// TODO: add `EnumIter` when gemini3d releases
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
     <span class="attr">#[default]
     </span>Gemini3c,
     Dev,
     DevNet,
+}
+
+<span class="comment">// TODO: delete this when gemini3d releases
+</span><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>ChainConfig {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter) -&gt; std::fmt::Result {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            ChainConfig::Gemini3c =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;gemini-3c&quot;</span>),
+            ChainConfig::Dev =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;dev-chain&quot;</span>),
+            ChainConfig::DevNet =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;devnet&quot;</span>),
+        }
+    }
 }
 
 <span class="kw">impl </span>FromStr <span class="kw">for </span>ChainConfig {
