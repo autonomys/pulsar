@@ -196,7 +196,7 @@ async fn subscribe_to_solutions(
                             // carriage return to overwrite the current value
                             // instead of inserting
                             // a new line
-                            std::io::stdout().flush().expect("some error message");
+                            std::io::stdout().flush().expect("Failed to flush stdout");
                             // flush the
                             // stdout to make sure values are printed
                         }
