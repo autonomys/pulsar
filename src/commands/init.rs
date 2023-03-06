@@ -11,20 +11,20 @@ use crate::config::{
 use crate::utils::{
     cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
     plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser, yes_or_no_parser,
+    reward_address_parser, size_parser,
 };
 
 /// implementation of the `init` command
 ///
 /// prints a very cool ascii art,
 /// creates a config file from the user inputs
-pub(crate) fn init() -> Result<()> {
+pub(crate) fn init(executor: bool) -> Result<()> {
     let (mut config_file, config_path) = create_config()?;
     print_ascii_art();
     print_version();
     println!();
     println!("Configuration creation process has started...");
-    let config = get_config_from_user_inputs()?;
+    let config = get_config_from_user_inputs(executor)?;
     config_file
         .write_all(toml::to_string_pretty(&config).wrap_err("Failed to write config")?.as_ref())
         .wrap_err("Failed to write config")?;
@@ -39,7 +39,7 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given
 /// configuration file
-fn get_config_from_user_inputs() -> Result<Config> {
+fn get_config_from_user_inputs(is_executor: bool) -> Result<Config> {
     // GET USER INPUTS...
     // get reward address
     let reward_address =
@@ -89,12 +89,6 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ChainConfig::from_str,
     )?;
 
-    let is_executor = get_user_input(
-        "Do you want to be an executor? y/n (defaults to no): ",
-        Some(false),
-        yes_or_no_parser,
-    )?;
-
     let cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?;
     let (farmer, node) = match chain {
         ChainConfig::Gemini3c => (
@@ -111,9 +105,5 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ),
     };
 
-    Ok(Config {
-        chain,
-        farmer,
-        node, // farmer: FarmerConfig::new(),
-    })
+    Ok(Config { chain, farmer, node })
 }

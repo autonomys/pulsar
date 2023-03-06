@@ -50,7 +50,7 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
         ChainConfig::Dev =>
             chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
         ChainConfig::DevNet =>
-            chain_spec::devnet_config().expect("cannot extrat the devnet chain spec from SDK"),
+            chain_spec::devnet_config().expect("cannot extract the devnet chain spec from SDK"),
     };
 
     let node = node_config

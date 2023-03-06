@@ -38,10 +38,13 @@ enum Commands {
                        and status of initial plotting)")]
     Info,
     #[command(about = "initializes the config file required for the farming")]
-    Init,
+    Init {
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
+        executor: bool,
+    },
     #[command(about = "starting the farming process (along with node in the background)")]
     Farm {
-        #[arg(short, long, action)]
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
         verbose: bool,
     },
     #[command(about = "wipes the node and farm instance (along with your plots)")]
@@ -56,8 +59,8 @@ async fn main() -> Result<(), Report> {
         Commands::Info => {
             info().await?;
         }
-        Commands::Init => {
-            init().suggestion(support_message())?;
+        Commands::Init { executor } => {
+            init(executor).suggestion(support_message())?;
         }
         Commands::Farm { verbose } => {
             let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
