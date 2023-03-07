@@ -241,7 +241,17 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
+<span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>, WrapErr};
@@ -415,6 +425,7 @@
     farmer: Farmer,
     is_initial_progress_finished: Arc&lt;AtomicBool&gt;,
 ) {
+    <span class="macro">println!</span>();
     <span class="kw">let </span>farmed_blocks = summary
         .get_farmed_block_count()
         .<span class="kw">await
@@ -432,8 +443,15 @@
                         <span class="kw">let </span>total_farmed = farmed_block_count.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
                         <span class="kw">let _ </span>= summary.update(<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(total_farmed)).<span class="kw">await</span>; <span class="comment">// ignore the error, since we will abandon this mechanism
                         </span><span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
-                            <span class="macro">println!</span>(<span class="string">&quot;You have farmed {total_farmed} block(s) in total!&quot;</span>);
-                        }
+                            <span class="macro">print!</span>(<span class="string">&quot;\rYou have farmed {total_farmed} block(s) in total!&quot;</span>);
+                            <span class="comment">// use
+                            // carriage return to overwrite the current value
+                            // instead of inserting
+                            // a new line
+                            </span>std::io::stdout().flush().expect(<span class="string">&quot;Failed to flush stdout&quot;</span>);
+                            <span class="comment">// flush the
+                            // stdout to make sure values are printed
+                        </span>}
                     }
                 }
             })
