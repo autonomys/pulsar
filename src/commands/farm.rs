@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
@@ -172,6 +173,7 @@ async fn subscribe_to_solutions(
     farmer: Farmer,
     is_initial_progress_finished: Arc<AtomicBool>,
 ) {
+    println!();
     let farmed_blocks = summary
         .get_farmed_block_count()
         .await
@@ -189,7 +191,14 @@ async fn subscribe_to_solutions(
                         let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
                         let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
                         if is_initial_progress_finished.load(Ordering::Relaxed) {
-                            println!("You have farmed {total_farmed} block(s) in total!");
+                            print!("\rYou have farmed {total_farmed} block(s) in total!");
+                            // use
+                            // carriage return to overwrite the current value
+                            // instead of inserting
+                            // a new line
+                            std::io::stdout().flush().expect("Failed to flush stdout");
+                            // flush the
+                            // stdout to make sure values are printed
                         }
                     }
                 }
