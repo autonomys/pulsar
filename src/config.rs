@@ -23,10 +23,34 @@ pub(crate) const MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(32)
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize)]
-pub(crate) struct Config {
-    pub(crate) chain: ChainConfig,
-    pub(crate) farmer: FarmerConfig,
-    pub(crate) node: NodeConfig,
+pub(crate) struct CliConfig {
+    pub(crate) chain: CliChainConfig,
+    pub(crate) farmer: CliFarmerConfig,
+    pub(crate) node: CliNodeConfig,
+}
+
+/// Enum for Chain
+#[derive(Deserialize, Serialize, Default)] // TODO: add `EnumIter` when gemini3d releases
+pub(crate) enum CliChainConfig {
+    #[default]
+    Gemini3c,
+    Dev,
+    DevNet,
+}
+
+/// Farmer Options Wrapper for CLI
+#[derive(Deserialize, Serialize)]
+pub(crate) struct CliFarmerConfig {
+    pub(crate) address: PublicKey,
+    pub(crate) plot_directory: PathBuf,
+    #[serde(with = "bytesize_serde")]
+    pub(crate) plot_size: ByteSize,
+}
+
+/// Node Options Wrapper for CLI
+#[derive(Deserialize, Serialize)]
+pub(crate) struct CliNodeConfig {
+    pub(crate) directory: PathBuf,
 }
 
 /// structure for the `farmer` field of the config toml file
@@ -125,33 +149,25 @@ impl FarmerConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Default)] // TODO: add `EnumIter` when gemini3d releases
-pub(crate) enum ChainConfig {
-    #[default]
-    Gemini3c,
-    Dev,
-    DevNet,
-}
-
 // TODO: delete this when gemini3d releases
-impl std::fmt::Display for ChainConfig {
+impl std::fmt::Display for CliChainConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            ChainConfig::Gemini3c => write!(f, "gemini-3c"),
-            ChainConfig::Dev => write!(f, "dev-chain"),
-            ChainConfig::DevNet => write!(f, "devnet"),
+            CliChainConfig::Gemini3c => write!(f, "gemini-3c"),
+            CliChainConfig::Dev => write!(f, "dev-chain"),
+            CliChainConfig::DevNet => write!(f, "devnet"),
         }
     }
 }
 
-impl FromStr for ChainConfig {
+impl FromStr for CliChainConfig {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini-3c" => Ok(ChainConfig::Gemini3c),
-            "dev" => Ok(ChainConfig::Dev),
-            "devnet" => Ok(ChainConfig::DevNet),
+            "gemini-3c" => Ok(CliChainConfig::Gemini3c),
+            "dev" => Ok(CliChainConfig::Dev),
+            "devnet" => Ok(CliChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
         }
     }
@@ -176,19 +192,19 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
-/// parses the config, and returns [`Config`]
+/// parses the config, and returns [`CliConfig`]
 #[instrument]
-pub(crate) fn parse_config() -> Result<Config> {
+pub(crate) fn parse_config() -> Result<CliConfig> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("subspace-cli").join("settings.toml");
 
-    let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
+    let config: CliConfig = toml::from_str(&std::fs::read_to_string(config_path)?)?;
     Ok(config)
 }
 
 /// validates the config for farming
 #[instrument]
-pub(crate) fn validate_config() -> Result<Config> {
+pub(crate) fn validate_config() -> Result<CliConfig> {
     let config = parse_config()?;
 
     // validity checks

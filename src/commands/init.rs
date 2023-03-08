@@ -6,12 +6,12 @@ use color_eyre::eyre::{Context, Result};
 use subspace_sdk::farmer::CacheDescription;
 
 use crate::config::{
-    create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
+    create_config, CliChainConfig, CliConfig, CliFarmerConfig, CliNodeConfig, DEFAULT_PLOT_SIZE,
 };
 use crate::utils::{
     cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
     plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser, yes_or_no_parser,
+    reward_address_parser, size_parser,
 };
 
 /// implementation of the `init` command
@@ -39,7 +39,7 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given
 /// configuration file
-fn get_config_from_user_inputs() -> Result<Config> {
+fn get_config_from_user_inputs() -> Result<CliConfig> {
     // GET USER INPUTS...
     // get reward address
     let reward_address =
@@ -77,7 +77,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get chain
-    let default_chain = ChainConfig::Gemini3c;
+    let default_chain = CliChainConfig::Gemini3c;
     let chain = get_user_input(
         &format!(
             "Specify the chain to farm (defaults to `{default_chain}`, press enter to use the \
@@ -85,35 +85,25 @@ fn get_config_from_user_inputs() -> Result<Config> {
                          * {:?}: ",` TODO: uncomment this when gemini3d
                          * releases: `ChainConfig::iter().collect::<Vec<_>>()` */
         ),
-        Some(crate::config::ChainConfig::Gemini3c),
-        ChainConfig::from_str,
-    )?;
-
-    let is_executor = get_user_input(
-        "Do you want to be an executor? y/n (defaults to no): ",
-        Some(false),
-        yes_or_no_parser,
+        Some(crate::config::CliChainConfig::Gemini3c),
+        CliChainConfig::from_str,
     )?;
 
     let cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?;
-    let (farmer, node) = match chain {
-        ChainConfig::Gemini3c => (
-            FarmerConfig::gemini_3c(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::gemini_3c(node_directory_getter(), node_name, is_executor),
-        ),
-        ChainConfig::Dev => (
-            FarmerConfig::dev(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::dev(node_directory_getter(), is_executor),
-        ),
-        ChainConfig::DevNet => (
-            FarmerConfig::devnet(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::devnet(node_directory_getter(), node_name, is_executor),
-        ),
-    };
 
-    Ok(Config {
-        chain,
-        farmer,
-        node, // farmer: FarmerConfig::new(),
-    })
+    // let (farmer, node) = match chain {
+    //     ChainConfig::Gemini3c => (
+    //         FarmerConfig::gemini_3c(reward_address, plot_directory,
+    // plot_size, cache),
+    // NodeConfig::gemini_3c(node_directory_getter(), node_name,
+    // is_executor),     ),
+    //     ChainConfig::Dev => (
+    //         FarmerConfig::dev(reward_address, plot_directory, plot_size,
+    // cache),         NodeConfig::dev(node_directory_getter(),
+    // is_executor),     ),
+    //     ChainConfig::DevNet => (
+    //         FarmerConfig::devnet(reward_address, plot_directory, plot_size,
+    // cache),         NodeConfig::devnet(node_directory_getter(), node_name,
+    // is_executor),     ),
+    // };
 }

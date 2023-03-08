@@ -113,14 +113,6 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     }
 }
 
-pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
-    match answer.to_lowercase().as_str() {
-        "y" | "yes" => Ok(true),
-        "n" | "no" => Ok(false),
-        _ => Err(eyre!("could not interpret your answer. Please provide `y` or `n`.")),
-    }
-}
-
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
     data_dir_getter().join("plots")
@@ -240,7 +232,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::ChainConfig;
+    use crate::config::CliChainConfig;
 
     #[test]
     fn node_name_checker() {
@@ -264,8 +256,8 @@ mod tests {
 
     #[test]
     fn chain_checker() {
-        assert!(ChainConfig::from_str("gemini-3c").is_ok());
-        assert!(ChainConfig::from_str("devv").is_err());
+        assert!(CliChainConfig::from_str("gemini-3c").is_ok());
+        assert!(CliChainConfig::from_str("devv").is_err());
     }
 
     #[test]
