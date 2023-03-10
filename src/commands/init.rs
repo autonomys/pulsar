@@ -6,7 +6,7 @@ use color_eyre::eyre::{Context, Result};
 use subspace_sdk::farmer::CacheDescription;
 
 use crate::config::{
-    create_config, CliChainConfig, CliConfig, CliFarmerConfig, CliNodeConfig, DEFAULT_PLOT_SIZE,
+    create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
 };
 use crate::utils::{
     cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
@@ -39,7 +39,7 @@ pub(crate) fn init() -> Result<()> {
 
 /// gets the necessary information from user, and writes them to the given
 /// configuration file
-fn get_config_from_user_inputs() -> Result<CliConfig> {
+fn get_config_from_user_inputs() -> Result<Config> {
     // GET USER INPUTS...
     // get reward address
     let reward_address =
@@ -77,7 +77,7 @@ fn get_config_from_user_inputs() -> Result<CliConfig> {
     )?;
 
     // get chain
-    let default_chain = CliChainConfig::Gemini3c;
+    let default_chain = ChainConfig::Gemini3c;
     let chain = get_user_input(
         &format!(
             "Specify the chain to farm (defaults to `{default_chain}`, press enter to use the \
@@ -85,11 +85,12 @@ fn get_config_from_user_inputs() -> Result<CliConfig> {
                          * {:?}: ",` TODO: uncomment this when gemini3d
                          * releases: `ChainConfig::iter().collect::<Vec<_>>()` */
         ),
-        Some(crate::config::CliChainConfig::Gemini3c),
-        CliChainConfig::from_str,
+        Some(crate::config::ChainConfig::Gemini3c),
+        ChainConfig::from_str,
     )?;
 
-    let cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(1))?;
+    // let cache = CacheDescription::new(cache_directory_getter(),
+    // bytesize::ByteSize::gb(1))?;
 
     // let (farmer, node) = match chain {
     //     ChainConfig::Gemini3c => (

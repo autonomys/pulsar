@@ -232,7 +232,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::CliChainConfig;
+    use crate::config::ChainConfig;
 
     #[test]
     fn node_name_checker() {
@@ -256,8 +256,8 @@ mod tests {
 
     #[test]
     fn chain_checker() {
-        assert!(CliChainConfig::from_str("gemini-3c").is_ok());
-        assert!(CliChainConfig::from_str("devv").is_err());
+        assert!(ChainConfig::from_str("gemini-3c").is_ok());
+        assert!(ChainConfig::from_str("devv").is_err());
     }
 
     #[test]

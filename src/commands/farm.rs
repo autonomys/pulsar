@@ -10,7 +10,7 @@ use subspace_sdk::node::SyncingProgress;
 use subspace_sdk::{chain_spec, Farmer, Node, PlotDescription};
 use tracing::instrument;
 
-use crate::config::{validate_config, CliChainConfig, Config};
+use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::Summary;
 use crate::utils::{install_tracing, raise_fd_limit};
 
@@ -45,11 +45,11 @@ pub(crate) async fn farm(is_verbose: bool) -> Result<(Farmer, Node, SingleInstan
 
     println!("Starting node ...");
     let chain_spec = match chain {
-        CliChainConfig::Gemini3c =>
+        ChainConfig::Gemini3c =>
             chain_spec::gemini_3c().expect("cannot extract the gemini3c chain spec from SDK"),
-        CliChainConfig::Dev =>
+        ChainConfig::Dev =>
             chain_spec::dev_config().expect("cannot extract the dev chain spec from SDK"),
-        CliChainConfig::DevNet =>
+        ChainConfig::DevNet =>
             chain_spec::devnet_config().expect("cannot extrat the devnet chain spec from SDK"),
     };
 
