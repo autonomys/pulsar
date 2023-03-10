@@ -229,6 +229,10 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     }
 }
 
+pub fn is_default<T: Default + PartialEq>(t: &T) -> bool {
+    t == &T::default()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

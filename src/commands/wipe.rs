@@ -1,9 +1,10 @@
 use color_eyre::eyre::Result;
+use subspace_sdk::farmer::CacheDescription;
 use subspace_sdk::{Node, PlotDescription};
 
 use crate::config::parse_config;
 use crate::summary::delete_summary;
-use crate::utils::{node_directory_getter, plot_directory_getter};
+use crate::utils::{cache_directory_getter, node_directory_getter, plot_directory_getter};
 
 /// implementation of the `wipe` command
 ///
@@ -37,7 +38,9 @@ pub(crate) async fn wipe() -> Result<()> {
                 "Skipping wiping plot. Got error while constructing the plot reference: {err}"
             ),
         }
-        let _ = config.farmer.cache.wipe().await;
+        let _ = CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)?
+            .wipe()
+            .await;
     } else {
         let _ = tokio::fs::remove_dir_all(plot_directory_getter()).await;
     }

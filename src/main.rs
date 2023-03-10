@@ -43,6 +43,8 @@ enum Commands {
     Farm {
         #[arg(short, long, action)]
         verbose: bool,
+        #[arg(short, long, action)]
+        executor: bool,
     },
     #[command(about = "wipes the node and farm instance (along with your plots)")]
     Wipe,
@@ -59,8 +61,9 @@ async fn main() -> Result<(), Report> {
         Commands::Init => {
             init().suggestion(support_message())?;
         }
-        Commands::Farm { verbose } => {
-            let (farmer, node, _instance) = farm(verbose).await.suggestion(support_message())?;
+        Commands::Farm { verbose, executor } => {
+            let (farmer, node, _instance) =
+                farm(verbose, executor).await.suggestion(support_message())?;
 
             signal::ctrl_c().await?;
             println!(

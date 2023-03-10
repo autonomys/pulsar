@@ -2,16 +2,15 @@ use std::io::Write;
 use std::str::FromStr;
 
 use color_eyre::eyre::{Context, Result};
-// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
-use subspace_sdk::farmer::CacheDescription;
 
+// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
 use crate::config::{
-    create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
+    create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
+    NodeConfig, DEFAULT_PLOT_SIZE,
 };
 use crate::utils::{
-    cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
-    plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser,
+    get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
+    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
 /// implementation of the `init` command
@@ -89,22 +88,17 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ChainConfig::from_str,
     )?;
 
-    // let cache = CacheDescription::new(cache_directory_getter(),
-    // bytesize::ByteSize::gb(1))?;
+    let farmer_config = FarmerConfig {
+        plot_size,
+        plot_directory,
+        reward_address,
+        advanced: AdvancedFarmerSettings::default(),
+    };
+    let node_config = NodeConfig {
+        name: node_name,
+        directory: node_directory_getter(),
+        advanced: AdvancedNodeSettings::default(),
+    };
 
-    // let (farmer, node) = match chain {
-    //     ChainConfig::Gemini3c => (
-    //         FarmerConfig::gemini_3c(reward_address, plot_directory,
-    // plot_size, cache),
-    // NodeConfig::gemini_3c(node_directory_getter(), node_name,
-    // is_executor),     ),
-    //     ChainConfig::Dev => (
-    //         FarmerConfig::dev(reward_address, plot_directory, plot_size,
-    // cache),         NodeConfig::dev(node_directory_getter(),
-    // is_executor),     ),
-    //     ChainConfig::DevNet => (
-    //         FarmerConfig::devnet(reward_address, plot_directory, plot_size,
-    // cache),         NodeConfig::devnet(node_directory_getter(), node_name,
-    // is_executor),     ),
-    // };
+    Ok(Config { farmer: farmer_config, node: node_config, chain })
 }

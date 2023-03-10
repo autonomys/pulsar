@@ -5,7 +5,7 @@ use std::str::FromStr;
 use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::Report;
-use derive_builder::Builder;
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 // use strum_macros::EnumIter; // uncomment this when gemini3d releases
 use subspace_sdk::farmer::{CacheDescription, Farmer};
@@ -29,29 +29,18 @@ pub(crate) struct Config {
 }
 
 /// Advanced Node Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Builder, Clone)]
-#[builder(setter(strip_option))]
+#[derive(Deserialize, Serialize, Clone, Default)]
 pub(crate) struct AdvancedNodeSettings {
-    pub(crate) executor: Option<bool>,
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
+    pub(crate) executor: bool,
 }
 
 /// Node Options Wrapper for CLI
-#[derive(Deserialize, Serialize, Builder, Clone)]
-#[builder(build_fn(private, name = "_constructor"), name = "NodeBuilder")]
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
     pub(crate) name: String,
     pub(crate) advanced: AdvancedNodeSettings,
-}
-
-impl NodeBuilder {
-    pub fn configuration(&self) -> NodeConfig {
-        self._constructor().expect("build is infallible")
-    }
-
-    pub async fn build(self, chain: ChainConfig) -> Result<Node> {
-        self.configuration().build(chain).await
-    }
 }
 
 impl NodeConfig {
@@ -63,7 +52,7 @@ impl NodeConfig {
                     DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
                 );
 
-                if self.advanced.executor.unwrap_or(false) {
+                if self.advanced.executor {
                     node = node.system_domain(
                         domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
                     );
@@ -77,7 +66,7 @@ impl NodeConfig {
             ChainConfig::Dev => {
                 node = Node::dev();
 
-                if self.advanced.executor.unwrap_or_default() {
+                if self.advanced.executor {
                     node = node.system_domain(
                         domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
                     );
@@ -93,7 +82,7 @@ impl NodeConfig {
                     .network(NetworkBuilder::devnet().name(self.name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
 
-                if self.advanced.executor.unwrap_or_default() {
+                if self.advanced.executor {
                     node = node.system_domain(
                         domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
                     );
@@ -109,54 +98,41 @@ impl NodeConfig {
 }
 
 /// Advanced Farmer Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Builder, Clone)]
-#[builder(setter(strip_option))]
+#[derive(Deserialize, Serialize, Clone, Derivative, Default)]
 pub(crate) struct AdvancedFarmerSettings {
-    cache_size: Option<u64>,
+    #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
+    #[derivative(Default(value = "bytesize::ByteSize::gb(1)"))]
+    pub(crate) cache_size: ByteSize,
 }
 
 /// Farmer Options Wrapper for CLI
-#[derive(Deserialize, Serialize, Builder, Clone)]
-#[builder(build_fn(name = "constructor"), name = "FarmerBuilder")]
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct FarmerConfig {
-    pub(crate) address: PublicKey,
+    pub(crate) reward_address: PublicKey,
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
     pub(crate) advanced: AdvancedFarmerSettings,
 }
 
-impl FarmerBuilder {
-    pub fn configuration(&self) -> FarmerConfig {
-        self.constructor().expect("build is infallible")
-    }
-
-    pub async fn build(self, chain: ChainConfig, node: Node) {
-        self.configuration().build(chain, node).await;
-    }
-}
-
 impl FarmerConfig {
     pub async fn build(self, chain: ChainConfig, node: Node) -> Result<Farmer> {
         let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
             .wrap_err("Plot size is too low")?];
-        let cache = CacheDescription::new(
-            cache_directory_getter(),
-            bytesize::ByteSize::gb(self.advanced.cache_size.unwrap_or(1)),
-        )?;
+        let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
         // currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
         match chain {
             ChainConfig::Gemini3c => Farmer::builder()
-                .build(self.address, node, plot_description, cache)
+                .build(self.reward_address, node, plot_description, cache)
                 .await
                 .map_err(Report::msg),
             ChainConfig::Dev => Farmer::builder()
-                .build(self.address, node, plot_description, cache)
+                .build(self.reward_address, node, plot_description, cache)
                 .await
                 .map_err(Report::msg),
             ChainConfig::DevNet => Farmer::builder()
-                .build(self.address, node, plot_description, cache)
+                .build(self.reward_address, node, plot_description, cache)
                 .await
                 .map_err(Report::msg),
         }
@@ -164,7 +140,7 @@ impl FarmerConfig {
 }
 
 /// Enum for Chain
-#[derive(Deserialize, Serialize, Default)] // TODO: add `EnumIter` when gemini3d releases
+#[derive(Deserialize, Serialize, Default, Clone)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,

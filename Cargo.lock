@@ -9568,7 +9568,7 @@ dependencies = [
  "bytesize-serde",
  "clap",
  "color-eyre",
- "derive_builder 0.12.0",
+ "derivative",
  "dirs",
  "fdlimit",
  "futures 0.3.26",

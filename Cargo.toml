@@ -9,7 +9,7 @@ bytesize = "1.1"
 bytesize-serde = "0.2"
 clap = { version = "4.1.1", features = ["derive"] }
 color-eyre = "0.6.2"
-derive_builder = "0.12.0"
+derivative = "2.2.0"
 dirs = "4.0.0"
 fdlimit = "0.2"
 futures = "0.3"
