@@ -48,6 +48,11 @@ pub(crate) async fn farm(
 
     // apply advanced options (flags)
     if executor {
+        println!(
+            "Setting the {} flag for the node...",
+            ansi_term::Style::new().underline().paint("executor")
+        );
+
         node_config.advanced.executor = true;
     }
 
