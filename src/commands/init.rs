@@ -31,7 +31,7 @@ pub(crate) fn init() -> Result<()> {
     println!("Configuration has been generated at {}", config_path.display());
 
     println!("Ready for lift off! Run the follow command to begin:");
-    println!("`./subspace-cli farm`");
+    println!("./subspace-cli farm");
 
     Ok(())
 }

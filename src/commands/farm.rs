@@ -9,6 +9,7 @@ use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
 use subspace_sdk::node::SyncingProgress;
 use subspace_sdk::{Farmer, Node};
+use tokio::signal;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
@@ -27,14 +28,10 @@ pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
 /// lastly, depending on the verbosity, it subscribes to plotting progress and
 /// new solutions
 #[instrument]
-pub(crate) async fn farm(
-    is_verbose: bool,
-    executor: bool,
-) -> Result<(Farmer, Node, SingleInstance)> {
+pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     install_tracing(is_verbose);
     color_eyre::install()?;
 
-    // TODO: this can be configured for chain in the future
     let instance = SingleInstance::new(SINGLE_INSTANCE)
         .context("Cannot take the instance lock from the OS! Aborting...")?;
     if !instance.is_single() {
@@ -59,7 +56,7 @@ pub(crate) async fn farm(
 
     if !matches!(chain, ChainConfig::Dev) {
         if !is_verbose {
-            subscribe_to_node_syncing(node.clone()).await?;
+            subscribe_to_node_syncing(&node).await?;
         } else {
             node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
         }
@@ -68,31 +65,63 @@ pub(crate) async fn farm(
     let summary = Summary::new(Some(farmer_config.plot_size)).await?;
 
     println!("Starting farmer ...");
-    let farmer = farmer_config.build(node.clone()).await?;
+    let farmer = farmer_config.build(&node).await?;
+    let farmer = Arc::new(farmer);
     println!("Farmer started successfully!");
 
     if !is_verbose {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
-        let _ = tokio::spawn(subscribe_to_plotting_progress(
+
+        let plotting_subscribe_handle = tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
-        ))
-        .await;
-        let _ = tokio::spawn(subscribe_to_solutions(
+        ));
+
+        let solution_subscribe_handle = tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
-        ))
-        .await;
+        ));
+
+        // node subscription can be gracefully closed with `ctrl_c` without any problem
+        // (no code needed). We need graceful closing for farmer subscriptions.
+        signal::ctrl_c().await?;
+        println!(
+            "\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
+             will try to forcefully close the app!"
+        );
+
+        // closing the subscriptions
+        plotting_subscribe_handle.abort();
+        solution_subscribe_handle.abort();
+
+        // shutting down the farmer and the node
+        let handle = tokio::spawn(async move {
+            // if one of the subscriptions have not aborted yet, wait
+            plotting_subscribe_handle.await.expect_err("it is cancelled");
+            solution_subscribe_handle.await.expect_err("it is cancelled");
+
+            Arc::try_unwrap(farmer)
+                .expect("there should have been only 1 strong farmer counter")
+                .close()
+                .await
+                .expect("cannot close farmer");
+            node.close().await.expect("cannot close node");
+        });
+
+        tokio::select! {
+            _ = handle => println!("gracefully closed the app!"),
+            _ = signal::ctrl_c() => println!("\nforcefully closing the app!"),
+        }
     }
 
-    Ok((farmer, node, instance))
+    Ok(())
 }
 
-async fn subscribe_to_node_syncing(node: Node) -> Result<()> {
+async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
     let mut syncing_progress = node
         .subscribe_syncing_progress()
         .await
@@ -116,7 +145,7 @@ async fn subscribe_to_node_syncing(node: Node) -> Result<()> {
 
 async fn subscribe_to_plotting_progress(
     summary: Summary,
-    farmer: Farmer,
+    farmer: Arc<Farmer>,
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) {
@@ -156,7 +185,7 @@ async fn subscribe_to_plotting_progress(
 
 async fn subscribe_to_solutions(
     summary: Summary,
-    farmer: Farmer,
+    farmer: Arc<Farmer>,
     is_initial_progress_finished: Arc<AtomicBool>,
 ) {
     println!();
