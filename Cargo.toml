@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 
 [dependencies]
@@ -30,7 +30,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "776f5a4bc3e4e67d4481aa9e1a7011d0bbb22579" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "5b8e1d4f1b107618756c51d58c58ca30803fd482" }
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
