@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Report, Result};
+use owo_colors::OwoColorize;
 use subspace_sdk::PublicKey;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -159,7 +160,7 @@ fn custom_log_dir() -> PathBuf {
 pub(crate) fn support_message() -> String {
     format!(
         "If you think this is a bug, please submit it to our forums: {}",
-        ansi_term::Style::new().underline().paint("https://forum.subspace.network")
+        "https://forum.subspace.network".underline()
     )
 }
 

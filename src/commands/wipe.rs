@@ -1,4 +1,5 @@
 use color_eyre::eyre::Result;
+use owo_colors::OwoColorize;
 use subspace_sdk::farmer::CacheDescription;
 use subspace_sdk::{Node, PlotDescription};
 
@@ -15,10 +16,9 @@ pub(crate) async fn wipe() -> Result<()> {
         Err(_) => {
             println!(
                 "could not read your config. Wipe will still continue... \n{}",
-                ansi_term::Style::new().underline().paint(
-                    "However, if you have set a custom location for your plots, you will need to \
-                     manually delete your plots!"
-                )
+                "However, if you have set a custom location for your plots, you will need to \
+                 manually delete your plots!"
+                    .underline()
             );
             None
         }

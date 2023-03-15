@@ -5,6 +5,7 @@ use std::sync::Arc;
 use color_eyre::eyre::{eyre, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
+use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
 use subspace_sdk::node::SyncingProgress;
 use subspace_sdk::{Farmer, Node};
@@ -48,11 +49,7 @@ pub(crate) async fn farm(
 
     // apply advanced options (flags)
     if executor {
-        println!(
-            "Setting the {} flag for the node...",
-            ansi_term::Style::new().underline().paint("executor")
-        );
-
+        println!("Setting the {} flag for the node...", "executor".underline());
         node_config.advanced.executor = true;
     }
 

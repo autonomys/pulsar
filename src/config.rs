@@ -21,7 +21,7 @@ pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(
 pub(crate) const MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(32);
 
 /// structure of the config toml file
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub(crate) struct Config {
     pub(crate) chain: ChainConfig,
     pub(crate) farmer: FarmerConfig,
@@ -29,14 +29,14 @@ pub(crate) struct Config {
 }
 
 /// Advanced Node Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub(crate) struct AdvancedNodeSettings {
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) executor: bool,
 }
 
 /// Node Options Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
     pub(crate) name: String,
@@ -45,60 +45,33 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub async fn build(self, chain: ChainConfig) -> Result<Node> {
-        let mut node;
-        match chain {
-            ChainConfig::Gemini3c => {
-                node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(self.name)).dsn(
-                    DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
-                );
+        let mut node = match chain {
+            ChainConfig::Gemini3c => Node::gemini_3c()
+                .network(NetworkBuilder::gemini_3c().name(self.name))
+                .dsn(DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter())),
+            ChainConfig::Dev => Node::dev(),
+            ChainConfig::DevNet => Node::devnet()
+                .network(NetworkBuilder::devnet().name(self.name))
+                .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter())),
+        };
 
-                if self.advanced.executor {
-                    node = node.system_domain(
-                        domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
-                    );
-                }
-                node = node.role(Role::Authority);
-                let chain_spec = chain_spec::gemini_3c()
-                    .expect("cannot extract the gemini3c chain spec from SDK");
-
-                node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
-            }
-            ChainConfig::Dev => {
-                node = Node::dev();
-
-                if self.advanced.executor {
-                    node = node.system_domain(
-                        domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
-                    );
-                }
-                node = node.role(Role::Authority);
-                let chain_spec = chain_spec::gemini_3c()
-                    .expect("cannot extract the gemini3c chain spec from SDK");
-
-                node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
-            }
-            ChainConfig::DevNet => {
-                let mut node = Node::devnet()
-                    .network(NetworkBuilder::devnet().name(self.name))
-                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
-
-                if self.advanced.executor {
-                    node = node.system_domain(
-                        domains::ConfigBuilder::new().core(ConfigBuilder::new().build()),
-                    );
-                }
-                node = node.role(Role::Authority);
-                let chain_spec = chain_spec::gemini_3c()
-                    .expect("cannot extract the gemini3c chain spec from SDK");
-
-                node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
-            }
+        if self.advanced.executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+
+        node = node.role(Role::Authority);
+
+        let chain_spec =
+            chain_spec::gemini_3c().expect("cannot extract the gemini3c chain spec from SDK");
+
+        node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
     }
 }
 
 /// Advanced Farmer Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Derivative, Default)]
+#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+#[derivative(Default)]
 pub(crate) struct AdvancedFarmerSettings {
     #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
     #[derivative(Default(value = "bytesize::ByteSize::gb(1)"))]
@@ -106,7 +79,7 @@ pub(crate) struct AdvancedFarmerSettings {
 }
 
 /// Farmer Options Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct FarmerConfig {
     pub(crate) reward_address: PublicKey,
     pub(crate) plot_directory: PathBuf,
@@ -140,7 +113,7 @@ impl FarmerConfig {
 }
 
 /// Enum for Chain
-#[derive(Deserialize, Serialize, Default, Clone)] // TODO: add `EnumIter` when gemini3d releases
+#[derive(Deserialize, Serialize, Default, Clone, Debug)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,

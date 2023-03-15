@@ -4,7 +4,6 @@ version = "0.1.8"
 edition = "2021"
 
 [dependencies]
-ansi_term = "0.12.1"
 bytesize = "1.1"
 bytesize-serde = "0.2"
 clap = { version = "4.1.1", features = ["derive"] }
@@ -15,6 +14,7 @@ fdlimit = "0.2"
 futures = "0.3"
 indicatif = { version = "0.17.1", features = ["improved_unicode"] }
 libp2p-core = "0.38"
+owo-colors = "3.5.0"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
