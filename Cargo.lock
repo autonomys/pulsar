@@ -9579,6 +9579,7 @@ dependencies = [
  "fdlimit",
  "futures 0.3.26",
  "indicatif",
+ "jemallocator",
  "libp2p-core 0.38.0",
  "owo-colors",
  "serde",
