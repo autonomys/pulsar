@@ -2,7 +2,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{eyre, Context, Report, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
@@ -36,7 +36,7 @@ pub(crate) async fn farm(
 
     // TODO: this can be configured for chain in the future
     let instance = SingleInstance::new(SINGLE_INSTANCE)
-        .map_err(|_| eyre!("Cannot take the instance lock from the OS! Aborting..."))?;
+        .context("Cannot take the instance lock from the OS! Aborting...")?;
     if !instance.is_single() {
         return Err(eyre!(
             "It seems like there is already a farming instance running. Aborting...",
@@ -54,7 +54,7 @@ pub(crate) async fn farm(
     }
 
     println!("Starting node ...");
-    let node = node_config.build(chain.clone()).await.expect("error building the node");
+    let node = node_config.build(chain.clone()).await.context("error building the node")?;
     println!("Node started successfully!");
 
     if !matches!(chain, ChainConfig::Dev) {
@@ -68,7 +68,7 @@ pub(crate) async fn farm(
     let summary = Summary::new(Some(farmer_config.plot_size)).await?;
 
     println!("Starting farmer ...");
-    let farmer = farmer_config.build(chain, node.clone()).await?;
+    let farmer = farmer_config.build(node.clone()).await?;
     println!("Farmer started successfully!");
 
     if !is_verbose {

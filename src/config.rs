@@ -3,8 +3,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{eyre, Result, WrapErr};
-use color_eyre::Report;
+use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 // use strum_macros::EnumIter; // uncomment this when gemini3d releases
@@ -45,14 +44,34 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub async fn build(self, chain: ChainConfig) -> Result<Node> {
-        let mut node = match chain {
-            ChainConfig::Gemini3c => Node::gemini_3c()
-                .network(NetworkBuilder::gemini_3c().name(self.name))
-                .dsn(DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter())),
-            ChainConfig::Dev => Node::dev(),
-            ChainConfig::DevNet => Node::devnet()
-                .network(NetworkBuilder::devnet().name(self.name))
-                .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter())),
+        let (mut node, chain_spec) = match chain {
+            ChainConfig::Gemini3c => {
+                let node =
+                    Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(self.name)).dsn(
+                        DsnBuilder::gemini_3c()
+                            .provider_storage_path(provider_storage_dir_getter()),
+                    );
+                let chain_spec = chain_spec::gemini_3c()
+                    .map_err(Report::msg)
+                    .context("cannot extract the gemini3c chain spec from SDK")?;
+                (node, chain_spec)
+            }
+            ChainConfig::Dev => {
+                let node = Node::dev();
+                let chain_spec = chain_spec::dev_config()
+                    .map_err(Report::msg)
+                    .context("cannot extract the dev chain spec from SDK")?;
+                (node, chain_spec)
+            }
+            ChainConfig::DevNet => {
+                let node = Node::devnet()
+                    .network(NetworkBuilder::devnet().name(self.name))
+                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                let chain_spec = chain_spec::devnet_config()
+                    .map_err(Report::msg)
+                    .context("cannot extract the devnet chain spec from SDK")?;
+                (node, chain_spec)
+            }
         };
 
         if self.advanced.executor {
@@ -61,10 +80,6 @@ impl NodeConfig {
         }
 
         node = node.role(Role::Authority);
-
-        let chain_spec =
-            chain_spec::gemini_3c().expect("cannot extract the gemini3c chain spec from SDK");
-
         node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
     }
 }
@@ -89,26 +104,17 @@ pub(crate) struct FarmerConfig {
 }
 
 impl FarmerConfig {
-    pub async fn build(self, chain: ChainConfig, node: Node) -> Result<Farmer> {
+    pub async fn build(self, node: Node) -> Result<Farmer> {
         let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
             .wrap_err("Plot size is too low")?];
         let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
+
         // currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
-        match chain {
-            ChainConfig::Gemini3c => Farmer::builder()
-                .build(self.reward_address, node, plot_description, cache)
-                .await
-                .map_err(Report::msg),
-            ChainConfig::Dev => Farmer::builder()
-                .build(self.reward_address, node, plot_description, cache)
-                .await
-                .map_err(Report::msg),
-            ChainConfig::DevNet => Farmer::builder()
-                .build(self.reward_address, node, plot_description, cache)
-                .await
-                .map_err(Report::msg),
-        }
+        Farmer::builder()
+            .build(self.reward_address, node, plot_description, cache)
+            .await
+            .context("Failed to build a farmer")
     }
 }
 

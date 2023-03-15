@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{eyre, Context, Result};
 use owo_colors::OwoColorize;
 use subspace_sdk::PublicKey;
 use tracing::level_filters::LevelFilter;
@@ -89,7 +89,7 @@ pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
 
 /// check for a valid SS58 address
 pub(crate) fn reward_address_parser(address: &str) -> Result<PublicKey> {
-    PublicKey::from_str(address).map_err(Report::msg)
+    PublicKey::from_str(address).context("Failed to parse reward address")
 }
 
 /// the provided path should be an existing directory
