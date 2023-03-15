@@ -192,6 +192,9 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -273,8 +276,11 @@
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
-        node = node.role(Role::Authority);
-        node.build(<span class="self">self</span>.directory, chain_spec).<span class="kw">await</span>.map_err(color_eyre::Report::msg)
+        node.role(Role::Authority)
+            .impl_name(<span class="macro">format!</span>(<span class="string">&quot;cli-{}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)))
+            .build(<span class="self">self</span>.directory, chain_spec)
+            .<span class="kw">await
+            </span>.map_err(color_eyre::Report::msg)
     }
 }
 
