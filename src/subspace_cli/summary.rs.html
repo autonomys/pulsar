@@ -144,6 +144,7 @@
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -152,7 +153,7 @@
 </span><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>bytesize::ByteSize;
-<span class="kw">use </span>color_eyre::eyre::{Report, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>tokio::fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions};
 <span class="kw">use </span>tokio::io::AsyncWriteExt;
@@ -199,7 +200,8 @@
                     farmed_block_count: <span class="number">0</span>,
                     user_space_pledged,
                 };
-                <span class="kw">let </span>summary_text = toml::to_string(<span class="kw-2">&amp;</span>initialization).map_err(Report::msg)<span class="question-mark">?</span>;
+                <span class="kw">let </span>summary_text = toml::to_string(<span class="kw-2">&amp;</span>initialization)
+                    .context(<span class="string">&quot;Failed to serialize FarmerSummary&quot;</span>)<span class="question-mark">?</span>;
                 OpenOptions::new()
                     .write(<span class="bool-val">true</span>)
                     .truncate(<span class="bool-val">true</span>)
@@ -232,7 +234,7 @@
             summary.farmed_block_count = count;
         }
 
-        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).map_err(Report::msg)<span class="question-mark">?</span>;
+        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize FarmerSummary&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
         OpenOptions::new()

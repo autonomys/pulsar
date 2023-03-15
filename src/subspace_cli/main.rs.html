@@ -83,6 +83,9 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -128,6 +131,8 @@
     </span>Farm {
         <span class="attr">#[arg(short, long, action)]
         </span>verbose: bool,
+        <span class="attr">#[arg(short, long, action)]
+        </span>executor: bool,
     },
     <span class="attr">#[command(about = <span class="string">&quot;wipes the node and farm instance (along with your plots)&quot;</span>)]
     </span>Wipe,
@@ -144,8 +149,9 @@
         Commands::Init =&gt; {
             init().suggestion(support_message())<span class="question-mark">?</span>;
         }
-        Commands::Farm { verbose } =&gt; {
-            <span class="kw">let </span>(farmer, node, _instance) = farm(verbose).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
+        Commands::Farm { verbose, executor } =&gt; {
+            <span class="kw">let </span>(farmer, node, _instance) =
+                farm(verbose, executor).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
 
             signal::ctrl_c().<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="macro">println!</span>(

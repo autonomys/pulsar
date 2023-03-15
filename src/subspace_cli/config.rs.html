@@ -192,140 +192,128 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>bytesize::ByteSize;
-<span class="kw">use </span>color_eyre::eyre::{eyre, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>color_eyre::Report;
+<span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>, WrapErr};
+<span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="comment">// use strum_macros::EnumIter; // uncomment this when gemini3d releases
-</span><span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Config <span class="kw">as </span>SdkFarmerConfig, Farmer};
+</span><span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Farmer};
 <span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
-<span class="kw">use </span>subspace_sdk::node::{
-    domains, Config <span class="kw">as </span>SdkNodeConfig, DsnBuilder, NetworkBuilder, Node, Role,
-};
-<span class="kw">use </span>subspace_sdk::PublicKey;
+<span class="kw">use </span>subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
+<span class="kw">use </span>subspace_sdk::{chain_spec, PlotDescription, PublicKey};
 <span class="kw">use </span>tracing::instrument;
 
-<span class="kw">use </span><span class="kw">crate</span>::utils::provider_storage_dir_getter;
+<span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, provider_storage_dir_getter};
 
 <span class="doccomment">/// defaults for the user config file
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(<span class="number">1</span>);
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(<span class="number">32</span>);
 
 <span class="doccomment">/// structure of the config toml file
-</span><span class="attr">#[derive(Deserialize, Serialize)]
+</span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Config {
     <span class="kw">pub</span>(<span class="kw">crate</span>) chain: ChainConfig,
     <span class="kw">pub</span>(<span class="kw">crate</span>) farmer: FarmerConfig,
     <span class="kw">pub</span>(<span class="kw">crate</span>) node: NodeConfig,
 }
 
-<span class="doccomment">/// structure for the `farmer` field of the config toml file
-</span><span class="attr">#[derive(Deserialize, Serialize)]
+<span class="doccomment">/// Advanced Node Settings Wrapper for CLI
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedNodeSettings {
+    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) executor: bool,
+}
+
+<span class="doccomment">/// Node Options Wrapper for CLI
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) directory: PathBuf,
-    <span class="attr">#[serde(flatten)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) node: SdkNodeConfig,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) name: String,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedNodeSettings,
 }
 
 <span class="kw">impl </span>NodeConfig {
-    <span class="kw">pub fn </span>gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::gemini_3c()
-            .network(NetworkBuilder::gemini_3c().name(node_name))
-            .dsn(DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()));
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>, chain: ChainConfig) -&gt; <span class="prelude-ty">Result</span>&lt;Node&gt; {
+        <span class="kw">let </span>(<span class="kw-2">mut </span>node, chain_spec) = <span class="kw">match </span>chain {
+            ChainConfig::Gemini3c =&gt; {
+                <span class="kw">let </span>node =
+                    Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(<span class="self">self</span>.name)).dsn(
+                        DsnBuilder::gemini_3c()
+                            .provider_storage_path(provider_storage_dir_getter()),
+                    );
+                <span class="kw">let </span>chain_spec = chain_spec::gemini_3c()
+                    .map_err(Report::msg)
+                    .context(<span class="string">&quot;cannot extract the gemini3c chain spec from SDK&quot;</span>)<span class="question-mark">?</span>;
+                (node, chain_spec)
+            }
+            ChainConfig::Dev =&gt; {
+                <span class="kw">let </span>node = Node::dev();
+                <span class="kw">let </span>chain_spec = chain_spec::dev_config()
+                    .map_err(Report::msg)
+                    .context(<span class="string">&quot;cannot extract the dev chain spec from SDK&quot;</span>)<span class="question-mark">?</span>;
+                (node, chain_spec)
+            }
+            ChainConfig::DevNet =&gt; {
+                <span class="kw">let </span>node = Node::devnet()
+                    .network(NetworkBuilder::devnet().name(<span class="self">self</span>.name))
+                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                <span class="kw">let </span>chain_spec = chain_spec::devnet_config()
+                    .map_err(Report::msg)
+                    .context(<span class="string">&quot;cannot extract the devnet chain spec from SDK&quot;</span>)<span class="question-mark">?</span>;
+                (node, chain_spec)
+            }
+        };
 
-        <span class="kw">if </span>is_executor {
+        <span class="kw">if </span><span class="self">self</span>.advanced.executor {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+
         node = node.role(Role::Authority);
-
-        <span class="self">Self </span>{ directory, node: node.configuration() }
-    }
-
-    <span class="kw">pub fn </span>dev(directory: PathBuf, is_executor: bool) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::dev();
-        <span class="kw">if </span>is_executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
-        }
-        node = node.role(Role::Authority);
-
-        <span class="self">Self </span>{ directory, node: node.configuration() }
-    }
-
-    <span class="kw">pub fn </span>devnet(directory: PathBuf, node_name: String, is_executor: bool) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>node = Node::devnet()
-            .network(NetworkBuilder::devnet().name(node_name))
-            .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
-
-        <span class="kw">if </span>is_executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
-        }
-        node = node.role(Role::Authority);
-
-        <span class="self">Self </span>{ directory, node: node.configuration() }
+        node.build(<span class="self">self</span>.directory, chain_spec).<span class="kw">await</span>.map_err(color_eyre::Report::msg)
     }
 }
 
-<span class="doccomment">/// structure for the `farmer` field of the config toml file
-</span><span class="attr">#[derive(Deserialize, Serialize)]
+<span class="doccomment">/// Advanced Farmer Settings Wrapper for CLI
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+#[derivative(Default)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedFarmerSettings {
+    <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>, default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
+    #[derivative(Default(value = <span class="string">&quot;bytesize::ByteSize::gb(1)&quot;</span>))]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) cache_size: ByteSize,
+}
+
+<span class="doccomment">/// Farmer Options Wrapper for CLI
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FarmerConfig {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) address: PublicKey,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) reward_address: PublicKey,
     <span class="kw">pub</span>(<span class="kw">crate</span>) plot_directory: PathBuf,
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
-    <span class="attr">#[serde(flatten)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) farmer: SdkFarmerConfig,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) cache: CacheDescription,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedFarmerSettings,
 }
 
 <span class="kw">impl </span>FarmerConfig {
-    <span class="kw">pub fn </span>gemini_3c(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            address,
-            plot_directory,
-            plot_size,
-            cache,
-            farmer: Farmer::builder().configuration(),
-        }
-    }
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>, node: Node) -&gt; <span class="prelude-ty">Result</span>&lt;Farmer&gt; {
+        <span class="kw">let </span>plot_description = <span class="kw-2">&amp;</span>[PlotDescription::new(<span class="self">self</span>.plot_directory, <span class="self">self</span>.plot_size)
+            .wrap_err(<span class="string">&quot;Plot size is too low&quot;</span>)<span class="question-mark">?</span>];
+        <span class="kw">let </span>cache = CacheDescription::new(cache_directory_getter(), <span class="self">self</span>.advanced.cache_size)<span class="question-mark">?</span>;
 
-    <span class="kw">pub fn </span>dev(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::gemini_3c(address, plot_directory, plot_size, cache)
-    }
-
-    <span class="kw">pub fn </span>devnet(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::gemini_3c(address, plot_directory, plot_size, cache)
+        <span class="comment">// currently we do not have different configuration for the farmer w.r.t
+        // different chains, but we may in the future
+        </span>Farmer::builder()
+            .build(<span class="self">self</span>.reward_address, node, plot_description, cache)
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;Failed to build a farmer&quot;</span>)
     }
 }
 
-<span class="attr">#[derive(Deserialize, Serialize, Default)] </span><span class="comment">// TODO: add `EnumIter` when gemini3d releases
+<span class="doccomment">/// Enum for Chain
+</span><span class="attr">#[derive(Deserialize, Serialize, Default, Clone, Debug)] </span><span class="comment">// TODO: add `EnumIter` when gemini3d releases
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ChainConfig {
     <span class="attr">#[default]
     </span>Gemini3c,

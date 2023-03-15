@@ -321,15 +321,13 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>bytesize::ByteSize;
-<span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>color_eyre::eyre::{eyre, Context, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>owo_colors::OwoColorize;
 <span class="kw">use </span>subspace_sdk::PublicKey;
 <span class="kw">use </span>tracing::level_filters::LevelFilter;
 <span class="kw">use </span>tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -414,7 +412,7 @@
 
 <span class="doccomment">/// check for a valid SS58 address
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>reward_address_parser(address: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKey&gt; {
-    PublicKey::from_str(address).map_err(Report::msg)
+    PublicKey::from_str(address).context(<span class="string">&quot;Failed to parse reward address&quot;</span>)
 }
 
 <span class="doccomment">/// the provided path should be an existing directory
@@ -436,14 +434,6 @@
         <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;size could not be smaller than 1GB&quot;</span>))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
-    }
-}
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>yes_or_no_parser(answer: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-    <span class="kw">match </span>answer.to_lowercase().as_str() {
-        <span class="string">&quot;y&quot; </span>| <span class="string">&quot;yes&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-        <span class="string">&quot;n&quot; </span>| <span class="string">&quot;no&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not interpret your answer. Please provide `y` or `n`.&quot;</span>)),
     }
 }
 
@@ -493,7 +483,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>support_message() -&gt; String {
     <span class="macro">format!</span>(
         <span class="string">&quot;If you think this is a bug, please submit it to our forums: {}&quot;</span>,
-        ansi_term::Style::new().underline().paint(<span class="string">&quot;https://forum.subspace.network&quot;</span>)
+        <span class="string">&quot;https://forum.subspace.network&quot;</span>.underline()
     )
 }
 
@@ -561,6 +551,10 @@
     } <span class="kw">else </span>{
         tracing_layer.init();
     }
+}
+
+<span class="kw">pub fn </span>is_default&lt;T: Default + PartialEq&gt;(t: <span class="kw-2">&amp;</span>T) -&gt; bool {
+    t == <span class="kw-2">&amp;</span>T::default()
 }
 
 <span class="attr">#[cfg(test)]

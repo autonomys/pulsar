@@ -102,35 +102,19 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
-<span class="comment">// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
-</span><span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
 
-<span class="kw">use </span><span class="kw">crate</span>::config::{
-    create_config, ChainConfig, Config, FarmerConfig, NodeConfig, DEFAULT_PLOT_SIZE,
+<span class="comment">// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
+</span><span class="kw">use </span><span class="kw">crate</span>::config::{
+    create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
+    NodeConfig, DEFAULT_PLOT_SIZE,
 };
 <span class="kw">use </span><span class="kw">crate</span>::utils::{
-    cache_directory_getter, get_user_input, node_directory_getter, node_name_parser,
-    plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
-    reward_address_parser, size_parser, yes_or_no_parser,
+    get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
+    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
 };
 
 <span class="doccomment">/// implementation of the `init` command
@@ -208,33 +192,19 @@
         ChainConfig::from_str,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>is_executor = get_user_input(
-        <span class="string">&quot;Do you want to be an executor? y/n (defaults to no): &quot;</span>,
-        <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
-        yes_or_no_parser,
-    )<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>cache = CacheDescription::new(cache_directory_getter(), bytesize::ByteSize::gb(<span class="number">1</span>))<span class="question-mark">?</span>;
-    <span class="kw">let </span>(farmer, node) = <span class="kw">match </span>chain {
-        ChainConfig::Gemini3c =&gt; (
-            FarmerConfig::gemini_3c(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::gemini_3c(node_directory_getter(), node_name, is_executor),
-        ),
-        ChainConfig::Dev =&gt; (
-            FarmerConfig::dev(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::dev(node_directory_getter(), is_executor),
-        ),
-        ChainConfig::DevNet =&gt; (
-            FarmerConfig::devnet(reward_address, plot_directory, plot_size, cache),
-            NodeConfig::devnet(node_directory_getter(), node_name, is_executor),
-        ),
+    <span class="kw">let </span>farmer_config = FarmerConfig {
+        plot_size,
+        plot_directory,
+        reward_address,
+        advanced: AdvancedFarmerSettings::default(),
+    };
+    <span class="kw">let </span>node_config = NodeConfig {
+        name: node_name,
+        directory: node_directory_getter(),
+        advanced: AdvancedNodeSettings::default(),
     };
 
-    <span class="prelude-val">Ok</span>(Config {
-        chain,
-        farmer,
-        node, <span class="comment">// farmer: FarmerConfig::new(),
-    </span>})
+    <span class="prelude-val">Ok</span>(Config { farmer: farmer_config, node: node_config, chain })
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="subspace_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (afaf3e07a 2023-01-14)" data-search-js="search-181581080540673f.js" data-settings-js="settings-a2afdefbb7c817f1.js" data-settings-css="settings-84508a86fe805444.css" ></div></body></html>
