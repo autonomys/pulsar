@@ -9563,17 +9563,17 @@ dependencies = [
 name = "subspace-cli"
 version = "0.1.8"
 dependencies = [
- "ansi_term",
  "bytesize",
  "bytesize-serde",
  "clap",
  "color-eyre",
- "derive_builder 0.12.0",
+ "derivative",
  "dirs",
  "fdlimit",
  "futures 0.3.26",
  "indicatif",
  "libp2p-core 0.38.0",
+ "owo-colors",
  "serde",
  "serde_derive",
  "single-instance",

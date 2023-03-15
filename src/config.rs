@@ -3,129 +3,123 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{eyre, Result};
-use color_eyre::Report;
+use color_eyre::eyre::{eyre, Report, Result, WrapErr};
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 // use strum_macros::EnumIter; // uncomment this when gemini3d releases
-use subspace_sdk::farmer::{CacheDescription, Config as SdkFarmerConfig, Farmer};
+use subspace_sdk::farmer::{CacheDescription, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
-use subspace_sdk::node::{
-    domains, Config as SdkNodeConfig, DsnBuilder, NetworkBuilder, Node, Role,
-};
-use subspace_sdk::PublicKey;
+use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
+use subspace_sdk::{chain_spec, PlotDescription, PublicKey};
 use tracing::instrument;
 
-use crate::utils::provider_storage_dir_getter;
+use crate::utils::{cache_directory_getter, provider_storage_dir_getter};
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
 pub(crate) const MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(32);
 
 /// structure of the config toml file
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub(crate) struct Config {
     pub(crate) chain: ChainConfig,
     pub(crate) farmer: FarmerConfig,
     pub(crate) node: NodeConfig,
 }
 
-/// structure for the `farmer` field of the config toml file
-#[derive(Deserialize, Serialize)]
+/// Advanced Node Settings Wrapper for CLI
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub(crate) struct AdvancedNodeSettings {
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
+    pub(crate) executor: bool,
+}
+
+/// Node Options Wrapper for CLI
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
-    #[serde(flatten)]
-    pub(crate) node: SdkNodeConfig,
+    pub(crate) name: String,
+    pub(crate) advanced: AdvancedNodeSettings,
 }
 
 impl NodeConfig {
-    pub fn gemini_3c(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::gemini_3c()
-            .network(NetworkBuilder::gemini_3c().name(node_name))
-            .dsn(DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()));
+    pub async fn build(self, chain: ChainConfig) -> Result<Node> {
+        let (mut node, chain_spec) = match chain {
+            ChainConfig::Gemini3c => {
+                let node =
+                    Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(self.name)).dsn(
+                        DsnBuilder::gemini_3c()
+                            .provider_storage_path(provider_storage_dir_getter()),
+                    );
+                let chain_spec = chain_spec::gemini_3c()
+                    .map_err(Report::msg)
+                    .context("cannot extract the gemini3c chain spec from SDK")?;
+                (node, chain_spec)
+            }
+            ChainConfig::Dev => {
+                let node = Node::dev();
+                let chain_spec = chain_spec::dev_config()
+                    .map_err(Report::msg)
+                    .context("cannot extract the dev chain spec from SDK")?;
+                (node, chain_spec)
+            }
+            ChainConfig::DevNet => {
+                let node = Node::devnet()
+                    .network(NetworkBuilder::devnet().name(self.name))
+                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                let chain_spec = chain_spec::devnet_config()
+                    .map_err(Report::msg)
+                    .context("cannot extract the devnet chain spec from SDK")?;
+                (node, chain_spec)
+            }
+        };
 
-        if is_executor {
+        if self.advanced.executor {
             node = node
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
+
         node = node.role(Role::Authority);
-
-        Self { directory, node: node.configuration() }
-    }
-
-    pub fn dev(directory: PathBuf, is_executor: bool) -> Self {
-        let mut node = Node::dev();
-        if is_executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
-        }
-        node = node.role(Role::Authority);
-
-        Self { directory, node: node.configuration() }
-    }
-
-    pub fn devnet(directory: PathBuf, node_name: String, is_executor: bool) -> Self {
-        let mut node = Node::devnet()
-            .network(NetworkBuilder::devnet().name(node_name))
-            .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
-
-        if is_executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
-        }
-        node = node.role(Role::Authority);
-
-        Self { directory, node: node.configuration() }
+        node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
     }
 }
 
-/// structure for the `farmer` field of the config toml file
-#[derive(Deserialize, Serialize)]
+/// Advanced Farmer Settings Wrapper for CLI
+#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+#[derivative(Default)]
+pub(crate) struct AdvancedFarmerSettings {
+    #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
+    #[derivative(Default(value = "bytesize::ByteSize::gb(1)"))]
+    pub(crate) cache_size: ByteSize,
+}
+
+/// Farmer Options Wrapper for CLI
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct FarmerConfig {
-    pub(crate) address: PublicKey,
+    pub(crate) reward_address: PublicKey,
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
-    #[serde(flatten)]
-    pub(crate) farmer: SdkFarmerConfig,
-    pub(crate) cache: CacheDescription,
+    pub(crate) advanced: AdvancedFarmerSettings,
 }
 
 impl FarmerConfig {
-    pub fn gemini_3c(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -> Self {
-        Self {
-            address,
-            plot_directory,
-            plot_size,
-            cache,
-            farmer: Farmer::builder().configuration(),
-        }
-    }
+    pub async fn build(self, node: Node) -> Result<Farmer> {
+        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
+            .wrap_err("Plot size is too low")?];
+        let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
 
-    pub fn dev(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -> Self {
-        Self::gemini_3c(address, plot_directory, plot_size, cache)
-    }
-
-    pub fn devnet(
-        address: PublicKey,
-        plot_directory: PathBuf,
-        plot_size: ByteSize,
-        cache: CacheDescription,
-    ) -> Self {
-        Self::gemini_3c(address, plot_directory, plot_size, cache)
+        // currently we do not have different configuration for the farmer w.r.t
+        // different chains, but we may in the future
+        Farmer::builder()
+            .build(self.reward_address, node, plot_description, cache)
+            .await
+            .context("Failed to build a farmer")
     }
 }
 
-#[derive(Deserialize, Serialize, Default)] // TODO: add `EnumIter` when gemini3d releases
+/// Enum for Chain
+#[derive(Deserialize, Serialize, Default, Clone, Debug)] // TODO: add `EnumIter` when gemini3d releases
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3c,

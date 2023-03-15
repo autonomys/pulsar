@@ -6,7 +6,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{Report, Result};
+use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
 use tokio::fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -53,7 +53,8 @@ impl Summary {
                     farmed_block_count: 0,
                     user_space_pledged,
                 };
-                let summary_text = toml::to_string(&initialization).map_err(Report::msg)?;
+                let summary_text = toml::to_string(&initialization)
+                    .context("Failed to serialize FarmerSummary")?;
                 OpenOptions::new()
                     .write(true)
                     .truncate(true)
@@ -86,7 +87,7 @@ impl Summary {
             summary.farmed_block_count = count;
         }
 
-        let new_summary = toml::to_string(&summary).map_err(Report::msg)?;
+        let new_summary = toml::to_string(&summary).context("Failed to serialize FarmerSummary")?;
 
         let guard = self.file.lock().await;
         OpenOptions::new()

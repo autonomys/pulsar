@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use bytesize::ByteSize;
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{eyre, Context, Result};
+use owo_colors::OwoColorize;
 use subspace_sdk::PublicKey;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -88,7 +89,7 @@ pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
 
 /// check for a valid SS58 address
 pub(crate) fn reward_address_parser(address: &str) -> Result<PublicKey> {
-    PublicKey::from_str(address).map_err(Report::msg)
+    PublicKey::from_str(address).context("Failed to parse reward address")
 }
 
 /// the provided path should be an existing directory
@@ -110,14 +111,6 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
         Err(eyre!("size could not be smaller than 1GB"))
     } else {
         Ok(size)
-    }
-}
-
-pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
-    match answer.to_lowercase().as_str() {
-        "y" | "yes" => Ok(true),
-        "n" | "no" => Ok(false),
-        _ => Err(eyre!("could not interpret your answer. Please provide `y` or `n`.")),
     }
 }
 
@@ -167,7 +160,7 @@ fn custom_log_dir() -> PathBuf {
 pub(crate) fn support_message() -> String {
     format!(
         "If you think this is a bug, please submit it to our forums: {}",
-        ansi_term::Style::new().underline().paint("https://forum.subspace.network")
+        "https://forum.subspace.network".underline()
     )
 }
 
@@ -235,6 +228,10 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     } else {
         tracing_layer.init();
     }
+}
+
+pub fn is_default<T: Default + PartialEq>(t: &T) -> bool {
+    t == &T::default()
 }
 
 #[cfg(test)]

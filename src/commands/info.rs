@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Report, Result};
+use color_eyre::eyre::{Context, Result};
 use single_instance::SingleInstance;
 
 use crate::commands::farm::SINGLE_INSTANCE;
@@ -8,7 +8,8 @@ use crate::summary::Summary;
 ///
 /// informs the user about the current farming instance
 pub(crate) async fn info() -> Result<()> {
-    let instance = SingleInstance::new(SINGLE_INSTANCE).map_err(Report::msg)?;
+    let instance =
+        SingleInstance::new(SINGLE_INSTANCE).context("failed to initialize single instance")?;
     if !instance.is_single() {
         println!("A farmer instance is active!");
     } else {
@@ -19,21 +20,25 @@ pub(crate) async fn info() -> Result<()> {
 
     println!(
         "You have pledged to the network: {}",
-        summary.get_user_space_pledged().await.map_err(|_| eyre!(
-            "Couldn't read the summary file, are you sure you ran the farm command?"
-        ))?
+        summary
+            .get_user_space_pledged()
+            .await
+            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
     );
 
     println!(
         "Total farmed blocks: {}",
-        summary.get_farmed_block_count().await.map_err(|_| eyre!(
-            "Couldn't read the summary file, are you sure you ran the farm command?"
-        ))?
+        summary
+            .get_farmed_block_count()
+            .await
+            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
     );
 
-    if summary.get_initial_plotting_progress().await.map_err(|_| {
-        eyre!("Couldn't read the summary file, are you sure you ran the farm command?")
-    })? {
+    if summary
+        .get_initial_plotting_progress()
+        .await
+        .context("Couldn't read the summary file, are you sure you ran the farm command?")?
+    {
         println!("Initial plotting is finished!");
     } else {
         println!("Initial plotting is not finished...");
