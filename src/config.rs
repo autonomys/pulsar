@@ -28,10 +28,12 @@ pub(crate) struct Config {
 }
 
 /// Advanced Node Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default, PartialEq)]
 pub(crate) struct AdvancedNodeSettings {
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) executor: bool,
+    #[serde(default, flatten)]
+    pub(crate) extra: toml::Table,
 }
 
 /// Node Options Wrapper for CLI
@@ -39,18 +41,19 @@ pub(crate) struct AdvancedNodeSettings {
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
     pub(crate) name: String,
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedNodeSettings,
 }
 
 impl NodeConfig {
     pub async fn build(self, chain: ChainConfig) -> Result<Node> {
-        let (mut node, chain_spec) = match chain {
+        let Self { directory, name, advanced: AdvancedNodeSettings { executor, extra } } = self;
+
+        let (node, chain_spec) = match chain {
             ChainConfig::Gemini3c => {
-                let node =
-                    Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(self.name)).dsn(
-                        DsnBuilder::gemini_3c()
-                            .provider_storage_path(provider_storage_dir_getter()),
-                    );
+                let node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(name)).dsn(
+                    DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
+                );
                 let chain_spec = chain_spec::gemini_3c()
                     .map_err(Report::msg)
                     .context("cannot extract the gemini3c chain spec from SDK")?;
@@ -65,7 +68,7 @@ impl NodeConfig {
             }
             ChainConfig::DevNet => {
                 let node = Node::devnet()
-                    .network(NetworkBuilder::devnet().name(self.name))
+                    .network(NetworkBuilder::devnet().name(name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
                 let chain_spec = chain_spec::devnet_config()
                     .map_err(Report::msg)
@@ -74,26 +77,31 @@ impl NodeConfig {
             }
         };
 
-        if self.advanced.executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        let node = if executor {
+            node.system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()))
+        } else {
+            node
         }
+        .role(Role::Authority)
+        .impl_name(format!("cli-{}", env!("CARGO_PKG_VERSION")));
 
-        node.role(Role::Authority)
-            .impl_name(format!("cli-{}", env!("CARGO_PKG_VERSION")))
-            .build(self.directory, chain_spec)
+        crate::utils::apply_extra_options(&node.configuration(), extra)
+            .context("Failed to deserialize node config")?
+            .build(directory, chain_spec)
             .await
             .map_err(color_eyre::Report::msg)
     }
 }
 
 /// Advanced Farmer Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+#[derive(Deserialize, Serialize, Clone, Derivative, Debug, PartialEq)]
 #[derivative(Default)]
 pub(crate) struct AdvancedFarmerSettings {
     #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
     #[derivative(Default(value = "bytesize::ByteSize::gb(1)"))]
     pub(crate) cache_size: ByteSize,
+    #[serde(default, flatten)]
+    pub(crate) extra: toml::Table,
 }
 
 /// Farmer Options Wrapper for CLI
@@ -103,6 +111,7 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedFarmerSettings,
 }
 
@@ -114,7 +123,9 @@ impl FarmerConfig {
 
         // currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
-        Farmer::builder()
+        let farmer = Farmer::builder();
+        crate::utils::apply_extra_options(&farmer.configuration(), self.advanced.extra)
+            .context("Failed to deserialize node config")?
             .build(self.reward_address, node, plot_description, cache)
             .await
             .context("Failed to build a farmer")
