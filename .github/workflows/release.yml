@@ -37,7 +37,7 @@ jobs:
 
     env:
       PRODUCTION_TARGET: target/${{ matrix.build.target }}/production
-      RUSTFLAGS: ${{ matrix.build.rustflags }}
+      RUSTFLAGS: ${{ matrix.build.rustflags }} --cfg tokio_unstable
 
     steps:
       - name: Checkout
