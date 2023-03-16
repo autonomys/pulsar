@@ -102,6 +102,7 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
@@ -114,7 +115,8 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::utils::{
     get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
-    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
+    plot_directory_parser, print_ascii_art, print_run_executable_command, print_version,
+    reward_address_parser, size_parser,
 };
 
 <span class="doccomment">/// implementation of the `init` command
@@ -135,7 +137,7 @@
     <span class="macro">println!</span>(<span class="string">&quot;Configuration has been generated at {}&quot;</span>, config_path.display());
 
     <span class="macro">println!</span>(<span class="string">&quot;Ready for lift off! Run the follow command to begin:&quot;</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;./subspace-cli farm&quot;</span>);
+    print_run_executable_command();
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -155,7 +157,7 @@
             <span class="string">&quot;Enter your node name to be identified on the network(defaults to \
              `{default_node_name}`, press enter to use the default): &quot;
         </span>),
-        <span class="prelude-val">Some</span>(default_node_name),
+        (default_node_name != <span class="string">&quot;root&quot;</span>).then_some(default_node_name),
         node_name_parser,
     )<span class="question-mark">?</span>;
 

@@ -321,7 +321,27 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::fs::create_dir_all;
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::env;
+<span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>std::str::FromStr;
 
@@ -361,6 +381,22 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_version() {
     <span class="kw">let </span>version: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>);
     <span class="macro">println!</span>(<span class="string">&quot;version: {version}&quot;</span>);
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_run_executable_command() {
+    <span class="kw">let </span>executable_name = <span class="macro">format!</span>(
+        <span class="string">&quot;subspace-cli-{}-{}-{}-alpha&quot;</span>,
+        env::consts::OS,
+        env::consts::ARCH,
+        <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)
+    );
+
+    <span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
+    </span><span class="kw">let </span>executable_name = <span class="macro">format!</span>(<span class="string">&quot;{executable_name}.exe&quot;</span>);
+
+    <span class="kw">let </span>command = <span class="macro">format!</span>(<span class="string">&quot;`./{executable_name} farm`&quot;</span>);
+
+    <span class="macro">println!</span>(<span class="string">&quot;{command}&quot;</span>);
 }
 
 <span class="doccomment">/// gets the input from the user for a given `prompt`
@@ -403,10 +439,11 @@
 
 <span class="doccomment">/// node name should be ascii, and should begin/end with whitespace
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>node_name_parser(node_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-    <span class="kw">if </span>!node_name.trim().is_empty() {
-        <span class="prelude-val">Ok</span>(node_name.to_string())
-    } <span class="kw">else </span>{
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;Node name cannot be empty!&quot;</span>))
+    <span class="kw">let </span>node_name = node_name.trim();
+    <span class="kw">match </span>node_name {
+        <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;Node name cannot be empty!&quot;</span>)),
+        <span class="string">&quot;root&quot; </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;please select a name different than `root`&quot;</span>)),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(node_name.to_string()),
     }
 }
 
@@ -565,6 +602,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>node_name_checker() {
         <span class="macro">assert!</span>(node_name_parser(<span class="string">&quot;     &quot;</span>).is_err());
+        <span class="macro">assert!</span>(node_name_parser(<span class="string">&quot;root &quot;</span>).is_err());
         <span class="macro">assert!</span>(node_name_parser(<span class="string">&quot;ゴゴゴゴ yare yare daze&quot;</span>).is_ok());
     }
 
