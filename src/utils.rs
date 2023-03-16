@@ -1,3 +1,4 @@
+use std::env;
 use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -40,6 +41,22 @@ pub(crate) fn print_version() {
     println!("version: {version}");
 }
 
+pub(crate) fn print_run_executable_command() {
+    let executable_name = format!(
+        "subspace-cli-{}-{}-{}-alpha",
+        env::consts::OS,
+        env::consts::ARCH,
+        env!("CARGO_PKG_VERSION")
+    );
+
+    #[cfg(target_os = "windows")]
+    let executable_name = format!("{executable_name}.exe");
+
+    let command = format!("`./{executable_name} farm`");
+
+    println!("{command}");
+}
+
 /// gets the input from the user for a given `prompt`
 ///
 /// `default_value`: will be used if user does not provide any input
@@ -80,10 +97,11 @@ where
 
 /// node name should be ascii, and should begin/end with whitespace
 pub(crate) fn node_name_parser(node_name: &str) -> Result<String> {
-    if !node_name.trim().is_empty() {
-        Ok(node_name.to_string())
-    } else {
-        Err(eyre!("Node name cannot be empty!"))
+    let node_name = node_name.trim();
+    match node_name {
+        "" => Err(eyre!("Node name cannot be empty!")),
+        "root" => Err(eyre!("please select a name different than `root`")),
+        _ => Ok(node_name.to_string()),
     }
 }
 
@@ -242,6 +260,7 @@ mod tests {
     #[test]
     fn node_name_checker() {
         assert!(node_name_parser("     ").is_err());
+        assert!(node_name_parser("root ").is_err());
         assert!(node_name_parser("ゴゴゴゴ yare yare daze").is_ok());
     }
 

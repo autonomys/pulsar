@@ -10,7 +10,8 @@ use crate::config::{
 };
 use crate::utils::{
     get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
-    plot_directory_parser, print_ascii_art, print_version, reward_address_parser, size_parser,
+    plot_directory_parser, print_ascii_art, print_run_executable_command, print_version,
+    reward_address_parser, size_parser,
 };
 
 /// implementation of the `init` command
@@ -31,7 +32,7 @@ pub(crate) fn init() -> Result<()> {
     println!("Configuration has been generated at {}", config_path.display());
 
     println!("Ready for lift off! Run the follow command to begin:");
-    println!("`./subspace-cli farm`");
+    print_run_executable_command();
 
     Ok(())
 }
@@ -51,7 +52,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
             "Enter your node name to be identified on the network(defaults to \
              `{default_node_name}`, press enter to use the default): "
         ),
-        Some(default_node_name),
+        (default_node_name != "root").then_some(default_node_name),
         node_name_parser,
     )?;
 
