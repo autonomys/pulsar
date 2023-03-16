@@ -304,7 +304,7 @@
 }
 
 <span class="kw">impl </span>FarmerConfig {
-    <span class="kw">pub async fn </span>build(<span class="self">self</span>, node: Node) -&gt; <span class="prelude-ty">Result</span>&lt;Farmer&gt; {
+    <span class="kw">pub async fn </span>build(<span class="self">self</span>, node: <span class="kw-2">&amp;</span>Node) -&gt; <span class="prelude-ty">Result</span>&lt;Farmer&gt; {
         <span class="kw">let </span>plot_description = <span class="kw-2">&amp;</span>[PlotDescription::new(<span class="self">self</span>.plot_directory, <span class="self">self</span>.plot_size)
             .wrap_err(<span class="string">&quot;Plot size is too low&quot;</span>)<span class="question-mark">?</span>];
         <span class="kw">let </span>cache = CacheDescription::new(cache_directory_getter(), <span class="self">self</span>.advanced.cache_size)<span class="question-mark">?</span>;
