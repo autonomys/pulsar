@@ -252,6 +252,20 @@ pub fn is_default<T: Default + PartialEq>(t: &T) -> bool {
     t == &T::default()
 }
 
+pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
+    config: &T,
+    extra: toml::Table,
+) -> Result<T> {
+    let mut table: toml::Table =
+        toml::from_str(&toml::to_string(config).expect("Config is always toml serializable"))
+            .expect("Config is always toml serializable");
+
+    table.extend(extra);
+
+    Ok(toml::from_str(&toml::to_string(&table).context("Failed to deserialize extra options")?)
+        .expect("At this stage we know that config is always toml deserializable"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
