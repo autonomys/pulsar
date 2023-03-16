@@ -79,8 +79,11 @@ impl NodeConfig {
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
-        node = node.role(Role::Authority);
-        node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
+        node.role(Role::Authority)
+            .impl_name(format!("cli-{}", env!("CARGO_PKG_VERSION")))
+            .build(self.directory, chain_spec)
+            .await
+            .map_err(color_eyre::Report::msg)
     }
 }
 

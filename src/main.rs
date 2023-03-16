@@ -20,6 +20,15 @@ use tracing::instrument;
 
 use crate::utils::support_message;
 
+#[cfg(all(
+    target_arch = "x86_64",
+    target_vendor = "unknown",
+    target_os = "linux",
+    target_env = "gnu"
+))]
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 #[derive(Debug, Parser)]
 #[command(subcommand_required = true)]
 #[command(arg_required_else_help = true)]
