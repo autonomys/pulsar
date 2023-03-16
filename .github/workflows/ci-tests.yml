@@ -23,7 +23,7 @@ env:
   CARGO_TERM_COLOR: always
   # Build smaller artifacts to avoid running out of space in CI
   # TODO: Try to remove once https://github.com/paritytech/substrate/issues/11538 is resolved
-  RUSTFLAGS: -C strip=symbols -C opt-level=s
+  RUSTFLAGS: -C strip=symbols -C opt-level=s --cfg tokio_unstable
   # Remove unnecessary WASM build artefacts
   WASM_BUILD_CLEAN_TARGET: 1
 
