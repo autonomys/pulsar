@@ -195,6 +195,17 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -225,10 +236,12 @@
 }
 
 <span class="doccomment">/// Advanced Node Settings Wrapper for CLI
-</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug, Default, PartialEq)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedNodeSettings {
     <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) executor: bool,
+    <span class="attr">#[serde(default, flatten)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) extra: toml::Table,
 }
 
 <span class="doccomment">/// Node Options Wrapper for CLI
@@ -236,18 +249,19 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>NodeConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) directory: PathBuf,
     <span class="kw">pub</span>(<span class="kw">crate</span>) name: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedNodeSettings,
+    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedNodeSettings,
 }
 
 <span class="kw">impl </span>NodeConfig {
     <span class="kw">pub async fn </span>build(<span class="self">self</span>, chain: ChainConfig) -&gt; <span class="prelude-ty">Result</span>&lt;Node&gt; {
-        <span class="kw">let </span>(<span class="kw-2">mut </span>node, chain_spec) = <span class="kw">match </span>chain {
+        <span class="kw">let </span><span class="self">Self </span>{ directory, name, advanced: AdvancedNodeSettings { executor, extra } } = <span class="self">self</span>;
+
+        <span class="kw">let </span>(node, chain_spec) = <span class="kw">match </span>chain {
             ChainConfig::Gemini3c =&gt; {
-                <span class="kw">let </span>node =
-                    Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(<span class="self">self</span>.name)).dsn(
-                        DsnBuilder::gemini_3c()
-                            .provider_storage_path(provider_storage_dir_getter()),
-                    );
+                <span class="kw">let </span>node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(name)).dsn(
+                    DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
+                );
                 <span class="kw">let </span>chain_spec = chain_spec::gemini_3c()
                     .map_err(Report::msg)
                     .context(<span class="string">&quot;cannot extract the gemini3c chain spec from SDK&quot;</span>)<span class="question-mark">?</span>;
@@ -262,7 +276,7 @@
             }
             ChainConfig::DevNet =&gt; {
                 <span class="kw">let </span>node = Node::devnet()
-                    .network(NetworkBuilder::devnet().name(<span class="self">self</span>.name))
+                    .network(NetworkBuilder::devnet().name(name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
                 <span class="kw">let </span>chain_spec = chain_spec::devnet_config()
                     .map_err(Report::msg)
@@ -271,26 +285,31 @@
             }
         };
 
-        <span class="kw">if </span><span class="self">self</span>.advanced.executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+        <span class="kw">let </span>node = <span class="kw">if </span>executor {
+            node.system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()))
+        } <span class="kw">else </span>{
+            node
         }
+        .role(Role::Authority)
+        .impl_name(<span class="macro">format!</span>(<span class="string">&quot;cli-{}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)));
 
-        node.role(Role::Authority)
-            .impl_name(<span class="macro">format!</span>(<span class="string">&quot;cli-{}&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)))
-            .build(<span class="self">self</span>.directory, chain_spec)
+        <span class="kw">crate</span>::utils::apply_extra_options(<span class="kw-2">&amp;</span>node.configuration(), extra)
+            .context(<span class="string">&quot;Failed to deserialize node config&quot;</span>)<span class="question-mark">?
+            </span>.build(directory, chain_spec)
             .<span class="kw">await
             </span>.map_err(color_eyre::Report::msg)
     }
 }
 
 <span class="doccomment">/// Advanced Farmer Settings Wrapper for CLI
-</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+</span><span class="attr">#[derive(Deserialize, Serialize, Clone, Derivative, Debug, PartialEq)]
 #[derivative(Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedFarmerSettings {
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>, default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
     #[derivative(Default(value = <span class="string">&quot;bytesize::ByteSize::gb(1)&quot;</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) cache_size: ByteSize,
+    <span class="attr">#[serde(default, flatten)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) extra: toml::Table,
 }
 
 <span class="doccomment">/// Farmer Options Wrapper for CLI
@@ -300,7 +319,8 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) plot_directory: PathBuf,
     <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedFarmerSettings,
+    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedFarmerSettings,
 }
 
 <span class="kw">impl </span>FarmerConfig {
@@ -311,8 +331,10 @@
 
         <span class="comment">// currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
-        </span>Farmer::builder()
-            .build(<span class="self">self</span>.reward_address, node, plot_description, cache)
+        </span><span class="kw">let </span>farmer = Farmer::builder();
+        <span class="kw">crate</span>::utils::apply_extra_options(<span class="kw-2">&amp;</span>farmer.configuration(), <span class="self">self</span>.advanced.extra)
+            .context(<span class="string">&quot;Failed to deserialize node config&quot;</span>)<span class="question-mark">?
+            </span>.build(<span class="self">self</span>.reward_address, node, plot_description, cache)
             .<span class="kw">await
             </span>.context(<span class="string">&quot;Failed to build a farmer&quot;</span>)
     }

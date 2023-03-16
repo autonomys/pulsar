@@ -340,6 +340,20 @@
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -592,6 +606,20 @@
 
 <span class="kw">pub fn </span>is_default&lt;T: Default + PartialEq&gt;(t: <span class="kw-2">&amp;</span>T) -&gt; bool {
     t == <span class="kw-2">&amp;</span>T::default()
+}
+
+<span class="kw">pub fn </span>apply_extra_options&lt;T: serde::Serialize + serde::de::DeserializeOwned&gt;(
+    config: <span class="kw-2">&amp;</span>T,
+    extra: toml::Table,
+) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>table: toml::Table =
+        toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(config).expect(<span class="string">&quot;Config is always toml serializable&quot;</span>))
+            .expect(<span class="string">&quot;Config is always toml serializable&quot;</span>);
+
+    table.extend(extra);
+
+    <span class="prelude-val">Ok</span>(toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(<span class="kw-2">&amp;</span>table).context(<span class="string">&quot;Failed to deserialize extra options&quot;</span>)<span class="question-mark">?</span>)
+        .expect(<span class="string">&quot;At this stage we know that config is always toml deserializable&quot;</span>))
 }
 
 <span class="attr">#[cfg(test)]
