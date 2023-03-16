@@ -79,8 +79,11 @@ impl NodeConfig {
                 .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
 
-        node = node.role(Role::Authority);
-        node.build(self.directory, chain_spec).await.map_err(color_eyre::Report::msg)
+        node.role(Role::Authority)
+            .impl_name(format!("cli-{}", env!("CARGO_PKG_VERSION")))
+            .build(self.directory, chain_spec)
+            .await
+            .map_err(color_eyre::Report::msg)
     }
 }
 
@@ -104,7 +107,7 @@ pub(crate) struct FarmerConfig {
 }
 
 impl FarmerConfig {
-    pub async fn build(self, node: Node) -> Result<Farmer> {
+    pub async fn build(self, node: &Node) -> Result<Farmer> {
         let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
             .wrap_err("Plot size is too low")?];
         let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;

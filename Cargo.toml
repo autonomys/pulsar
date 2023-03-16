@@ -22,7 +22,7 @@ single-instance = "0.3.3"
 # strum_macros = "0.24.3"
 thiserror = "1"
 toml = "0.7"
-tokio = { version = "1.25", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.26", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.37"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.4"
@@ -30,7 +30,11 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "5b8e1d4f1b107618756c51d58c58ca30803fd482" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "e9dd3be8e8e146651f5a235da75d8726597b3af8" }
+
+# The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
+[target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
+jemallocator = "0.5.0"
 
 [patch.crates-io]
 # TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies

@@ -16,10 +16,18 @@ use commands::farm::farm;
 use commands::info::info;
 use commands::init::init;
 use commands::wipe::wipe;
-use tokio::signal;
 use tracing::instrument;
 
 use crate::utils::support_message;
+
+#[cfg(all(
+    target_arch = "x86_64",
+    target_vendor = "unknown",
+    target_os = "linux",
+    target_env = "gnu"
+))]
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 #[derive(Debug, Parser)]
 #[command(subcommand_required = true)]
@@ -62,22 +70,7 @@ async fn main() -> Result<(), Report> {
             init().suggestion(support_message())?;
         }
         Commands::Farm { verbose, executor } => {
-            let (farmer, node, _instance) =
-                farm(verbose, executor).await.suggestion(support_message())?;
-
-            signal::ctrl_c().await?;
-            println!(
-                "\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
-                 will try to forcefully close the app!"
-            );
-            let handle = tokio::spawn(async {
-                let _ = farmer.close().await;
-                node.close().await;
-            });
-            tokio::select! {
-                _ = handle => println!("gracefully closed the app!"),
-                _ = signal::ctrl_c() => println!("\nforcefully closing the app!"),
-            }
+            farm(verbose, executor).await.suggestion(support_message())?;
         }
         Commands::Wipe => {
             wipe().await?;
