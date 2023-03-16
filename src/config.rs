@@ -28,7 +28,7 @@ pub(crate) struct Config {
 }
 
 /// Advanced Node Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default, PartialEq)]
 pub(crate) struct AdvancedNodeSettings {
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) executor: bool,
@@ -41,6 +41,7 @@ pub(crate) struct AdvancedNodeSettings {
 pub(crate) struct NodeConfig {
     pub(crate) directory: PathBuf,
     pub(crate) name: String,
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedNodeSettings,
 }
 
@@ -93,7 +94,7 @@ impl NodeConfig {
 }
 
 /// Advanced Farmer Settings Wrapper for CLI
-#[derive(Deserialize, Serialize, Clone, Derivative, Debug)]
+#[derive(Deserialize, Serialize, Clone, Derivative, Debug, PartialEq)]
 #[derivative(Default)]
 pub(crate) struct AdvancedFarmerSettings {
     #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
@@ -110,6 +111,7 @@ pub(crate) struct FarmerConfig {
     pub(crate) plot_directory: PathBuf,
     #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedFarmerSettings,
 }
 
