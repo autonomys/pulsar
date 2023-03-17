@@ -138,7 +138,7 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
-        syncing_progress_bar.finish_with_message("Syncing is done!");
+        syncing_progress_bar.finish_with_message("Initial syncing is completed! Syncing will continue in the background...");
     }
     Ok(())
 }
