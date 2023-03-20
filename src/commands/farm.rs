@@ -51,7 +51,8 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     }
 
     println!("Starting node ...");
-    let node = node_config.build(chain.clone()).await.context("error building the node")?;
+    let node =
+        node_config.build(chain.clone(), is_verbose).await.context("error building the node")?;
     println!("Node started successfully!");
 
     if !matches!(chain, ChainConfig::Dev) {
