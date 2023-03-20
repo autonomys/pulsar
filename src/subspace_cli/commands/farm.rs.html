@@ -267,6 +267,7 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -320,7 +321,8 @@
     }
 
     <span class="macro">println!</span>(<span class="string">&quot;Starting node ...&quot;</span>);
-    <span class="kw">let </span>node = node_config.build(chain.clone()).<span class="kw">await</span>.context(<span class="string">&quot;error building the node&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>node =
+        node_config.build(chain.clone(), is_verbose).<span class="kw">await</span>.context(<span class="string">&quot;error building the node&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">println!</span>(<span class="string">&quot;Node started successfully!&quot;</span>);
 
     <span class="kw">if </span>!<span class="macro">matches!</span>(chain, ChainConfig::Dev) {
