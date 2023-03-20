@@ -265,6 +265,8 @@
 <a href="#265" id="265">265</a>
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -405,7 +407,9 @@
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
-        syncing_progress_bar.finish_with_message(<span class="string">&quot;Syncing is done!&quot;</span>);
+        syncing_progress_bar.finish_with_message(
+            <span class="string">&quot;Initial syncing is completed! Syncing will continue in the background...&quot;</span>,
+        );
     }
     <span class="prelude-val">Ok</span>(())
 }
