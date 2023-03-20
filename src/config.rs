@@ -46,10 +46,10 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub async fn build(self, chain: ChainConfig) -> Result<Node> {
+    pub async fn build(self, chain: ChainConfig, is_verbose: bool) -> Result<Node> {
         let Self { directory, name, advanced: AdvancedNodeSettings { executor, extra } } = self;
 
-        let (node, chain_spec) = match chain {
+        let (mut node, chain_spec) = match chain {
             ChainConfig::Gemini3c => {
                 let node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(name)).dsn(
                     DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
@@ -77,13 +77,19 @@ impl NodeConfig {
             }
         };
 
-        let node = if executor {
-            node.system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()))
-        } else {
-            node
+        if executor {
+            node = node
+                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
         }
-        .role(Role::Authority)
-        .impl_name(format!("cli-{}", env!("CARGO_PKG_VERSION")));
+
+        if is_verbose {
+            node = node.informant_enable_color(true);
+        }
+
+        node = node
+            .role(Role::Authority)
+            .impl_version(format!("cli-{}", env!("CARGO_PKG_VERSION")))
+            .impl_name("cli".to_string());
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
