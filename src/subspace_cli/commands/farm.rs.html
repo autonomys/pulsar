@@ -268,6 +268,7 @@
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -372,8 +373,9 @@
         <span class="comment">// shutting down the farmer and the node
         </span><span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
             <span class="comment">// if one of the subscriptions have not aborted yet, wait
-            </span>plotting_subscribe_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;it is cancelled&quot;</span>);
-            solution_subscribe_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;it is cancelled&quot;</span>);
+            // Plotting might end, so we ignore result here
+            </span><span class="kw">let _ </span>= plotting_subscribe_handle.<span class="kw">await</span>;
+            solution_subscribe_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;Solution subscription never ends&quot;</span>);
 
             Arc::try_unwrap(farmer)
                 .expect(<span class="string">&quot;there should have been only 1 strong farmer counter&quot;</span>)
