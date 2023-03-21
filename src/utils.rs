@@ -42,13 +42,28 @@ pub(crate) fn print_version() {
 }
 
 pub(crate) fn generate_run_executable_command() -> Result<String> {
-    let executable_name = std::env::current_exe()?
-        .file_name()
-        .expect("filename cannot be empty if `current_exe()` returned ok")
-        .to_str()
-        .expect("osStr to str conversion cannot be empty for filenames")
-        .to_owned();
-    Ok(format!("`./{executable_name} farm`"))
+    let exec_full_path = std::env::current_exe()?;
+    let exec_dir = exec_full_path.parent().expect("directory cannot be empty");
+    let current_dir = std::env::current_dir()?;
+    println!("logging: exec_dir: {} \n current_dir: {}", exec_dir.display(), current_dir.display());
+
+    // if current dir is equal to the dir of the exec, just recommend the filename
+    // else, recommend the full path
+    let exec_name = if current_dir.eq(exec_dir) {
+        format!(
+            "./{}",
+            exec_full_path
+                .file_name()
+                .expect("filename cannot be empty")
+                .to_str()
+                .expect("conversion cannot be empty for filenames")
+                .to_owned()
+        )
+    } else {
+        exec_full_path.to_str().expect("conversion cannot be empty for filenames").to_owned()
+    };
+
+    Ok(format!("`{exec_name} farm`"))
 }
 
 /// gets the input from the user for a given `prompt`
