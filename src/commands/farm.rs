@@ -102,8 +102,9 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         // shutting down the farmer and the node
         let handle = tokio::spawn(async move {
             // if one of the subscriptions have not aborted yet, wait
-            plotting_subscribe_handle.await.expect_err("it is cancelled");
-            solution_subscribe_handle.await.expect_err("it is cancelled");
+            // Plotting might end, so we ignore result here
+            let _ = plotting_subscribe_handle.await;
+            solution_subscribe_handle.await.expect_err("Solution subscription never ends");
 
             Arc::try_unwrap(farmer)
                 .expect("there should have been only 1 strong farmer counter")
