@@ -45,7 +45,6 @@ pub(crate) fn generate_run_executable_command() -> Result<String> {
     let exec_full_path = std::env::current_exe()?;
     let exec_dir = exec_full_path.parent().expect("directory cannot be empty");
     let current_dir = std::env::current_dir()?;
-    println!("logging: exec_dir: {} \n current_dir: {}", exec_dir.display(), current_dir.display());
 
     // if current dir is equal to the dir of the exec, just recommend the filename
     // else, recommend the full path
