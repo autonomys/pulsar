@@ -41,20 +41,14 @@ pub(crate) fn print_version() {
     println!("version: {version}");
 }
 
-pub(crate) fn print_run_executable_command() {
-    let executable_name = format!(
-        "subspace-cli-{}-{}-v{}-alpha",
-        env::consts::OS,
-        env::consts::ARCH,
-        env!("CARGO_PKG_VERSION")
-    );
-
-    #[cfg(target_os = "windows")]
-    let executable_name = format!("{executable_name}.exe");
-
-    let command = format!("`./{executable_name} farm`");
-
-    println!("{command}");
+pub(crate) fn generate_run_executable_command() -> Result<String> {
+    let executable_name = std::env::current_exe()?
+        .file_name()
+        .expect("filename cannot be empty if `current_exe()` returned ok")
+        .to_str()
+        .expect("osStr to str conversion cannot be empty for filenames")
+        .to_owned();
+    Ok(format!("`./{executable_name} farm`"))
 }
 
 /// gets the input from the user for a given `prompt`
