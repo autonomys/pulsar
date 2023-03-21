@@ -399,7 +399,7 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_run_executable_command() {
     <span class="kw">let </span>executable_name = <span class="macro">format!</span>(
-        <span class="string">&quot;subspace-cli-{}-{}-{}-alpha&quot;</span>,
+        <span class="string">&quot;subspace-cli-{}-{}-v{}-alpha&quot;</span>,
         env::consts::OS,
         env::consts::ARCH,
         <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)
