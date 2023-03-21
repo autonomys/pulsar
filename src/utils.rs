@@ -43,7 +43,7 @@ pub(crate) fn print_version() {
 
 pub(crate) fn print_run_executable_command() {
     let executable_name = format!(
-        "subspace-cli-{}-{}-{}-alpha",
+        "subspace-cli-{}-{}-v{}-alpha",
         env::consts::OS,
         env::consts::ARCH,
         env!("CARGO_PKG_VERSION")
