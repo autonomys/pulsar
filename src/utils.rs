@@ -42,19 +42,9 @@ pub(crate) fn print_version() {
 }
 
 pub(crate) fn print_run_executable_command() {
-    let executable_name = format!(
-        "subspace-cli-{}-{}-v{}-alpha",
-        env::consts::OS,
-        env::consts::ARCH,
-        env!("CARGO_PKG_VERSION")
-    );
-
-    #[cfg(target_os = "windows")]
-    let executable_name = format!("{executable_name}.exe");
-
-    let command = format!("`./{executable_name} farm`");
-
-    println!("{command}");
+    let exec_name =
+        std::env::args().next().map(PathBuf::from).expect("First argument always exists");
+    println!("`{exec_name:?} farm`");
 }
 
 /// gets the input from the user for a given `prompt`
