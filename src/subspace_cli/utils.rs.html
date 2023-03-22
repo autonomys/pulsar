@@ -344,16 +344,6 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -398,19 +388,9 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_run_executable_command() {
-    <span class="kw">let </span>executable_name = <span class="macro">format!</span>(
-        <span class="string">&quot;subspace-cli-{}-{}-v{}-alpha&quot;</span>,
-        env::consts::OS,
-        env::consts::ARCH,
-        <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>)
-    );
-
-    <span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
-    </span><span class="kw">let </span>executable_name = <span class="macro">format!</span>(<span class="string">&quot;{executable_name}.exe&quot;</span>);
-
-    <span class="kw">let </span>command = <span class="macro">format!</span>(<span class="string">&quot;`./{executable_name} farm`&quot;</span>);
-
-    <span class="macro">println!</span>(<span class="string">&quot;{command}&quot;</span>);
+    <span class="kw">let </span>exec_name =
+        std::env::args().next().map(PathBuf::from).expect(<span class="string">&quot;First argument always exists&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">&quot;`{exec_name:?} farm`&quot;</span>);
 }
 
 <span class="doccomment">/// gets the input from the user for a given `prompt`
