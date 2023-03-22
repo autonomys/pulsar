@@ -41,20 +41,10 @@ pub(crate) fn print_version() {
     println!("version: {version}");
 }
 
-pub(crate) fn generate_run_executable_command() -> Result<String> {
-    let exec_full_path = std::env::current_exe()?;
-    let exec_dir = exec_full_path.parent().expect("directory cannot be empty");
-    let current_dir = std::env::current_dir()?;
-
-    // if current dir is equal to the dir of the exec, just recommend the filename
-    // else, recommend the full path
-    let exec_name = if current_dir.eq(exec_dir) {
-        format!("./{:?}", exec_full_path.file_name().expect("filename cannot be empty"))
-    } else {
-        format!("{exec_full_path:?}")
-    };
-
-    Ok(format!("`{exec_name} farm`"))
+pub(crate) fn print_run_executable_command() {
+    let exec_name =
+        std::env::args().next().map(PathBuf::from).expect("First argument always exists");
+    println!("`{exec_name:?} farm`");
 }
 
 /// gets the input from the user for a given `prompt`

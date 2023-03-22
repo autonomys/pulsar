@@ -9,8 +9,8 @@ use crate::config::{
     NodeConfig, DEFAULT_PLOT_SIZE,
 };
 use crate::utils::{
-    generate_run_executable_command, get_user_input, node_directory_getter, node_name_parser,
-    plot_directory_getter, plot_directory_parser, print_ascii_art, print_version,
+    get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
+    plot_directory_parser, print_ascii_art, print_run_executable_command, print_version,
     reward_address_parser, size_parser,
 };
 
@@ -32,7 +32,7 @@ pub(crate) fn init() -> Result<()> {
     println!("Configuration has been generated at {}", config_path.display());
 
     println!("Ready for lift off! Run the follow command to begin:");
-    println!("{}", generate_run_executable_command()?);
+    print_run_executable_command();
 
     Ok(())
 }
