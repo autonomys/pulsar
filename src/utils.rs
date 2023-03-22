@@ -49,17 +49,9 @@ pub(crate) fn generate_run_executable_command() -> Result<String> {
     // if current dir is equal to the dir of the exec, just recommend the filename
     // else, recommend the full path
     let exec_name = if current_dir.eq(exec_dir) {
-        format!(
-            "./{}",
-            exec_full_path
-                .file_name()
-                .expect("filename cannot be empty")
-                .to_str()
-                .expect("conversion cannot be empty for filenames")
-                .to_owned()
-        )
+        format!("./{:?}", exec_full_path.file_name().expect("filename cannot be empty"))
     } else {
-        exec_full_path.to_str().expect("conversion cannot be empty for filenames").to_owned()
+        format!("{exec_full_path:?}")
     };
 
     Ok(format!("`{exec_name} farm`"))
