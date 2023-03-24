@@ -1,0 +1,30 @@
+name: Feature Request
+
+about: Suggest a new feature for the project
+
+title: "[Req]: "
+
+labels:
+  - enhancement
+
+assignees:
+
+---
+
+Thank you for taking the time to submit this feature request. We take all feature requests seriously and appreciate your input. Our engineering team will review this request and may follow up with additional clarification questions to better understand how to build this feature.
+
+## Summary
+
+A two-line recap of the information below. Try to imagine it as a tweet.
+
+## Intended Outcomes
+
+- What is the context of this request? What's the issue/complication that needs attention?
+- What is the evidence of this complication? Adding any evidence highly increases the priority of your request.
+- What is your definition of success coming from this feature request?
+
+## How Will it Work
+
+- What could be a high-level user journey?
+- Alternatively, what would be the high-level acceptance criteria?
+- Do you have links to examples that may help visualize the issue?
