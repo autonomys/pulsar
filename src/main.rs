@@ -34,6 +34,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[command(arg_required_else_help = true)]
 #[command(name = "subspace")]
 #[command(about = "Subspace CLI", long_about = None)]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

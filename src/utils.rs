@@ -42,19 +42,9 @@ pub(crate) fn print_version() {
 }
 
 pub(crate) fn print_run_executable_command() {
-    let executable_name = format!(
-        "subspace-cli-{}-{}-v{}-alpha",
-        env::consts::OS,
-        env::consts::ARCH,
-        env!("CARGO_PKG_VERSION")
-    );
-
-    #[cfg(target_os = "windows")]
-    let executable_name = format!("{executable_name}.exe");
-
-    let command = format!("`./{executable_name} farm`");
-
-    println!("{command}");
+    let exec_name =
+        std::env::args().next().map(PathBuf::from).expect("First argument always exists");
+    println!("`{exec_name:?} farm`");
 }
 
 /// gets the input from the user for a given `prompt`
@@ -256,11 +246,30 @@ pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
     config: &T,
     extra: toml::Table,
 ) -> Result<T> {
+    fn apply_extra_options_inner(config: &mut toml::Table, extra: toml::Table) {
+        for (k, v) in extra {
+            use toml::Value::Table;
+
+            let e = match config.get_mut(&k) {
+                Some(e) => e,
+                None => {
+                    config.insert(k, v);
+                    continue;
+                }
+            };
+
+            match (e, v) {
+                (Table(table), Table(v)) => apply_extra_options_inner(table, v),
+                (entry, v) => *entry = v,
+            }
+        }
+    }
+
     let mut table: toml::Table =
         toml::from_str(&toml::to_string(config).expect("Config is always toml serializable"))
             .expect("Config is always toml serializable");
 
-    table.extend(extra);
+    apply_extra_options_inner(&mut table, extra);
 
     Ok(toml::from_str(&toml::to_string(&table).context("Failed to deserialize extra options")?)
         .expect("At this stage we know that config is always toml deserializable"))
@@ -270,6 +279,36 @@ pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
 mod tests {
     use super::*;
     use crate::config::ChainConfig;
+
+    #[test]
+    fn extra_options() {
+        let cargo_toml = toml::toml! {
+            name = "toml"
+
+            [package]
+            version = "0.4.5"
+            authors = ["Alex Crichton <alex@alexcrichton.com>"]
+        };
+        let extra = toml::toml! {
+            name = "toml-edit"
+            option = true
+
+            [package]
+            version = "0.4.6"
+            badges = ["travis-ci"]
+        };
+        let result = toml::toml! {
+            name = "toml-edit"
+            option = true
+
+            [package]
+            authors = ["Alex Crichton <alex@alexcrichton.com>"]
+            version = "0.4.6"
+            badges = ["travis-ci"]
+        };
+
+        assert_eq!(apply_extra_options(&cargo_toml, extra).unwrap(), result);
+    }
 
     #[test]
     fn node_name_checker() {
