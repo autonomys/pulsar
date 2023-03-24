@@ -344,6 +344,55 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -592,11 +641,30 @@
     config: <span class="kw-2">&amp;</span>T,
     extra: toml::Table,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
+    <span class="kw">fn </span>apply_extra_options_inner(config: <span class="kw-2">&amp;mut </span>toml::Table, extra: toml::Table) {
+        <span class="kw">for </span>(k, v) <span class="kw">in </span>extra {
+            <span class="kw">use </span>toml::Value::Table;
+
+            <span class="kw">let </span>e = <span class="kw">match </span>config.get_mut(<span class="kw-2">&amp;</span>k) {
+                <span class="prelude-val">Some</span>(e) =&gt; e,
+                <span class="prelude-val">None </span>=&gt; {
+                    config.insert(k, v);
+                    <span class="kw">continue</span>;
+                }
+            };
+
+            <span class="kw">match </span>(e, v) {
+                (Table(table), Table(v)) =&gt; apply_extra_options_inner(table, v),
+                (entry, v) =&gt; <span class="kw-2">*</span>entry = v,
+            }
+        }
+    }
+
     <span class="kw">let </span><span class="kw-2">mut </span>table: toml::Table =
         toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(config).expect(<span class="string">&quot;Config is always toml serializable&quot;</span>))
             .expect(<span class="string">&quot;Config is always toml serializable&quot;</span>);
 
-    table.extend(extra);
+    apply_extra_options_inner(<span class="kw-2">&amp;mut </span>table, extra);
 
     <span class="prelude-val">Ok</span>(toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(<span class="kw-2">&amp;</span>table).context(<span class="string">&quot;Failed to deserialize extra options&quot;</span>)<span class="question-mark">?</span>)
         .expect(<span class="string">&quot;At this stage we know that config is always toml deserializable&quot;</span>))
@@ -606,6 +674,36 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::config::ChainConfig;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>extra_options() {
+        <span class="kw">let </span>cargo_toml = <span class="macro">toml::toml! </span>{
+            name = <span class="string">&quot;toml&quot;
+
+            </span>[package]
+            version = <span class="string">&quot;0.4.5&quot;
+            </span>authors = [<span class="string">&quot;Alex Crichton &lt;alex@alexcrichton.com&gt;&quot;</span>]
+        };
+        <span class="kw">let </span>extra = <span class="macro">toml::toml! </span>{
+            name = <span class="string">&quot;toml-edit&quot;
+            </span>option = <span class="bool-val">true
+
+            </span>[package]
+            version = <span class="string">&quot;0.4.6&quot;
+            </span>badges = [<span class="string">&quot;travis-ci&quot;</span>]
+        };
+        <span class="kw">let </span>result = <span class="macro">toml::toml! </span>{
+            name = <span class="string">&quot;toml-edit&quot;
+            </span>option = <span class="bool-val">true
+
+            </span>[package]
+            authors = [<span class="string">&quot;Alex Crichton &lt;alex@alexcrichton.com&gt;&quot;</span>]
+            version = <span class="string">&quot;0.4.6&quot;
+            </span>badges = [<span class="string">&quot;travis-ci&quot;</span>]
+        };
+
+        <span class="macro">assert_eq!</span>(apply_extra_options(<span class="kw-2">&amp;</span>cargo_toml, extra).unwrap(), result);
+    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>node_name_checker() {
