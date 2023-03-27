@@ -1,30 +1,40 @@
-name: Feature Request
-
-about: Suggest a new feature for the project
-
+name: 🎁 Feature Request
+description: If you have a great thing on your mind ⚡️
 title: "[Req]: "
-
-labels:
-  - enhancement
-
+labels: ["enhancement"]
 assignees:
-
----
-
-Thank you for taking the time to submit this feature request. We take all feature requests seriously and appreciate your input. Our engineering team will review this request and may follow up with additional clarification questions to better understand how to build this feature.
-
-## Summary
-
-A two-line recap of the information below. Try to imagine it as a tweet.
-
-## Intended Outcomes
-
-- What is the context of this request? What's the issue/complication that needs attention?
-- What is the evidence of this complication? Adding any evidence highly increases the priority of your request.
-- What is your definition of success coming from this feature request?
-
-## How Will it Work
-
-- What could be a high-level user journey?
-- Alternatively, what would be the high-level acceptance criteria?
-- Do you have links to examples that may help visualize the issue?
+  - ozgunozerk
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to submit this feature request. We take all feature requests seriously and appreciate your input. Our engineering team will review this request and may follow up with additional clarification questions to better understand how to build this feature.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A two-line recap of the information below. Try to imagine it as a tweet.
+    validations:
+      required: true
+  - type: textarea
+    id: outcomes
+    attributes:
+      label: Intended Outcomes
+      description: Try to answer your best the following questions: - What is the context of this request and the issue/complication that needs attention? What is the evidence of this complication? (Adding any evidence highly increases the priority of your request). What is your definition of success when this feature is implemented?
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: How Will it Work?
+      description: By answering this section it's easier to visualize how to build it. Try answering one or more of the following questions: what could be a high-level user journey? Alternatively, what would be the high-level acceptance criteria? Do you have links to examples that may help visualize the issue?
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/subspace/subspace-cli/blob/main/CODE_OF_CONDUCT.md) # TODO: fix this link
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
