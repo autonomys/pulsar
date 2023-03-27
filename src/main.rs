@@ -12,13 +12,13 @@ mod utils;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Report;
 use color_eyre::Help;
-use commands::farm::farm;
-use commands::info::info;
-use commands::init::init;
-use commands::wipe::wipe;
 use tracing::instrument;
 
-use crate::utils::support_message;
+use crate::commands::farm::farm;
+use crate::commands::info::info;
+use crate::commands::init::init;
+use crate::commands::wipe::wipe;
+use crate::utils::{get_user_input, support_message, yes_or_no_parser};
 
 #[cfg(all(
     target_arch = "x86_64",
@@ -56,7 +56,12 @@ enum Commands {
         executor: bool,
     },
     #[command(about = "wipes the node and farm instance (along with your plots)")]
-    Wipe,
+    Wipe {
+        #[arg(long, action)]
+        farmer: bool,
+        #[arg(long, action)]
+        node: bool,
+    },
 }
 
 #[tokio::main]
@@ -73,8 +78,21 @@ async fn main() -> Result<(), Report> {
         Commands::Farm { verbose, executor } => {
             farm(verbose, executor).await.suggestion(support_message())?;
         }
-        Commands::Wipe => {
-            wipe().await?;
+        Commands::Wipe { mut farmer, mut node } => {
+            // if user did not supply any argument, this means user wants to delete them
+            // both, but `farmer` and `node` are both false at the moment
+            if !farmer && !node {
+                let prompt = "This will delete both farmer and node (complete wipe). Do you want \
+                              to proceed? [y/n]";
+                if let Ok(false) = get_user_input(prompt, None, yes_or_no_parser) {
+                    println!("Wipe operation aborted, nothing has been deleted...");
+                    return Ok(());
+                }
+
+                farmer = true;
+                node = true;
+            }
+            wipe(farmer, node).await.suggestion(support_message())?;
         }
     }
 
