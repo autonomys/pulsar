@@ -27,7 +27,7 @@ body:
     id: criteria
     attributes:
       label: How Will it Work?
-      description: By answering this section it's easier to visualize how to build it. Try answering one or more of the following questions: what could be a high-level user journey? Alternatively, what would be the high-level acceptance criteria? Do you have links to examples that may help visualize the issue?
+      description: By answering this section it's easier to visualize how to build it. What could be a high-level user journey? Alternatively, what would be the high-level acceptance criteria? Do you have links to examples that may help visualize the issue?
     validations:
       required: false
   - type: checkboxes
