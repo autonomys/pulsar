@@ -20,7 +20,7 @@ body:
     id: outcomes
     attributes:
       label: Intended Outcomes
-      description: Try to answer your best the following questions: - What is the context of this request and the issue/complication that needs attention? What is the evidence of this complication? (Adding any evidence highly increases the priority of your request). What is your definition of success when this feature is implemented?
+      description: Try to answer your best the following questions: what is the context of this request? What is the issue or complication that needs attention? What is the evidence of this complication? (Adding any evidence highly increases the priority of your request). What is your definition of success when this feature is implemented?
     validations:
       required: true
   - type: textarea
