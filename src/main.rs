@@ -79,8 +79,8 @@ async fn main() -> Result<(), Report> {
             farm(verbose, executor).await.suggestion(support_message())?;
         }
         Commands::Wipe { mut farmer, mut node } => {
-            // if user did not supply any argument, this means user wants to delete them both, but
-            // `farmer` and `node` are both false at the moment
+            // if user did not supply any argument, this means user wants to delete them
+            // both, but `farmer` and `node` are both false at the moment
             if !farmer && !node {
                 let prompt = "This will delete both farmer and node (complete wipe). Do you want \
                               to proceed? [y/n]";
