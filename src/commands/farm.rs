@@ -10,6 +10,7 @@ use single_instance::SingleInstance;
 use subspace_sdk::node::SyncingProgress;
 use subspace_sdk::{Farmer, Node};
 use tokio::signal;
+use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
@@ -74,52 +75,71 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
 
-        let plotting_subscribe_handle = tokio::spawn(subscribe_to_plotting_progress(
+        let plotting_sub_handle = tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
         ));
 
-        let solution_subscribe_handle = tokio::spawn(subscribe_to_solutions(
+        let solution_sub_handle = tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
         ));
 
-        // node subscription can be gracefully closed with `ctrl_c` without any problem
-        // (no code needed). We need graceful closing for farmer subscriptions.
-        signal::ctrl_c().await?;
-        println!(
-            "\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
-             will try to forcefully close the app!"
-        );
+        wait_on_farmer(Some(plotting_sub_handle), Some(solution_sub_handle), farmer, node).await?;
+    } else {
+        wait_on_farmer(None, None, farmer, node).await?;
+    }
+    Ok(())
+}
 
-        // closing the subscriptions
-        plotting_subscribe_handle.abort();
-        solution_subscribe_handle.abort();
+async fn wait_on_farmer(
+    maybe_plotting_handle: Option<JoinHandle<()>>,
+    maybe_solution_handle: Option<JoinHandle<()>>,
+    farmer: Arc<Farmer>,
+    node: Node,
+) -> Result<()> {
+    // node subscription can be gracefully closed with `ctrl_c` without any problem
+    // (no code needed). We need graceful closing for farmer subscriptions.
+    signal::ctrl_c().await?;
+    println!(
+        "\nWill try to gracefully exit the application now. If you press ctrl+c again, it will \
+         try to forcefully close the app!"
+    );
 
-        // shutting down the farmer and the node
-        let handle = tokio::spawn(async move {
-            // if one of the subscriptions have not aborted yet, wait
-            // Plotting might end, so we ignore result here
-            let _ = plotting_subscribe_handle.await;
-            solution_subscribe_handle.await.expect_err("Solution subscription never ends");
-
-            Arc::try_unwrap(farmer)
-                .expect("there should have been only 1 strong farmer counter")
-                .close()
-                .await
-                .expect("cannot close farmer");
-            node.close().await.expect("cannot close node");
-        });
-
-        tokio::select! {
-            _ = handle => println!("gracefully closed the app!"),
-            _ = signal::ctrl_c() => println!("\nforcefully closing the app!"),
-        }
+    // closing the subscriptions if there are any
+    if maybe_solution_handle.is_some() && maybe_plotting_handle.is_some() {
+        maybe_plotting_handle.as_ref().expect("check is above").abort();
+        maybe_solution_handle.as_ref().expect("check is above").abort();
     }
 
+    // shutting down the farmer and the node
+    let handle = tokio::spawn(async move {
+        // if one of the subscriptions have not aborted yet, wait
+        // Plotting might end, so we ignore result here
+
+        if maybe_solution_handle.is_some() && maybe_plotting_handle.is_some() {
+            let _ = maybe_plotting_handle.expect("check is above").await;
+            maybe_solution_handle
+                .expect("check is above")
+                .await
+                .expect_err("Solution subscription never ends");
+        }
+
+        Arc::try_unwrap(farmer)
+            .expect("there should have been only 1 strong farmer counter")
+            .close()
+            .await
+            .expect("cannot close farmer");
+        node.close().await.expect("cannot close node");
+    });
+
+    tokio::select! {
+        _ = handle => println!("gracefully closed the app!"),
+        _ = signal::ctrl_c() => println!("\nforcefully closing the app!"),
+    }
     Ok(())
 }
 
