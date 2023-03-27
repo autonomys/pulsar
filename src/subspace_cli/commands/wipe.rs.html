@@ -51,6 +51,14 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
 </pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::Result;
 <span class="kw">use </span>owo_colors::OwoColorize;
 <span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
@@ -63,42 +71,50 @@
 <span class="doccomment">/// implementation of the `wipe` command
 ///
 /// wipes both farmer and node files (basically a fresh start)
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>wipe() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>config = <span class="kw">match </span>parse_config() {
-        <span class="prelude-val">Ok</span>(args) =&gt; <span class="prelude-val">Some</span>(args),
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-            <span class="macro">println!</span>(
-                <span class="string">&quot;could not read your config. Wipe will still continue... \n{}&quot;</span>,
-                <span class="string">&quot;However, if you have set a custom location for your plots, you will need to \
-                 manually delete your plots!&quot;
-                    </span>.underline()
-            );
-            <span class="prelude-val">None
-        </span>}
-    };
-    <span class="kw">let </span>node_directory = node_directory_getter();
-    <span class="kw">let _ </span>= Node::wipe(node_directory).<span class="kw">await</span>;
-
-    <span class="comment">// TODO: modify here when supporting multi-plot
-    // if config can be read, delete the farmer using the path in the config, else,
-    // delete the default location
-    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(config) = config {
-        <span class="kw">match </span>PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size) {
-            <span class="prelude-val">Ok</span>(plot) =&gt; {
-                <span class="kw">let _ </span>= plot.wipe().<span class="kw">await</span>;
-            }
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">println!</span>(
-                <span class="string">&quot;Skipping wiping plot. Got error while constructing the plot reference: {err}&quot;
-            </span>),
-        }
-        <span class="kw">let _ </span>= CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)<span class="question-mark">?
-            </span>.wipe()
-            .<span class="kw">await</span>;
-    } <span class="kw">else </span>{
-        <span class="kw">let _ </span>= tokio::fs::remove_dir_all(plot_directory_getter()).<span class="kw">await</span>;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>wipe(wipe_farmer: bool, wipe_node: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>wipe_node {
+        <span class="macro">println!</span>(<span class="string">&quot;wiping node...&quot;</span>);
+        <span class="kw">let </span>node_directory = node_directory_getter();
+        <span class="kw">let _ </span>= Node::wipe(node_directory).<span class="kw">await</span>;
     }
 
-    delete_summary().<span class="kw">await</span>;
+    <span class="kw">if </span>wipe_farmer {
+        <span class="macro">println!</span>(<span class="string">&quot;wiping farmer...&quot;</span>);
+        <span class="kw">let </span>config = <span class="kw">match </span>parse_config() {
+            <span class="prelude-val">Ok</span>(args) =&gt; <span class="prelude-val">Some</span>(args),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">println!</span>(
+                    <span class="string">&quot;could not read your config. Wipe will still continue... \n{}&quot;</span>,
+                    <span class="string">&quot;However, if you have set a custom location for your plots, you will need to \
+                     manually delete your plots!&quot;
+                        </span>.underline()
+                );
+                <span class="prelude-val">None
+            </span>}
+        };
+
+        <span class="comment">// TODO: modify here when supporting multi-plot
+        // if config can be read, delete the farmer using the path in the config, else,
+        // delete the default location
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(config) = config {
+            <span class="kw">match </span>PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size) {
+                <span class="prelude-val">Ok</span>(plot) =&gt; {
+                    <span class="kw">let _ </span>= plot.wipe().<span class="kw">await</span>;
+                }
+                <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">println!</span>(
+                    <span class="string">&quot;Skipping wiping plot. Got error while constructing the plot reference: {err}&quot;
+                </span>),
+            }
+            <span class="kw">let _ </span>=
+                CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)<span class="question-mark">?
+                    </span>.wipe()
+                    .<span class="kw">await</span>;
+        } <span class="kw">else </span>{
+            <span class="kw">let _ </span>= tokio::fs::remove_dir_all(plot_directory_getter()).<span class="kw">await</span>;
+        }
+
+        delete_summary().<span class="kw">await</span>;
+    }
 
     <span class="macro">println!</span>(<span class="string">&quot;Wipe successful!&quot;</span>);
 

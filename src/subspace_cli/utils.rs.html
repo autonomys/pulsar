@@ -393,6 +393,14 @@
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -514,6 +522,14 @@
         <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;size could not be smaller than 1GB&quot;</span>))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
+    }
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>yes_or_no_parser(answer: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="kw">match </span>answer.to_lowercase().as_str() {
+        <span class="string">&quot;y&quot; </span>| <span class="string">&quot;yes&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+        <span class="string">&quot;n&quot; </span>| <span class="string">&quot;no&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not interpret your answer. Please provide `y` or `n`.&quot;</span>)),
     }
 }
 

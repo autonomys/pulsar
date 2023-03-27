@@ -80,6 +80,24 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -94,13 +112,13 @@
 <span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>color_eyre::eyre::Report;
 <span class="kw">use </span>color_eyre::Help;
-<span class="kw">use </span>commands::farm::farm;
-<span class="kw">use </span>commands::info::info;
-<span class="kw">use </span>commands::init::init;
-<span class="kw">use </span>commands::wipe::wipe;
 <span class="kw">use </span>tracing::instrument;
 
-<span class="kw">use </span><span class="kw">crate</span>::utils::support_message;
+<span class="kw">use </span><span class="kw">crate</span>::commands::farm::farm;
+<span class="kw">use </span><span class="kw">crate</span>::commands::info::info;
+<span class="kw">use </span><span class="kw">crate</span>::commands::init::init;
+<span class="kw">use </span><span class="kw">crate</span>::commands::wipe::wipe;
+<span class="kw">use </span><span class="kw">crate</span>::utils::{get_user_input, support_message, yes_or_no_parser};
 
 <span class="attr">#[cfg(all(
     target_arch = <span class="string">&quot;x86_64&quot;</span>,
@@ -138,7 +156,12 @@
         </span>executor: bool,
     },
     <span class="attr">#[command(about = <span class="string">&quot;wipes the node and farm instance (along with your plots)&quot;</span>)]
-    </span>Wipe,
+    </span>Wipe {
+        <span class="attr">#[arg(long, action)]
+        </span>farmer: bool,
+        <span class="attr">#[arg(long, action)]
+        </span>node: bool,
+    },
 }
 
 <span class="attr">#[tokio::main]
@@ -155,8 +178,21 @@
         Commands::Farm { verbose, executor } =&gt; {
             farm(verbose, executor).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
-        Commands::Wipe =&gt; {
-            wipe().<span class="kw">await</span><span class="question-mark">?</span>;
+        Commands::Wipe { <span class="kw-2">mut </span>farmer, <span class="kw-2">mut </span>node } =&gt; {
+            <span class="comment">// if user did not supply any argument, this means user wants to delete them
+            // both, but `farmer` and `node` are both false at the moment
+            </span><span class="kw">if </span>!farmer &amp;&amp; !node {
+                <span class="kw">let </span>prompt = <span class="string">&quot;This will delete both farmer and node (complete wipe). Do you want \
+                              to proceed? [y/n]&quot;</span>;
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser) {
+                    <span class="macro">println!</span>(<span class="string">&quot;Wipe operation aborted, nothing has been deleted...&quot;</span>);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+                }
+
+                farmer = <span class="bool-val">true</span>;
+                node = <span class="bool-val">true</span>;
+            }
+            wipe(farmer, node).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
     }
 
