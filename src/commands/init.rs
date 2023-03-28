@@ -85,7 +85,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
                          * {:?}: ",` TODO: uncomment this when gemini3d
                          * releases: `ChainConfig::iter().collect::<Vec<_>>()` */
         ),
-        Some(crate::config::ChainConfig::Gemini3c),
+        Some(default_chain),
         ChainConfig::from_str,
     )?;
 
