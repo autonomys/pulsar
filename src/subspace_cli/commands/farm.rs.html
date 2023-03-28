@@ -269,6 +269,26 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -281,6 +301,7 @@
 <span class="kw">use </span>subspace_sdk::node::SyncingProgress;
 <span class="kw">use </span>subspace_sdk::{Farmer, Node};
 <span class="kw">use </span>tokio::signal;
+<span class="kw">use </span>tokio::task::JoinHandle;
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, ChainConfig, Config};
@@ -341,56 +362,75 @@
     <span class="kw">let </span>farmer = Arc::new(farmer);
     <span class="macro">println!</span>(<span class="string">&quot;Farmer started successfully!&quot;</span>);
 
-    <span class="kw">if </span>!is_verbose {
+    <span class="kw">let </span>maybe_handles = <span class="kw">if </span>!is_verbose {
         <span class="kw">let </span>is_initial_progress_finished = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
         <span class="kw">let </span>sector_size_bytes = farmer.get_info().<span class="kw">await</span>.map_err(Report::msg)<span class="question-mark">?</span>.sector_size;
 
-        <span class="kw">let </span>plotting_subscribe_handle = tokio::spawn(subscribe_to_plotting_progress(
+        <span class="kw">let </span>plotting_sub_handle = tokio::spawn(subscribe_to_plotting_progress(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
             sector_size_bytes,
         ));
 
-        <span class="kw">let </span>solution_subscribe_handle = tokio::spawn(subscribe_to_solutions(
+        <span class="kw">let </span>solution_sub_handle = tokio::spawn(subscribe_to_solutions(
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
         ));
 
-        <span class="comment">// node subscription can be gracefully closed with `ctrl_c` without any problem
-        // (no code needed). We need graceful closing for farmer subscriptions.
-        </span>signal::ctrl_c().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">println!</span>(
-            <span class="string">&quot;\nWill try to gracefully exit the application now. If you press ctrl+c again, it \
-             will try to forcefully close the app!&quot;
-        </span>);
+        <span class="prelude-val">Some</span>((plotting_sub_handle, solution_sub_handle))
+    } <span class="kw">else </span>{
+        <span class="comment">// we don&#39;t have handles if it is verbose
+        </span><span class="prelude-val">None
+    </span>};
 
-        <span class="comment">// closing the subscriptions
-        </span>plotting_subscribe_handle.abort();
-        solution_subscribe_handle.abort();
+    wait_on_farmer(maybe_handles, farmer, node).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="comment">// shutting down the farmer and the node
-        </span><span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
-            <span class="comment">// if one of the subscriptions have not aborted yet, wait
-            // Plotting might end, so we ignore result here
-            </span><span class="kw">let _ </span>= plotting_subscribe_handle.<span class="kw">await</span>;
-            solution_subscribe_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;Solution subscription never ends&quot;</span>);
+    <span class="prelude-val">Ok</span>(())
+}
 
-            Arc::try_unwrap(farmer)
-                .expect(<span class="string">&quot;there should have been only 1 strong farmer counter&quot;</span>)
-                .close()
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;cannot close farmer&quot;</span>);
-            node.close().<span class="kw">await</span>.expect(<span class="string">&quot;cannot close node&quot;</span>);
-        });
+<span class="kw">async fn </span>wait_on_farmer(
+    maybe_handles: <span class="prelude-ty">Option</span>&lt;(JoinHandle&lt;()&gt;, JoinHandle&lt;()&gt;)&gt;,
+    farmer: Arc&lt;Farmer&gt;,
+    node: Node,
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// node subscription can be gracefully closed with `ctrl_c` without any problem
+    // (no code needed). We need graceful closing for farmer subscriptions.
+    </span>signal::ctrl_c().<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="macro">println!</span>(
+        <span class="string">&quot;\nWill try to gracefully exit the application now. If you press ctrl+c again, it will \
+         try to forcefully close the app!&quot;
+    </span>);
 
-        <span class="macro">tokio::select! </span>{
-            <span class="kw">_ </span>= handle =&gt; <span class="macro">println!</span>(<span class="string">&quot;gracefully closed the app!&quot;</span>),
-            <span class="kw">_ </span>= signal::ctrl_c() =&gt; <span class="macro">println!</span>(<span class="string">&quot;\nforcefully closing the app!&quot;</span>),
-        }
+    <span class="comment">// closing the subscriptions if there are any
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>((plotting_handle, solution_handle)) = maybe_handles.as_ref() {
+        plotting_handle.abort();
+        solution_handle.abort();
     }
 
+    <span class="comment">// shutting down the farmer and the node
+    </span><span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
+        <span class="comment">// if one of the subscriptions have not aborted yet, wait
+        // Plotting might end, so we ignore result here
+
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>((plotting_handle, solution_handle)) = maybe_handles {
+            <span class="kw">let _ </span>= plotting_handle.<span class="kw">await</span>;
+            solution_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;Solution subscription never ends&quot;</span>);
+        }
+
+        Arc::try_unwrap(farmer)
+            .expect(<span class="string">&quot;there should have been only 1 strong farmer counter&quot;</span>)
+            .close()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;cannot close farmer&quot;</span>);
+        node.close().<span class="kw">await</span>.expect(<span class="string">&quot;cannot close node&quot;</span>);
+    });
+
+    <span class="macro">tokio::select! </span>{
+        <span class="kw">_ </span>= handle =&gt; <span class="macro">println!</span>(<span class="string">&quot;gracefully closed the app!&quot;</span>),
+        <span class="kw">_ </span>= signal::ctrl_c() =&gt; <span class="macro">println!</span>(<span class="string">&quot;\nforcefully closing the app!&quot;</span>),
+    }
     <span class="prelude-val">Ok</span>(())
 }
 
