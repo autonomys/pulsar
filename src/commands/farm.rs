@@ -88,16 +88,15 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
             is_initial_progress_finished.clone(),
         ));
 
-        wait_on_farmer(Some(plotting_sub_handle), Some(solution_sub_handle), farmer, node).await?;
+        wait_on_farmer(Some((plotting_sub_handle, solution_sub_handle)), farmer, node).await?;
     } else {
-        wait_on_farmer(None, None, farmer, node).await?;
+        wait_on_farmer(None, farmer, node).await?;
     }
     Ok(())
 }
 
 async fn wait_on_farmer(
-    maybe_plotting_handle: Option<JoinHandle<()>>,
-    maybe_solution_handle: Option<JoinHandle<()>>,
+    maybe_handles: Option<(JoinHandle<()>, JoinHandle<()>)>,
     farmer: Arc<Farmer>,
     node: Node,
 ) -> Result<()> {
@@ -110,9 +109,9 @@ async fn wait_on_farmer(
     );
 
     // closing the subscriptions if there are any
-    if maybe_solution_handle.is_some() && maybe_plotting_handle.is_some() {
-        maybe_plotting_handle.as_ref().expect("check is above").abort();
-        maybe_solution_handle.as_ref().expect("check is above").abort();
+    if let Some((plotting_handle, solution_handle)) = maybe_handles.as_ref() {
+        plotting_handle.abort();
+        solution_handle.abort();
     }
 
     // shutting down the farmer and the node
@@ -120,12 +119,9 @@ async fn wait_on_farmer(
         // if one of the subscriptions have not aborted yet, wait
         // Plotting might end, so we ignore result here
 
-        if maybe_solution_handle.is_some() && maybe_plotting_handle.is_some() {
-            let _ = maybe_plotting_handle.expect("check is above").await;
-            maybe_solution_handle
-                .expect("check is above")
-                .await
-                .expect_err("Solution subscription never ends");
+        if let Some((plotting_handle, solution_handle)) = maybe_handles {
+            let _ = plotting_handle.await;
+            solution_handle.await.expect_err("Solution subscription never ends");
         }
 
         Arc::try_unwrap(farmer)
