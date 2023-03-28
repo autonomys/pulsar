@@ -71,7 +71,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     let farmer = Arc::new(farmer);
     println!("Farmer started successfully!");
 
-    if !is_verbose {
+    let maybe_handles = if !is_verbose {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
 
@@ -88,10 +88,14 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
             is_initial_progress_finished.clone(),
         ));
 
-        wait_on_farmer(Some((plotting_sub_handle, solution_sub_handle)), farmer, node).await?;
+        Some((plotting_sub_handle, solution_sub_handle))
     } else {
-        wait_on_farmer(None, farmer, node).await?;
-    }
+        // we don't have handles if it is verbose
+        None
+    };
+
+    wait_on_farmer(maybe_handles, farmer, node).await?;
+
     Ok(())
 }
 
