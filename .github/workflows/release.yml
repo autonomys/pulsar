@@ -15,7 +15,7 @@ jobs:
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
             suffix: ubuntu-x86_64-v2-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v2' 
+            rustflags: '-C target-cpu=x86-64-v2'
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
             suffix: ubuntu-x86_64-v3-${{ github.ref_name }}
@@ -88,8 +88,8 @@ jobs:
           ditto -c -k --rsrc ${{ env.PRODUCTION_TARGET }}/macos-binaries subspace-binaries.zip
           echo "Notarizing"
           xcrun altool --notarize-app --primary-bundle-id binaries-${{ github.ref_name }} --username "${{ secrets.MACOS_APPLE_ID}}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --file subspace-binaries.zip
-          echo "Stapling farmer"
-          xcrun stapler staple ${{ env.PRODUCTION_TARGET }}/subspace-cli
+          # echo "Stapling farmer"
+          # xcrun stapler staple ${{ env.PRODUCTION_TARGET }}/subspace-cli
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
