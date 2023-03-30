@@ -1,0 +1,67 @@
+# This action is to send a release message to our Discord community. 
+# - It will only trigger when our release workflow completes successfully or be triggered manually.
+# - When triggering this manually you will need to select Branch > Tags > Select the release you want to notify. (Generally the release you just updated from a pre-release.)
+name: Send Release Messages
+
+on:
+  workflow_run:
+    workflows: ["release"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Please run this workflow from the tag of the release you updated'
+        required: true
+        type: boolean
+      notify_community:
+        description: 'I understand that running this workflow will notify the community of my actions'
+        required: true
+        type: boolean
+
+jobs:
+  send_message:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Get release by Tag for manual run
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        id: manual_release_info
+        uses: cardinalby/git-get-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commitSha: ${{ github.sha }}
+          prerelease: false
+      - name: Get release by Tag for release run
+        if: ${{ github.event_name == 'workflow_run' }}
+        id: release_info
+        uses: cardinalby/git-get-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commitSha: ${{ github.event.workflow_run.head_sha }}
+          prerelease: false
+          latest: true
+      - name: Send Discord Message
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch ==  steps.release_info.outputs.tag_name}}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            ${{ steps.release_info.outputs.tag_name || steps.manual_release_info.outputs.tag_name }} of ${{ github.repository }} has been released!
+            
+            *Release Name:**
+            ```
+            ${{ steps.release_info.outputs.name || steps.manual_release_info.outputs.name }}
+            ```
+
+            *Release Description:**
+            ```
+            ${{ steps.release_info.outputs.body || steps.manual_release_info.outputs.body }}
+            ```
+            Read more at: ${{ steps.release_info.outputs.html_url || steps.manual_release_info.outputs.html_url }}
+
+            You can also update by visiting our docs at:
+            https://docs.subspace.network/docs/protocol/cli
