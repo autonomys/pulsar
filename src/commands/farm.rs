@@ -99,6 +99,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
 async fn wait_on_farmer(
     maybe_handles: Option<(JoinHandle<()>, JoinHandle<()>)>,
     farmer: Arc<Farmer>,

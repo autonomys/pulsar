@@ -147,7 +147,7 @@ impl FromStr for ChainConfig {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "gemini3d" => Ok(ChainConfig::Gemini3d),
-            "dev-chain" => Ok(ChainConfig::Dev),
+            "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
         }
