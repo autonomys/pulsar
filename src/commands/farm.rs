@@ -202,7 +202,7 @@ async fn subscribe_to_plotting_progress(
             )
             .expect("hardcoded template is correct"),
         );
-        progress_bar.finish_with_message("Initial plotting finished!");
+        progress_bar.finish_with_message("Initial plotting finished!\n");
     }
     is_initial_progress_finished.store(true, Ordering::Relaxed);
     let _ = summary.update(Some(true), None).await; // ignore the error,
