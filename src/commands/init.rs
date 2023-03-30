@@ -2,8 +2,8 @@ use std::io::Write;
 use std::str::FromStr;
 
 use color_eyre::eyre::{Context, Result};
+use strum::IntoEnumIterator;
 
-// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
 use crate::config::{
     create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
     NodeConfig, DEFAULT_PLOT_SIZE,
@@ -77,13 +77,12 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get chain
-    let default_chain = ChainConfig::Gemini3c;
+    let default_chain = ChainConfig::Gemini3d;
     let chain = get_user_input(
         &format!(
-            "Specify the chain to farm (defaults to `{default_chain}`, press enter to use the \
-             default):" /* TODO: uncomment this when gemini3d releases: ` Available options are
-                         * {:?}: ",` TODO: uncomment this when gemini3d
-                         * releases: `ChainConfig::iter().collect::<Vec<_>>()` */
+            "Specify the chain to farm. Available options are ({:?}). Defaults to \
+             `{default_chain:?}`, press enter to use the default:",
+            ChainConfig::iter().collect::<Vec<_>>()
         ),
         Some(default_chain),
         ChainConfig::from_str,

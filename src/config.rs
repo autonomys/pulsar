@@ -6,7 +6,7 @@ use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-// use strum_macros::EnumIter; // uncomment this when gemini3d releases
+use strum_macros::EnumIter;
 use subspace_sdk::farmer::{CacheDescription, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
 use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
@@ -50,29 +50,23 @@ impl NodeConfig {
         let Self { directory, name, advanced: AdvancedNodeSettings { executor, extra } } = self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3c => {
-                let node = Node::gemini_3c().network(NetworkBuilder::gemini_3c().name(name)).dsn(
-                    DsnBuilder::gemini_3c().provider_storage_path(provider_storage_dir_getter()),
+            ChainConfig::Gemini3d => {
+                let node = Node::gemini_3d().network(NetworkBuilder::gemini_3d().name(name)).dsn(
+                    DsnBuilder::gemini_3d().provider_storage_path(provider_storage_dir_getter()),
                 );
-                let chain_spec = chain_spec::gemini_3c()
-                    .map_err(Report::msg)
-                    .context("cannot extract the gemini3c chain spec from SDK")?;
+                let chain_spec = chain_spec::gemini_3d();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
                 let node = Node::dev();
-                let chain_spec = chain_spec::dev_config()
-                    .map_err(Report::msg)
-                    .context("cannot extract the dev chain spec from SDK")?;
+                let chain_spec = chain_spec::dev_config();
                 (node, chain_spec)
             }
             ChainConfig::DevNet => {
                 let node = Node::devnet()
                     .network(NetworkBuilder::devnet().name(name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
-                let chain_spec = chain_spec::devnet_config()
-                    .map_err(Report::msg)
-                    .context("cannot extract the devnet chain spec from SDK")?;
+                let chain_spec = chain_spec::devnet_config();
                 (node, chain_spec)
             }
         };
@@ -139,23 +133,12 @@ impl FarmerConfig {
 }
 
 /// Enum for Chain
-#[derive(Deserialize, Serialize, Default, Clone, Debug)] // TODO: add `EnumIter` when gemini3d releases
+#[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3c,
+    Gemini3d,
     Dev,
     DevNet,
-}
-
-// TODO: delete this when gemini3d releases
-impl std::fmt::Display for ChainConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            ChainConfig::Gemini3c => write!(f, "gemini-3c"),
-            ChainConfig::Dev => write!(f, "dev-chain"),
-            ChainConfig::DevNet => write!(f, "devnet"),
-        }
-    }
 }
 
 impl FromStr for ChainConfig {
@@ -163,8 +146,8 @@ impl FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini-3c" => Ok(ChainConfig::Gemini3c),
-            "dev" => Ok(ChainConfig::Dev),
+            "gemini3d" => Ok(ChainConfig::Gemini3d),
+            "dev-chain" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
         }
