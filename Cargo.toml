@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.1.12"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -18,8 +18,8 @@ owo-colors = "3.5.0"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
-# strum = "0.24.1"
-# strum_macros = "0.24.3"
+strum = "0.24.1"
+strum_macros = "0.24.3"
 thiserror = "1"
 toml = "0.7"
 tokio = { version = "1.26", features = ["macros", "rt-multi-thread"] }
@@ -30,7 +30,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ed89479c0ca7baa5e488ad120fb760f295d2f00c" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "1c25ea518f0ce98e0587d62123d73ee7cd89f158" }
 
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
 [target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
@@ -76,8 +76,6 @@ crc32fast = { opt-level = 3 }
 crossbeam-deque = { opt-level = 3 }
 crypto-mac = { opt-level = 3 }
 curve25519-dalek = { opt-level = 3 }
-dusk-bls12_381 = { opt-level = 3 }
-dusk-plonk = { opt-level = 3 }
 ed25519-zebra = { opt-level = 3 }
 flate2 = { opt-level = 3 }
 futures-channel = { opt-level = 3 }
@@ -98,7 +96,6 @@ parking_lot = { opt-level = 3 }
 parking_lot_core = { opt-level = 3 }
 percent-encoding = { opt-level = 3 }
 primitive-types = { opt-level = 3 }
-reed-solomon-erasure = { opt-level = 3 }
 ring = { opt-level = 3 }
 rustls = { opt-level = 3 }
 secp256k1 = { opt-level = 3 }
