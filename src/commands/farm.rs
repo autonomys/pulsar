@@ -99,6 +99,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     Ok(())
 }
 
+#[instrument]
 async fn wait_on_farmer(
     maybe_handles: Option<(JoinHandle<()>, JoinHandle<()>)>,
     farmer: Arc<Farmer>,
@@ -201,7 +202,7 @@ async fn subscribe_to_plotting_progress(
             )
             .expect("hardcoded template is correct"),
         );
-        progress_bar.finish_with_message("Initial plotting finished!");
+        progress_bar.finish_with_message("Initial plotting finished!\n");
     }
     is_initial_progress_finished.store(true, Ordering::Relaxed);
     let _ = summary.update(Some(true), None).await; // ignore the error,
