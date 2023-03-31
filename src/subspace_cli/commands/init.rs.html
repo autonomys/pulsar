@@ -102,14 +102,13 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>strum::IntoEnumIterator;
 
-<span class="comment">// use strum::IntoEnumIterator; // TODO: unlock this when gemini3d releases
-</span><span class="kw">use </span><span class="kw">crate</span>::config::{
+<span class="kw">use </span><span class="kw">crate</span>::config::{
     create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
     NodeConfig, DEFAULT_PLOT_SIZE,
 };
@@ -182,14 +181,13 @@
     )<span class="question-mark">?</span>;
 
     <span class="comment">// get chain
-    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3c;
+    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3d;
     <span class="kw">let </span>chain = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify the chain to farm (defaults to `{default_chain}`, press enter to use the \
-             default):&quot; </span><span class="comment">/* TODO: uncomment this when gemini3d releases: ` Available options are
-                         * {:?}: &quot;,` TODO: uncomment this when gemini3d
-                         * releases: `ChainConfig::iter().collect::&lt;Vec&lt;_&gt;&gt;()` */
-        </span>),
+            <span class="string">&quot;Specify the chain to farm. Available options are: {:?}. \n Defaults to \
+             `{default_chain:?}`, press enter to use the default:&quot;</span>,
+            ChainConfig::iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+        ),
         <span class="prelude-val">Some</span>(default_chain),
         ChainConfig::from_str,
     )<span class="question-mark">?</span>;

@@ -289,6 +289,7 @@
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -390,7 +391,8 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">async fn </span>wait_on_farmer(
+<span class="attr">#[instrument]
+</span><span class="kw">async fn </span>wait_on_farmer(
     maybe_handles: <span class="prelude-ty">Option</span>&lt;(JoinHandle&lt;()&gt;, JoinHandle&lt;()&gt;)&gt;,
     farmer: Arc&lt;Farmer&gt;,
     node: Node,
@@ -492,7 +494,7 @@
             )
             .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>),
         );
-        progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!&quot;</span>);
+        progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!\n&quot;</span>);
     }
     is_initial_progress_finished.store(<span class="bool-val">true</span>, Ordering::Relaxed);
     <span class="kw">let _ </span>= summary.update(<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="prelude-val">None</span>).<span class="kw">await</span>; <span class="comment">// ignore the error,
