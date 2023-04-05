@@ -20,7 +20,7 @@ struct FarmerSummary {
     initial_plotting_finished: bool,
     farmed_block_count: u64,
     vote_count: u64,
-    total_rewards: u64,
+    total_rewards: u128,
     #[serde(with = "bytesize_serde")]
     user_space_pledged: ByteSize,
 }
@@ -30,7 +30,7 @@ pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
     pub(crate) is_new_block_farmed: bool,
     pub(crate) is_new_vote: bool,
-    pub(crate) maybe_new_reward: Option<u64>,
+    pub(crate) maybe_new_reward: Option<u128>,
 }
 
 /// utilizing persistent storage for the information to be displayed for the
@@ -107,7 +107,7 @@ impl Summary {
             summary.vote_count += 1;
         }
         if let Some(new_reward) = maybe_new_reward {
-            summary.total_rewards += new_rewards;
+            summary.total_rewards += new_reward;
         }
 
         let new_summary = toml::to_string(&summary).context("Failed to serialize FarmerSummary")?;
@@ -141,7 +141,7 @@ impl Summary {
 
     /// retrieves the total amount of rewards in SSC
     #[instrument]
-    pub(crate) async fn get_total_rewards(&self) -> Result<u64> {
+    pub(crate) async fn get_total_rewards(&self) -> Result<u128> {
         let summary = self.parse_summary().await?;
         Ok(summary.total_rewards)
     }
