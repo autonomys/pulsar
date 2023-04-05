@@ -19,8 +19,18 @@ use tracing::instrument;
 struct FarmerSummary {
     initial_plotting_finished: bool,
     farmed_block_count: u64,
+    vote_count: u64,
+    total_rewards: u64,
     #[serde(with = "bytesize_serde")]
     user_space_pledged: ByteSize,
+}
+
+#[derive(Default, Debug)]
+pub(crate) struct SummaryUpdateFields {
+    pub(crate) is_plotting_finished: bool,
+    pub(crate) is_new_block_farmed: bool,
+    pub(crate) is_new_vote: bool,
+    pub(crate) maybe_new_reward: Option<u64>,
 }
 
 /// utilizing persistent storage for the information to be displayed for the
@@ -51,6 +61,8 @@ impl Summary {
                 let initialization = FarmerSummary {
                     initial_plotting_finished: false,
                     farmed_block_count: 0,
+                    vote_count: 0,
+                    total_rewards: 0,
                     user_space_pledged,
                 };
                 let summary_text = toml::to_string(&initialization)
@@ -76,15 +88,26 @@ impl Summary {
     #[instrument]
     pub(crate) async fn update(
         &self,
-        plotting_finished: Option<bool>,
-        farmed_block_count: Option<u64>,
+        SummaryUpdateFields {
+            is_plotting_finished,
+            is_new_block_farmed,
+            is_new_vote,
+            maybe_new_reward,
+        }: SummaryUpdateFields,
     ) -> Result<()> {
         let mut summary = self.parse_summary().await?;
-        if let Some(flag) = plotting_finished {
-            summary.initial_plotting_finished = flag;
+
+        if is_plotting_finished {
+            summary.initial_plotting_finished = true;
         }
-        if let Some(count) = farmed_block_count {
-            summary.farmed_block_count = count;
+        if is_new_block_farmed {
+            summary.farmed_block_count += 1;
+        }
+        if is_new_vote {
+            summary.vote_count += 1;
+        }
+        if let Some(new_reward) = maybe_new_reward {
+            summary.total_rewards += new_rewards;
         }
 
         let new_summary = toml::to_string(&summary).context("Failed to serialize FarmerSummary")?;
@@ -114,6 +137,20 @@ impl Summary {
     pub(crate) async fn get_farmed_block_count(&self) -> Result<u64> {
         let summary = self.parse_summary().await?;
         Ok(summary.farmed_block_count)
+    }
+
+    /// retrieves the total amount of rewards in SSC
+    #[instrument]
+    pub(crate) async fn get_total_rewards(&self) -> Result<u64> {
+        let summary = self.parse_summary().await?;
+        Ok(summary.total_rewards)
+    }
+
+    /// retrives how many votes did farmer issue
+    #[instrument]
+    pub(crate) async fn get_vote_count(&self) -> Result<u64> {
+        let summary = self.parse_summary().await?;
+        Ok(summary.vote_count)
     }
 
     /// retrieves the status of the initial plotting, from the summary file

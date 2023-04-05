@@ -7,14 +7,14 @@ use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
-use subspace_sdk::node::SyncingProgress;
-use subspace_sdk::{Farmer, Node};
+use subspace_sdk::node::{Event, RewardsEvent, SubspaceEvent, SyncingProgress};
+use subspace_sdk::{Farmer, Node, PublicKey};
 use tokio::signal;
 use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::Summary;
+use crate::summary::{Summary, SummaryUpdateFields};
 use crate::utils::{install_tracing, raise_fd_limit};
 
 /// allows us to detect multiple instances of the farmer and act on it
@@ -72,6 +72,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     println!("Farmer started successfully!");
 
     let maybe_handles = if !is_verbose {
+        // this will be shared between the two subscriptions
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
 
@@ -86,6 +87,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
             summary.clone(),
             farmer.clone(),
             is_initial_progress_finished.clone(),
+            farmer_config.reward_address,
         ));
 
         Some((plotting_sub_handle, solution_sub_handle))
@@ -205,31 +207,76 @@ async fn subscribe_to_plotting_progress(
         progress_bar.finish_with_message("Initial plotting finished!\n");
     }
     is_initial_progress_finished.store(true, Ordering::Relaxed);
-    let _ = summary.update(Some(true), None).await; // ignore the error,
+    let _ = summary
+        .update(SummaryUpdateFields { is_plotting_finished: true, ..Default::default() })
+        .await;
+    // ignore the error,
 }
 
 async fn subscribe_to_solutions(
     summary: Summary,
-    farmer: Arc<Farmer>,
+    node: Arc<Node>,
     is_initial_progress_finished: Arc<AtomicBool>,
+    reward_address: PublicKey,
 ) {
     println!();
     let farmed_blocks = summary
         .get_farmed_block_count()
         .await
         .expect("couldn't read farmed blocks count from summary");
-    let farmed_block_count = Arc::new(AtomicU64::new(farmed_blocks));
+
+    //let is_initial_progress_finished = &is_initial_progress_finished;
+
+    let mut new_blocks = node.subscribe_new_blocks().await?;
+    while let Some(new_block) = new_blocks.next().await {
+        let mut summary_update_values: SummaryUpdateFields =
+            SummaryUpdateFields { ..Default::default() };
+
+        let events = node.get_events(Some(new_block.hash)).await?;
+
+        for event in events {
+            // subscription is active when plotting is started, only print out rewards after
+            // plotting finishes to not corrup the progress bars
+            if is_initial_progress_finished.load(Ordering::Relaxed) {
+                match event {
+                    Event::Rewards(
+                        RewardsEvent::VoteReward { voter: author, reward }
+                        | RewardsEvent::BlockReward { block_author: author, reward },
+                    ) if author == reward_address.into() =>
+                        summary_update_values.maybe_new_reward = reward,
+                    Event::Subspace(SubspaceEvent::FarmerVote { reward_address, .. })
+                        if author == reward_address.into() =>
+                        summary_update_values.is_new_vote = true,
+                    _ => (),
+                }
+            }
+        }
+
+        if let Some(pre_digest) = new_block.pre_digest {
+            if pre_digest.solution.reward_address == reward_address {
+                summary_update_values.is_new_block_farmed = true;
+            }
+        }
+        let _ = summary.update(summary_update_values).await; // ignore the
+                                                             // error, we will
+                                                             // abandon this
+                                                             // mechanism
+        let (farmed_block_count, vote_count, total_rewards) = (
+            summary.get_farmed_block_count().await?,
+            summary.get_vote_count().await?,
+            summary.get_total_rewards().await?,
+        );
+    }
+
     for plot in farmer.iter_plots().await {
         plot.subscribe_new_solutions()
             .await
             .for_each(|solutions| {
-                let farmed_block_count = &farmed_block_count;
-                let is_initial_progress_finished = &is_initial_progress_finished;
                 let summary = summary.clone();
                 async move {
                     if !solutions.solutions.is_empty() {
-                        let total_farmed = farmed_block_count.fetch_add(1, Ordering::Relaxed);
-                        let _ = summary.update(None, Some(total_farmed)).await; // ignore the error, since we will abandon this mechanism
+                        //let _ = summary.update(None, Some(total_farmed)).await; // ignore the
+                        // error, since we will abandon this mechanism
                         if is_initial_progress_finished.load(Ordering::Relaxed) {
                             print!("\rYou have farmed {total_farmed} block(s) in total!");
                             // use
