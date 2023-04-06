@@ -13,6 +13,31 @@ use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 use tracing::instrument;
 
+// TODO: delete this when https://github.com/toml-rs/toml/issues/534 is solved
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[serde(try_from = "String", into = "String")]
+pub(crate) struct Rewards(pub(crate) u128);
+
+impl TryFrom<String> for Rewards {
+    type Error = <u128 as std::str::FromStr>::Err;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        s.parse().map(Self)
+    }
+}
+
+impl From<Rewards> for String {
+    fn from(Rewards(r): Rewards) -> Self {
+        r.to_string()
+    }
+}
+
+impl std::fmt::Display for Rewards {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// Struct for holding the information of what to be displayed with the `info`
 /// command
 #[derive(Deserialize, Serialize, Debug)]
@@ -20,7 +45,7 @@ struct FarmerSummary {
     initial_plotting_finished: bool,
     farmed_block_count: u64,
     vote_count: u64,
-    total_rewards: u128,
+    total_rewards: Rewards,
     #[serde(with = "bytesize_serde")]
     user_space_pledged: ByteSize,
 }
@@ -30,7 +55,7 @@ pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
     pub(crate) is_new_block_farmed: bool,
     pub(crate) is_new_vote: bool,
-    pub(crate) maybe_new_reward: Option<u128>,
+    pub(crate) maybe_new_reward: Option<Rewards>,
 }
 
 /// utilizing persistent storage for the information to be displayed for the
@@ -62,7 +87,7 @@ impl Summary {
                     initial_plotting_finished: false,
                     farmed_block_count: 0,
                     vote_count: 0,
-                    total_rewards: 0,
+                    total_rewards: Rewards(0),
                     user_space_pledged,
                 };
                 let summary_text = toml::to_string(&initialization)
@@ -107,7 +132,7 @@ impl Summary {
             summary.vote_count += 1;
         }
         if let Some(new_reward) = maybe_new_reward {
-            summary.total_rewards += new_reward;
+            summary.total_rewards = new_reward;
         }
 
         let new_summary = toml::to_string(&summary).context("Failed to serialize FarmerSummary")?;
@@ -141,7 +166,7 @@ impl Summary {
 
     /// retrieves the total amount of rewards in SSC
     #[instrument]
-    pub(crate) async fn get_total_rewards(&self) -> Result<u128> {
+    pub(crate) async fn get_total_rewards(&self) -> Result<Rewards> {
         let summary = self.parse_summary().await?;
         Ok(summary.total_rewards)
     }

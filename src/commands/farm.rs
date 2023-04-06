@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::{Summary, SummaryUpdateFields};
+use crate::summary::{Rewards, Summary, SummaryUpdateFields};
 use crate::utils::{install_tracing, raise_fd_limit};
 
 /// allows us to detect multiple instances of the farmer and act on it
@@ -111,27 +111,20 @@ async fn wait_on_farmer(
 ) -> Result<()> {
     // node subscription can be gracefully closed with `ctrl_c` without any problem
     // (no code needed). We need graceful closing for farmer subscriptions.
-    if let Some((_plotting_handle, solution_handle)) = maybe_handles.as_mut() {
-        tokio::select! {
-            _ = signal::ctrl_c() => {
+    if let Some((plotting_handle, solution_handle)) = maybe_handles.as_mut() {
+        futures::select! {
+            _ = signal::ctrl_c().fuse() => {
                println!(
                     "\nWill try to gracefully exit the application now. Please wait for a couple of seconds... If you press ctrl+c again, it will \
                     try to forcefully close the app!"
                 );
-                let (plotting_handle, solution_handle) = maybe_handles.as_ref().expect("check is up there");
                 plotting_handle.abort();
                 solution_handle.abort();
             }
-            res = solution_handle => {
-                // first level is join handle, second layer is actual result from the task
-                match res {
-                    Ok(Ok(())) => unreachable!("solution subscription never ends"),
-                    Ok(Err(err)) => return Err(eyre!("solution subscription crashed with err: {err}")),
-                    Err(err) => return Err(eyre!("couldn't join subscription handle with err: {err:?}"))
-                }
+            res = solution_handle.fuse() => {
+                return res.context("couldn't join subscription handle")?.context("solution subscription crashed");
             }
-            // cannot inspect plotting subscription for errors, since it may end and quit from
-            // `tokio::select`
+            // cannot inspect plotting sub for errors, since it may end and quit from select
         }
     } else {
         // if there are not subscriptions, just wait on the kill signal
@@ -192,7 +185,6 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
     Ok(())
 }
 
-#[instrument]
 async fn subscribe_to_plotting_progress(
     summary: Summary,
     farmer: Arc<Farmer>,
@@ -238,7 +230,6 @@ async fn subscribe_to_plotting_progress(
     Ok(())
 }
 
-#[instrument]
 async fn subscribe_to_solutions(
     summary: Summary,
     node: Arc<Node>,
@@ -267,7 +258,7 @@ async fn subscribe_to_solutions(
                         RewardsEvent::VoteReward { voter: author, reward }
                         | RewardsEvent::BlockReward { block_author: author, reward },
                     ) if author == reward_address.into() =>
-                        summary_update_values.maybe_new_reward = Some(reward),
+                        summary_update_values.maybe_new_reward = Some(Rewards(reward)),
                     Event::Subspace(SubspaceEvent::FarmerVote {
                         reward_address: author, ..
                     }) if author == reward_address.into() =>
