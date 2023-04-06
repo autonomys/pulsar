@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_config_from_user_inputs","gets the necessary information from user, and writes them to the given configuration file"],["init","implementation of the `init` command"]]};
+window.SIDEBAR_ITEMS = {"fn":["get_config_from_user_inputs","init"]};

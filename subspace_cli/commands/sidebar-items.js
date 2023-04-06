@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["farm",""],["info",""],["init",""],["wipe",""]]};
+window.SIDEBAR_ITEMS = {"mod":["farm","info","init","wipe"]};
