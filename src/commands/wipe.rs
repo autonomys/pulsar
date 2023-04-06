@@ -3,14 +3,19 @@ use owo_colors::OwoColorize;
 use subspace_sdk::farmer::CacheDescription;
 use subspace_sdk::{Node, PlotDescription};
 
-use crate::config::parse_config;
+use crate::config::{delete_config, parse_config};
 use crate::summary::delete_summary;
 use crate::utils::{cache_directory_getter, node_directory_getter, plot_directory_getter};
 
 /// implementation of the `wipe` command
 ///
 /// wipes both farmer and node files (basically a fresh start)
-pub(crate) async fn wipe(wipe_farmer: bool, wipe_node: bool) -> Result<()> {
+pub(crate) async fn wipe(
+    wipe_farmer: bool,
+    wipe_node: bool,
+    wipe_summary: bool,
+    wipe_config: bool,
+) -> Result<()> {
     if wipe_node {
         println!("wiping node...");
         let node_directory = node_directory_getter();
@@ -51,8 +56,14 @@ pub(crate) async fn wipe(wipe_farmer: bool, wipe_node: bool) -> Result<()> {
         } else {
             let _ = tokio::fs::remove_dir_all(plot_directory_getter()).await;
         }
+    }
 
-        delete_summary().await;
+    if wipe_summary {
+        delete_summary()?
+    }
+
+    if wipe_config {
+        delete_config()?
     }
 
     println!("Wipe successful!");
