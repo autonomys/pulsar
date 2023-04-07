@@ -26,7 +26,7 @@ pub(crate) async fn info() -> Result<()> {
             .context("Couldn't read the summary file, are you sure you ran the farm command?")?
     );
 
-   println!(
+    println!(
         "Farmed {} block(s)",
         summary
             .get_farmed_block_count()
