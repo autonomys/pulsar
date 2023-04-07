@@ -10,7 +10,7 @@ mod summary;
 mod utils;
 
 use clap::{Parser, Subcommand};
-use color_eyre::eyre::Report;
+use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
 use tracing::instrument;
 
@@ -78,21 +78,32 @@ async fn main() -> Result<(), Report> {
         Commands::Farm { verbose, executor } => {
             farm(verbose, executor).await.suggestion(support_message())?;
         }
-        Commands::Wipe { mut farmer, mut node } => {
-            // if user did not supply any argument, this means user wants to delete them
-            // both, but `farmer` and `node` are both false at the moment
+        Commands::Wipe { farmer, node } => {
             if !farmer && !node {
-                let prompt = "This will delete both farmer and node (complete wipe). Do you want \
-                              to proceed? [y/n]";
-                if let Ok(false) = get_user_input(prompt, None, yes_or_no_parser) {
-                    println!("Wipe operation aborted, nothing has been deleted...");
-                    return Ok(());
-                }
+                // if user did not supply any argument, ask for everything
+                let prompt = "Do you want to wipe farmer (delete plot)? [y/n]: ";
+                let wipe_farmer =
+                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
-                farmer = true;
-                node = true;
+                let prompt = "Do you want to wipe node? [y/n]: ";
+                let wipe_node =
+                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+                let prompt = "Do you want to wipe summary? [y/n]: ";
+                let wipe_summary =
+                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+                let prompt = "Do you want to wipe config? [y/n]: ";
+                let wipe_config =
+                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+                wipe(wipe_farmer, wipe_node, wipe_summary, wipe_config)
+                    .await
+                    .suggestion(support_message())?;
+            } else {
+                // don't delete summary and config if user supplied flags
+                wipe(farmer, node, false, false).await.suggestion(support_message())?;
             }
-            wipe(farmer, node).await.suggestion(support_message())?;
         }
     }
 

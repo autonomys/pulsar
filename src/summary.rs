@@ -3,17 +3,19 @@
 /// and also store the amount of potentially farmed blocks during the initial
 /// plotting progress, so that progress bar won't be affected with `println!`,
 /// and user will still know about them when initial plotting is finished.
-use std::{path::PathBuf, sync::Arc};
+use std::fs::remove_file;
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
-use tokio::fs::{create_dir_all, read_to_string, remove_file, File, OpenOptions};
+use tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 use tracing::instrument;
 
-// TODO: delete this when https://github.com/toml-rs/toml/issues/534 is solved
+// TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String", into = "String")]
 pub(crate) struct Rewards(pub(crate) u128);
@@ -196,8 +198,8 @@ impl Summary {
 
 /// deletes the summary file
 #[instrument]
-pub(crate) async fn delete_summary() {
-    let _ = remove_file(summary_path()).await;
+pub(crate) fn delete_summary() -> Result<()> {
+    remove_file(summary_path()).context("couldn't delete summary file")
 }
 
 /// returns the path for the summary file

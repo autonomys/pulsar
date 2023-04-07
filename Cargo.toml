@@ -8,6 +8,7 @@ bytesize = "1.1"
 bytesize-serde = "0.2"
 clap = { version = "4.1.1", features = ["derive"] }
 color-eyre = "0.6.2"
+console-subscriber = "0.1"
 derivative = "2.2.0"
 dirs = "4.0.0"
 fdlimit = "0.2"
@@ -22,7 +23,7 @@ strum = "0.24.1"
 strum_macros = "0.24.3"
 thiserror = "1"
 toml = "0.7"
-tokio = { version = "1.26", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.27", features = ["macros", "rt-multi-thread", "tracing"] }
 tracing = "0.1.37"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.4"
@@ -30,7 +31,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "0e58c7798d029c41142292fdcd340c9df9fcb02b" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "cc3460710f63a431faba7ea1572eda1971e0c9ee" }
 
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
 [target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
@@ -116,10 +117,10 @@ zeroize = { opt-level = 3 }
 # Reason: We need to patch substrate dependency of snowfork libraries to our fork
 # TODO: Remove when we are using upstream substrate instead of fork
 [patch."https://github.com/paritytech/substrate.git"]
-frame-benchmarking = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-frame-support = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-frame-system = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-sp-core = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-sp-std = { version = "5.0.0", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-sp-io = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
-sp-runtime = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "456cfad45a178617f6886ec400c312f2fea59232" }
+frame-benchmarking = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+frame-support = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+frame-system = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-core = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-std = { version = "5.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-io = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-runtime = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }

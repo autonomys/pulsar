@@ -26,10 +26,26 @@ pub(crate) async fn info() -> Result<()> {
             .context("Couldn't read the summary file, are you sure you ran the farm command?")?
     );
 
-    println!(
-        "Total farmed blocks: {}",
+   println!(
+        "Farmed {} block(s)",
         summary
             .get_farmed_block_count()
+            .await
+            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
+    );
+
+    println!(
+        "Voted on {} block(s)",
+        summary
+            .get_vote_count()
+            .await
+            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
+    );
+
+    println!(
+        "{} SSC(s) earned!",
+        summary
+            .get_total_rewards()
             .await
             .context("Couldn't read the summary file, are you sure you ran the farm command?")?
     );

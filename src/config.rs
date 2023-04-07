@@ -1,4 +1,4 @@
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all, remove_file, File};
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -194,4 +194,11 @@ pub(crate) fn validate_config() -> Result<Config> {
     }
 
     Ok(config)
+}
+
+/// deletes the config file
+#[instrument]
+pub(crate) fn delete_config() -> Result<()> {
+    let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
+    remove_file(config_path).context("couldn't delete config file")
 }
