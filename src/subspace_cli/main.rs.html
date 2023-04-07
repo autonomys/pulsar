@@ -98,6 +98,17 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -110,7 +121,7 @@
 <span class="kw">mod </span>utils;
 
 <span class="kw">use </span>clap::{Parser, Subcommand};
-<span class="kw">use </span>color_eyre::eyre::Report;
+<span class="kw">use </span>color_eyre::eyre::{Context, Report};
 <span class="kw">use </span>color_eyre::Help;
 <span class="kw">use </span>tracing::instrument;
 
@@ -178,21 +189,32 @@
         Commands::Farm { verbose, executor } =&gt; {
             farm(verbose, executor).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
-        Commands::Wipe { <span class="kw-2">mut </span>farmer, <span class="kw-2">mut </span>node } =&gt; {
-            <span class="comment">// if user did not supply any argument, this means user wants to delete them
-            // both, but `farmer` and `node` are both false at the moment
-            </span><span class="kw">if </span>!farmer &amp;&amp; !node {
-                <span class="kw">let </span>prompt = <span class="string">&quot;This will delete both farmer and node (complete wipe). Do you want \
-                              to proceed? [y/n]&quot;</span>;
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser) {
-                    <span class="macro">println!</span>(<span class="string">&quot;Wipe operation aborted, nothing has been deleted...&quot;</span>);
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-                }
+        Commands::Wipe { farmer, node } =&gt; {
+            <span class="kw">if </span>!farmer &amp;&amp; !node {
+                <span class="comment">// if user did not supply any argument, ask for everything
+                </span><span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe farmer (delete plot)? [y/n]: &quot;</span>;
+                <span class="kw">let </span>wipe_farmer =
+                    get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
 
-                farmer = <span class="bool-val">true</span>;
-                node = <span class="bool-val">true</span>;
+                <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe node? [y/n]: &quot;</span>;
+                <span class="kw">let </span>wipe_node =
+                    get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe summary? [y/n]: &quot;</span>;
+                <span class="kw">let </span>wipe_summary =
+                    get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe config? [y/n]: &quot;</span>;
+                <span class="kw">let </span>wipe_config =
+                    get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+                wipe(wipe_farmer, wipe_node, wipe_summary, wipe_config)
+                    .<span class="kw">await
+                    </span>.suggestion(support_message())<span class="question-mark">?</span>;
+            } <span class="kw">else </span>{
+                <span class="comment">// don&#39;t delete summary and config if user supplied flags
+                </span>wipe(farmer, node, <span class="bool-val">false</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
             }
-            wipe(farmer, node).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
     }
 

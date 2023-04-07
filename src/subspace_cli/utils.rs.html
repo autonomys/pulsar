@@ -401,6 +401,7 @@
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
 <a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -627,6 +628,7 @@
 
     <span class="comment">// start logger, after we acquire the bundle identifier
     </span><span class="kw">let </span>tracing_layer = tracing_subscriber::registry()
+        .with(console_subscriber::spawn())
         .with(
             BunyanFormattingLayer::new(<span class="string">&quot;subspace-cli&quot;</span>.to_owned(), file_appender)
                 .and_then(JsonStorageLayer)

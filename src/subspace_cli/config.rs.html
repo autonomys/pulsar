@@ -195,7 +195,14 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, File};
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
 
@@ -391,5 +398,12 @@
     }
 
     <span class="prelude-val">Ok</span>(config)
+}
+
+<span class="doccomment">/// deletes the config file
+</span><span class="attr">#[instrument]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>delete_config() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>config_path = dirs::config_dir().expect(<span class="string">&quot;couldn&#39;t get the default config directory!&quot;</span>);
+    remove_file(config_path).context(<span class="string">&quot;couldn&#39;t delete config file&quot;</span>)
 }
 </code></pre></div></section></main></body></html>
