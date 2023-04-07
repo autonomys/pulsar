@@ -224,6 +224,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 
     // start logger, after we acquire the bundle identifier
     let tracing_layer = tracing_subscriber::registry()
+        .with(console_subscriber::spawn())
         .with(
             BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
