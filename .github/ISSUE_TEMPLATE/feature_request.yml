@@ -1,6 +1,6 @@
-name: 🎁 Feature Request
+name: New Feature Request
 description: If you have a great thing on your mind ⚡️
-title: "🎁 [Feature Request]: "
+title: "[New Feat]: "
 labels: ["enhancement"]
 assignees:
   - ozgunozerk
@@ -8,14 +8,28 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill this feature request!
+        Thank you for taking the time to submit this feature request. We take all feature requests seriously and appreciate your input. Our engineering team will review this request and may follow up with additional clarification questions to better understand how to build this feature.
   - type: textarea
-    id: feature
+    id: summary
     attributes:
-      label: What is the feature you would like to see?
-      description: please explain all the details :)
+      label: Summary
+      description: A two-line recap of the information below. Try to imagine it as a tweet.
     validations:
       required: true
+  - type: textarea
+    id: outcomes
+    attributes:
+      label: Intended Outcomes
+      description: What is the context of this request? What is the issue or complication that needs attention? What is the evidence of this complication? (Adding any evidence highly increases the priority of your request). What is your definition of success when this feature is implemented?
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: How Will it Work?
+      description: By answering this section it's easier to visualize how to build it. What could be a high-level user journey? Alternatively, what would be the high-level acceptance criteria? Do you have links to examples that may help visualize the issue?
+    validations:
+      required: false
   - type: checkboxes
     id: terms
     attributes:
