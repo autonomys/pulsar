@@ -1,4 +1,4 @@
-# This action is to send a release message to our Discord community. 
+# This action is to send a release message to our Discord community.
 # - It will only trigger when our release workflow completes successfully or be triggered manually.
 # - When triggering this manually you will need to select Branch > Tags > Select the release you want to notify. (Generally the release you just updated from a pre-release.)
 name: Send Release Messages
@@ -11,18 +11,18 @@ on:
   workflow_dispatch:
     inputs:
       branch_name:
-        description: 'Please run this workflow from the tag of the release you updated'
+        description: "Please run this workflow from the tag of the release you updated"
         required: true
         type: boolean
       notify_community:
-        description: 'I understand that running this workflow will notify the community of my actions'
+        description: "I understand that running this workflow will notify the community of my actions"
         required: true
         type: boolean
 
 jobs:
   send_message:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'workflow_dispatch' ) || github.event_name == 'workflow_dispatch'
     steps:
       - name: Get release by Tag for manual run
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -51,7 +51,7 @@ jobs:
         with:
           args: |
             ${{ steps.release_info.outputs.tag_name || steps.manual_release_info.outputs.tag_name }} of ${{ github.repository }} has been released!
-            
+
             *Release Name:**
             ```
             ${{ steps.release_info.outputs.name || steps.manual_release_info.outputs.name }}

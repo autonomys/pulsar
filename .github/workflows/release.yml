@@ -7,6 +7,10 @@ on:
     tags:
       - "*"
 
+# Incremental compilation here isn't helpful
+env:
+  CARGO_INCREMENTAL: 0
+
 jobs:
   executables:
     strategy:
@@ -15,11 +19,11 @@ jobs:
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
             suffix: ubuntu-x86_64-v2-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v2'
+            rustflags: "-C target-cpu=x86-64-v2"
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
             suffix: ubuntu-x86_64-v3-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v3'
+            rustflags: "-C target-cpu=x86-64-v3"
           - os: ubuntu-20.04
             target: aarch64-unknown-linux-gnu
             suffix: ubuntu-aarch64-${{ github.ref_name }}
@@ -35,11 +39,11 @@ jobs:
           - os: windows-2022
             target: x86_64-pc-windows-msvc
             suffix: windows-x86_64-v2-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v2'
+            rustflags: "-C target-cpu=x86-64-v2"
           - os: windows-2022
             target: x86_64-pc-windows-msvc
             suffix: windows-x86_64-v3-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v3'
+            rustflags: "-C target-cpu=x86-64-v3"
 
     runs-on: ${{ matrix.build.os }}
 
@@ -68,15 +72,30 @@ jobs:
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
 
-      - name: AArch64 cross-compile packages
+      - name: Linux AArch64 cross-compile packages
         run: sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu gcc-aarch64-linux-gnu libc6-dev-arm64-cross
         if: matrix.build.target == 'aarch64-unknown-linux-gnu'
 
-      - name: Build the executable
+      - name: Build the executable (other than aarch64 linux)
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        if: matrix.build.target != 'aarch64-unknown-linux-gnu'
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin subspace-cli
+
+      # TODO: get rid of this when we have bigger RAM for aarch64 linux
+      - name: Build the executable for aarch64 linux separately
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        if: matrix.build.target == 'aarch64-unknown-linux-gnu'
+        with:
+          command: build
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin subspace-cli
+
+      # TODO: get rid of this when we have bigger RAM for aarch64 linux
+      - name: Rename the aarch64 linux target folder to `production` for compatibility
+        if: matrix.build.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          mv target/${{ matrix.build.target }}/aarch64linux ${{ env.PRODUCTION_TARGET }}
 
       - name: Sign Application (macOS)
         run: |
