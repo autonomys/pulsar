@@ -56,7 +56,7 @@ jobs:
     runs-on: ${{ matrix.build.os }}
 
     env:
-      RUSTFLAGS: ${{ matrix.build.rustflags }} --cfg tokio_unstable
+      RUSTFLAGS: ${{ matrix.build.rustflags }}
 
     steps:
       - name: Checkout

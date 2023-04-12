@@ -15,7 +15,7 @@ use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{Rewards, Summary, SummaryUpdateFields};
-use crate::utils::{install_tracing, raise_fd_limit};
+use crate::utils::{install_tracing, raise_fd_limit, spawn_task};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
@@ -78,19 +78,25 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
 
-        let plotting_sub_handle = tokio::spawn(subscribe_to_plotting_progress(
-            summary.clone(),
-            farmer.clone(),
-            is_initial_progress_finished.clone(),
-            sector_size_bytes,
-        ));
+        let plotting_sub_handle = spawn_task(
+            "plotting_subscriber",
+            subscribe_to_plotting_progress(
+                summary.clone(),
+                farmer.clone(),
+                is_initial_progress_finished.clone(),
+                sector_size_bytes,
+            ),
+        );
 
-        let solution_sub_handle = tokio::spawn(subscribe_to_solutions(
-            summary.clone(),
-            node.clone(),
-            is_initial_progress_finished.clone(),
-            reward_address,
-        ));
+        let solution_sub_handle = spawn_task(
+            "solution_subscriber",
+            subscribe_to_solutions(
+                summary.clone(),
+                node.clone(),
+                is_initial_progress_finished.clone(),
+                reward_address,
+            ),
+        );
 
         Some((plotting_sub_handle, solution_sub_handle))
     } else {
@@ -132,7 +138,7 @@ async fn wait_on_farmer(
     }
 
     // shutting down the farmer and the node
-    let graceful_close_handle = tokio::spawn(async move {
+    let graceful_close_handle = spawn_task("graceful_shutdown_listener", async move {
         // if one of the subscriptions have not aborted yet, wait
         // Plotting might end, so we ignore result here
 

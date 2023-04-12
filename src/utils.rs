@@ -223,8 +223,13 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     };
 
     // start logger, after we acquire the bundle identifier
-    let tracing_layer = tracing_subscriber::registry()
-        .with(console_subscriber::spawn())
+    #[cfg(tokio_unstable)]
+    let tracing_layer = tracing_subscriber::registry().with(console_subscriber::spawn());
+
+    #[cfg(not(tokio_unstable))]
+    let tracing_layer = tracing_subscriber::registry();
+
+    let tracing_layer = tracing_layer
         .with(
             BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
@@ -282,6 +287,28 @@ pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
 
     Ok(toml::from_str(&toml::to_string(&table).context("Failed to deserialize extra options")?)
         .expect("At this stage we know that config is always toml deserializable"))
+}
+
+#[cfg(tokio_unstable)]
+pub(crate) fn spawn_task<F>(name: impl AsRef<str>, future: F) -> tokio::task::JoinHandle<F::Output>
+where
+    F: futures::Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    tokio::task::Builder::new()
+        .name(name.as_ref())
+        .spawn(future)
+        .expect("Spawning task never fails")
+}
+
+#[cfg(not(tokio_unstable))]
+pub(crate) fn spawn_task<F>(name: impl AsRef<str>, future: F) -> tokio::task::JoinHandle<F::Output>
+where
+    F: futures::Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    let _ = name;
+    tokio::task::spawn(future)
 }
 
 #[cfg(test)]
