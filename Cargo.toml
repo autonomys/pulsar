@@ -53,6 +53,11 @@ inherits = "release"
 lto = "fat"
 codegen-units = 1
 
+# TODO: get rid of this when we have bigger RAM for aarch64 linux
+[profile.aarch64linux]
+inherits = "release"
+codegen-units = 1
+
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
 # their debug info might be missing) or to require to be frequently recompiled. We compile these

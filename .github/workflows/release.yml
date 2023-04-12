@@ -7,6 +7,11 @@ on:
     tags:
       - "*"
 
+# Incremental compilation here isn't helpful
+env:
+  CARGO_INCREMENTAL: 0
+
+# TODO: get rid of `production_target` variable when we have bigger RAM for aarch64 linux
 jobs:
   executables:
     strategy:
@@ -14,37 +19,43 @@ jobs:
         build:
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
+            production_target: target/x86_64-unknown-linux-gnu/production
             suffix: ubuntu-x86_64-v2-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v2'
+            rustflags: "-C target-cpu=x86-64-v2"
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
+            production_target: target/x86_64-unknown-linux-gnu/aarch64linux
             suffix: ubuntu-x86_64-v3-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v3'
+            rustflags: "-C target-cpu=x86-64-v3"
           - os: ubuntu-20.04
             target: aarch64-unknown-linux-gnu
+            production_target: target/aarch64-unknown-linux-gnu/production
             suffix: ubuntu-aarch64-${{ github.ref_name }}
             rustflags: "-C linker=aarch64-linux-gnu-gcc"
           - os: macos-12
             target: x86_64-apple-darwin
+            production_target: target/x86_64-apple-darwin/production
             suffix: macos-x86_64-${{ github.ref_name }}
             rustflags: ""
           - os: macos-12
             target: aarch64-apple-darwin
+            production_target: target/aarch64-apple-darwin/production
             suffix: macos-aarch64-${{ github.ref_name }}
             rustflags: ""
           - os: windows-2022
             target: x86_64-pc-windows-msvc
+            production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-v2-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v2'
+            rustflags: "-C target-cpu=x86-64-v2"
           - os: windows-2022
             target: x86_64-pc-windows-msvc
+            production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-v3-${{ github.ref_name }}
-            rustflags: '-C target-cpu=x86-64-v3'
+            rustflags: "-C target-cpu=x86-64-v3"
 
     runs-on: ${{ matrix.build.os }}
 
     env:
-      PRODUCTION_TARGET: target/${{ matrix.build.target }}/production
       RUSTFLAGS: ${{ matrix.build.rustflags }} --cfg tokio_unstable
 
     steps:
@@ -68,15 +79,24 @@ jobs:
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
 
-      - name: AArch64 cross-compile packages
+      - name: Linux AArch64 cross-compile packages
         run: sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu gcc-aarch64-linux-gnu libc6-dev-arm64-cross
         if: matrix.build.target == 'aarch64-unknown-linux-gnu'
 
-      - name: Build the executable
+      - name: Build the executable (other than aarch64 linux)
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        if: matrix.build.target != 'aarch64-unknown-linux-gnu'
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin subspace-cli
+
+      # TODO: get rid of this when we have bigger RAM for aarch64 linux
+      - name: Build the executable for aarch64 linux separately
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        if: matrix.build.target == 'aarch64-unknown-linux-gnu'
+        with:
+          command: build
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin subspace-cli
 
       - name: Sign Application (macOS)
         run: |
@@ -88,15 +108,15 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
           echo "Signing farmer"
-          codesign --force --options=runtime --entitlements .github/workflows/Entitlements.plist -s "${{ secrets.MACOS_IDENTITY }}" --timestamp ${{ env.PRODUCTION_TARGET }}/subspace-cli
+          codesign --force --options=runtime --entitlements .github/workflows/Entitlements.plist -s "${{ secrets.MACOS_IDENTITY }}" --timestamp ${{ matrix.build.production_target }}/subspace-cli
           echo "Creating an archive"
-          mkdir ${{ env.PRODUCTION_TARGET }}/macos-binaries
-          cp ${{ env.PRODUCTION_TARGET }}/subspace-cli ${{ env.PRODUCTION_TARGET }}/macos-binaries
-          ditto -c -k --rsrc ${{ env.PRODUCTION_TARGET }}/macos-binaries subspace-binaries.zip
+          mkdir ${{ matrix.build.production_target }}/macos-binaries
+          cp ${{ matrix.build.production_target }}/subspace-cli ${{ matrix.build.production_target }}/macos-binaries
+          ditto -c -k --rsrc ${{ matrix.build.production_target }}/macos-binaries subspace-binaries.zip
           echo "Notarizing"
           xcrun altool --notarize-app --primary-bundle-id binaries-${{ github.ref_name }} --username "${{ secrets.MACOS_APPLE_ID}}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --file subspace-binaries.zip
           # echo "Stapling farmer"
-          # xcrun stapler staple ${{ env.PRODUCTION_TARGET }}/subspace-cli
+          # xcrun stapler staple ${{ matrix.build.production_target }}/subspace-cli
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
@@ -108,7 +128,7 @@ jobs:
           certificate: "${{ secrets.WINDOWS_CERTIFICATE }}"
           password: "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}"
           certificatesha1: "${{ secrets.WINDOWS_CERTIFICATE_SHA }}"
-          folder: "${{ env.PRODUCTION_TARGET }}"
+          folder: "${{ matrix.build.production_target }}"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
         if: runner.os == 'Windows'
@@ -116,13 +136,13 @@ jobs:
       - name: Prepare executables for uploading (Ubuntu)
         run: |
           mkdir executables
-          mv ${{ env.PRODUCTION_TARGET }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+          mv ${{ matrix.build.production_target }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
         if: runner.os == 'Linux'
 
       - name: Prepare executables for uploading (macOS)
         run: |
           mkdir executables
-          mv ${{ env.PRODUCTION_TARGET }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+          mv ${{ matrix.build.production_target }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
           # Zip it so that signature is not lost
           ditto -c -k --rsrc executables/subspace-cli-${{ matrix.build.suffix }} executables/subspace-cli-${{ matrix.build.suffix }}.zip
           rm executables/subspace-cli-${{ matrix.build.suffix }}
@@ -131,7 +151,7 @@ jobs:
       - name: Prepare executables for uploading (Windows)
         run: |
           mkdir executables
-          move ${{ env.PRODUCTION_TARGET }}/subspace-cli.exe executables/subspace-cli-${{ matrix.build.suffix }}.exe
+          move ${{ matrix.build.production_target }}/subspace-cli.exe executables/subspace-cli-${{ matrix.build.suffix }}.exe
         if: runner.os == 'Windows'
 
       - name: Upload executable to artifacts
