@@ -9,6 +9,9 @@ mod config;
 mod summary;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
