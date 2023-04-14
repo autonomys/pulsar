@@ -2,7 +2,6 @@ use std::fs::{create_dir_all, remove_file, File};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
@@ -10,14 +9,14 @@ use strum_macros::EnumIter;
 use subspace_sdk::farmer::{CacheDescription, Farmer};
 use subspace_sdk::node::domains::core::ConfigBuilder;
 use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
-use subspace_sdk::{chain_spec, PlotDescription, PublicKey};
+use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 use tracing::instrument;
 
 use crate::utils::{cache_directory_getter, provider_storage_dir_getter};
 
 /// defaults for the user config file
-pub(crate) const DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(1);
-pub(crate) const MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(32);
+pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(1);
+pub(crate) const MIN_PLOT_SIZE: ByteSize = ByteSize::mib(32);
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize, Debug)]
@@ -97,8 +96,8 @@ impl NodeConfig {
 #[derive(Deserialize, Serialize, Clone, Derivative, Debug, PartialEq)]
 #[derivative(Default)]
 pub(crate) struct AdvancedFarmerSettings {
-    #[serde(with = "bytesize_serde", default, skip_serializing_if = "crate::utils::is_default")]
-    #[derivative(Default(value = "bytesize::ByteSize::gb(1)"))]
+    #[serde(default, skip_serializing_if = "crate::utils::is_default")]
+    #[derivative(Default(value = "subspace_sdk::ByteSize::gb(1)"))]
     pub(crate) cache_size: ByteSize,
     #[serde(default, flatten)]
     pub(crate) extra: toml::Table,
@@ -109,7 +108,6 @@ pub(crate) struct AdvancedFarmerSettings {
 pub(crate) struct FarmerConfig {
     pub(crate) reward_address: PublicKey,
     pub(crate) plot_directory: PathBuf,
-    #[serde(with = "bytesize_serde")]
     pub(crate) plot_size: ByteSize,
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedFarmerSettings,

@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 
 [dependencies]
@@ -8,7 +8,6 @@ bytesize = "1.1"
 bytesize-serde = "0.2"
 clap = { version = "4.1.1", features = ["derive"] }
 color-eyre = "0.6.2"
-console-subscriber = "0.1"
 derivative = "2.2.0"
 dirs = "4.0.0"
 fdlimit = "0.2"
@@ -31,16 +30,16 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "cc3460710f63a431faba7ea1572eda1971e0c9ee" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "2858928134fd497094986b130c0622904561a5f3" }
 
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
 [target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
 jemallocator = "0.5.0"
 
-[patch.crates-io]
-# TODO: Remove once chacha20poly1305 0.10 appears in libp2p's dependencies
-chacha20poly1305 = { git = "https://github.com/RustCrypto/AEADs", rev = "06dbfb5571687fd1bbe9d3c9b2193a1ba17f8e99" }
+[target.'cfg(tokio_unstable)'.dependencies]
+console-subscriber = "0.1"
 
+[patch.crates-io]
 # TODO: remove once tracing-appender has a new release
 tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
 tracing-appender = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }

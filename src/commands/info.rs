@@ -2,7 +2,7 @@ use color_eyre::eyre::{Context, Result};
 use single_instance::SingleInstance;
 
 use crate::commands::farm::SINGLE_INSTANCE;
-use crate::summary::Summary;
+use crate::summary::{Summary, SummaryFilePointer};
 
 /// implementation of the `init` command.
 ///
@@ -16,45 +16,24 @@ pub(crate) async fn info() -> Result<()> {
         println!("There is no active farmer instance...");
     }
 
-    let summary = Summary::new(None).await?;
+    let summary = SummaryFilePointer::new(None).await?;
+    let Summary {
+        user_space_pledged,
+        farmed_block_count,
+        vote_count,
+        total_rewards,
+        initial_plotting_finished,
+    } = summary.parse_summary().await.context("couldn't parse summary file")?;
 
-    println!(
-        "You have pledged to the network: {}",
-        summary
-            .get_user_space_pledged()
-            .await
-            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
-    );
+    println!("You have pledged to the network: {user_space_pledged}");
 
-    println!(
-        "Farmed {} block(s)",
-        summary
-            .get_farmed_block_count()
-            .await
-            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
-    );
+    println!("Farmed {farmed_block_count} block(s)");
 
-    println!(
-        "Voted on {} block(s)",
-        summary
-            .get_vote_count()
-            .await
-            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
-    );
+    println!("Voted on {vote_count} block(s)");
 
-    println!(
-        "{} SSC(s) earned!",
-        summary
-            .get_total_rewards()
-            .await
-            .context("Couldn't read the summary file, are you sure you ran the farm command?")?
-    );
+    println!("{total_rewards} SSC(s) earned!",);
 
-    if summary
-        .get_initial_plotting_progress()
-        .await
-        .context("Couldn't read the summary file, are you sure you ran the farm command?")?
-    {
+    if initial_plotting_finished {
         println!("Initial plotting is finished!");
     } else {
         println!("Initial plotting is not finished...");

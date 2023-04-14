@@ -3,10 +3,9 @@ use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Context, Result};
 use owo_colors::OwoColorize;
-use subspace_sdk::PublicKey;
+use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
@@ -154,7 +153,7 @@ fn data_dir_getter() -> PathBuf {
 }
 
 /// returns OS specific log directory
-fn custom_log_dir() -> PathBuf {
+pub(crate) fn custom_log_dir() -> PathBuf {
     let id = "subspace-cli";
 
     #[cfg(target_os = "macos")]
@@ -223,8 +222,13 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     };
 
     // start logger, after we acquire the bundle identifier
-    let tracing_layer = tracing_subscriber::registry()
-        .with(console_subscriber::spawn())
+    #[cfg(tokio_unstable)]
+    let tracing_layer = tracing_subscriber::registry().with(console_subscriber::spawn());
+
+    #[cfg(not(tokio_unstable))]
+    let tracing_layer = tracing_subscriber::registry();
+
+    let tracing_layer = tracing_layer
         .with(
             BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
@@ -284,121 +288,24 @@ pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
         .expect("At this stage we know that config is always toml deserializable"))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::ChainConfig;
+#[cfg(tokio_unstable)]
+pub(crate) fn spawn_task<F>(name: impl AsRef<str>, future: F) -> tokio::task::JoinHandle<F::Output>
+where
+    F: futures::Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    tokio::task::Builder::new()
+        .name(name.as_ref())
+        .spawn(future)
+        .expect("Spawning task never fails")
+}
 
-    #[test]
-    fn extra_options() {
-        let cargo_toml = toml::toml! {
-            name = "toml"
-
-            [package]
-            version = "0.4.5"
-            authors = ["Alex Crichton <alex@alexcrichton.com>"]
-        };
-        let extra = toml::toml! {
-            name = "toml-edit"
-            option = true
-
-            [package]
-            version = "0.4.6"
-            badges = ["travis-ci"]
-        };
-        let result = toml::toml! {
-            name = "toml-edit"
-            option = true
-
-            [package]
-            authors = ["Alex Crichton <alex@alexcrichton.com>"]
-            version = "0.4.6"
-            badges = ["travis-ci"]
-        };
-
-        assert_eq!(apply_extra_options(&cargo_toml, extra).unwrap(), result);
-    }
-
-    #[test]
-    fn node_name_checker() {
-        assert!(node_name_parser("     ").is_err());
-        assert!(node_name_parser("root ").is_err());
-        assert!(node_name_parser("ゴゴゴゴ yare yare daze").is_ok());
-    }
-
-    #[test]
-    fn reward_address_checker() {
-        // below address is randomly generated via metamask and then deleted
-        assert!(reward_address_parser("5FWr7j9DW4uy7K1JLmFN2R3eoae35PFDUfW7G42ARpBEUaN7").is_ok());
-        assert!(reward_address_parser("sdjhfskjfhdksjhfsfhskjskdjhfdsfjhk").is_err());
-    }
-
-    #[test]
-    fn size_checker() {
-        assert!(size_parser("800MB").is_ok());
-        assert!(size_parser("103gjie").is_err());
-        assert!(size_parser("12GB").is_ok());
-    }
-
-    #[test]
-    fn chain_checker() {
-        assert!(ChainConfig::from_str("gemini3d").is_ok());
-        assert!(ChainConfig::from_str("devv").is_err());
-    }
-
-    #[test]
-    fn plot_directory_tester() {
-        let plot_path = plot_directory_getter();
-
-        #[cfg(target_os = "macos")]
-        assert!(plot_path.ends_with("Library/Application Support/subspace-cli/plots"));
-
-        #[cfg(target_os = "linux")]
-        assert!(plot_path.ends_with(".local/share/subspace-cli/plots"));
-
-        #[cfg(target_os = "windows")]
-        assert!(plot_path.ends_with("AppData/Roaming/subspace-cli/plots"));
-    }
-
-    #[test]
-    fn cache_directory_tester() {
-        let cache_path = cache_directory_getter();
-
-        #[cfg(target_os = "macos")]
-        assert!(cache_path.ends_with("Library/Application Support/subspace-cli/cache"));
-
-        #[cfg(target_os = "linux")]
-        assert!(cache_path.ends_with(".local/share/subspace-cli/cache"));
-
-        #[cfg(target_os = "windows")]
-        assert!(cache_path.ends_with("AppData/Roaming/subspace-cli/cache"));
-    }
-
-    #[test]
-    fn node_directory_tester() {
-        let node_path = node_directory_getter();
-
-        #[cfg(target_os = "macos")]
-        assert!(node_path.ends_with("Library/Application Support/subspace-cli/node"));
-
-        #[cfg(target_os = "linux")]
-        assert!(node_path.ends_with(".local/share/subspace-cli/node"));
-
-        #[cfg(target_os = "windows")]
-        assert!(node_path.ends_with("AppData/Roaming/subspace-cli/node"));
-    }
-
-    #[test]
-    fn custom_log_dir_test() {
-        let log_path = custom_log_dir();
-
-        #[cfg(target_os = "macos")]
-        assert!(log_path.ends_with("Library/Logs/subspace-cli"));
-
-        #[cfg(target_os = "linux")]
-        assert!(log_path.ends_with(".local/share/subspace-cli/logs"));
-
-        #[cfg(target_os = "windows")]
-        assert!(log_path.ends_with("AppData/Local/subspace-cli/logs"));
-    }
+#[cfg(not(tokio_unstable))]
+pub(crate) fn spawn_task<F>(name: impl AsRef<str>, future: F) -> tokio::task::JoinHandle<F::Output>
+where
+    F: futures::Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    let _ = name;
+    tokio::task::spawn(future)
 }
