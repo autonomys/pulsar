@@ -67,7 +67,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         }
     }
 
-    let summary = SummaryFilePointer::new(Some(farmer_config.clone().plot_size)).await?;
+    let summary = SummaryFilePointer::new(Some(farmer_config.plot_size.clone())).await?;
 
     println!("Starting farmer ...");
     let farmer = Arc::new(farmer_config.build(&node).await?);
