@@ -95,8 +95,8 @@ impl SummaryFilePointer {
                     total_rewards: Rewards(0),
                     user_space_pledged,
                 };
-                let summary_text = toml::to_string(&initialization)
-                    .context("Failed to serialize FarmerSummary")?;
+                let summary_text =
+                    toml::to_string(&initialization).context("Failed to serialize Summary")?;
                 OpenOptions::new()
                     .write(true)
                     .truncate(true)
@@ -140,7 +140,7 @@ impl SummaryFilePointer {
             summary.total_rewards = new_reward;
         }
 
-        let new_summary = toml::to_string(&summary).context("Failed to serialize FarmerSummary")?;
+        let new_summary = toml::to_string(&summary).context("Failed to serialize Summary")?;
 
         let guard = self.file.lock().await;
         OpenOptions::new()
@@ -154,7 +154,7 @@ impl SummaryFilePointer {
         Ok(())
     }
 
-    /// parses the summary file and returns [`FarmerSummary`]
+    /// parses the summary file and returns [`Summary`]
     #[instrument]
     pub(crate) async fn parse_summary(&self) -> Result<Summary> {
         let guard = self.file.lock().await;
