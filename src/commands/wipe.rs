@@ -59,14 +59,20 @@ pub(crate) async fn wipe(
     }
 
     if wipe_summary {
-        delete_summary()?
+        match delete_summary() {
+            Ok(_) => println!("deleted the summary file"),
+            Err(_) => println!("Skipping wiping summary, could not find the file..."),
+        }
     }
 
     if wipe_config {
-        delete_config()?
+        match delete_config() {
+            Ok(_) => println!("deleted the config file"),
+            Err(_) => println!("Skipping wiping config, could not find the file..."),
+        }
     }
 
-    println!("Wipe successful!");
+    println!("Wipe finished!");
 
     Ok(())
 }
