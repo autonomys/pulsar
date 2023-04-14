@@ -3,10 +3,9 @@ use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use bytesize::ByteSize;
 use color_eyre::eyre::{eyre, Context, Result};
 use owo_colors::OwoColorize;
-use subspace_sdk::PublicKey;
+use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};

@@ -7,9 +7,9 @@ use std::fs::remove_file;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use bytesize::ByteSize;
 use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
+use subspace_sdk::ByteSize;
 use tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
@@ -48,7 +48,6 @@ struct FarmerSummary {
     farmed_block_count: u64,
     vote_count: u64,
     total_rewards: Rewards,
-    #[serde(with = "bytesize_serde")]
     user_space_pledged: ByteSize,
 }
 
