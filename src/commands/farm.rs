@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::{Rewards, Summary, SummaryUpdateFields};
+use crate::summary::{Rewards, Summary, SummaryFilePointer, SummaryUpdateFields};
 use crate::utils::{install_tracing, raise_fd_limit, spawn_task};
 
 /// allows us to detect multiple instances of the farmer and act on it
@@ -67,7 +67,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         }
     }
 
-    let summary = Summary::new(Some(farmer_config.clone().plot_size)).await?;
+    let summary = SummaryFilePointer::new(Some(farmer_config.clone().plot_size)).await?;
 
     println!("Starting farmer ...");
     let farmer = Arc::new(farmer_config.build(&node).await?);
@@ -192,7 +192,7 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
 }
 
 async fn subscribe_to_plotting_progress(
-    summary: Summary,
+    summary: SummaryFilePointer,
     farmer: Arc<Farmer>,
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
@@ -237,7 +237,7 @@ async fn subscribe_to_plotting_progress(
 }
 
 async fn subscribe_to_solutions(
-    summary: Summary,
+    summary: SummaryFilePointer,
     node: Arc<Node>,
     is_initial_progress_finished: Arc<AtomicBool>,
     reward_address: PublicKey,
@@ -283,20 +283,8 @@ async fn subscribe_to_solutions(
                                                              // error, we will
                                                              // abandon this
                                                              // mechanism
-        let (farmed_block_count, vote_count, total_rewards) = (
-            summary
-                .get_farmed_block_count()
-                .await
-                .context("couldn't read farmed block count value, summary was corrupted")?,
-            summary
-                .get_vote_count()
-                .await
-                .context("couldn't read vote count value, summary was corrupted")?,
-            summary
-                .get_total_rewards()
-                .await
-                .context("couldn't read total rewards value, summary was corrupted")?,
-        );
+        let Summary { total_rewards, farmed_block_count, vote_count, .. } =
+            summary.parse_summary().await.context("couldn't parse summary")?;
 
         if is_initial_progress_finished.load(Ordering::Relaxed) {
             print!(

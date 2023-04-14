@@ -43,12 +43,12 @@ impl std::fmt::Display for Rewards {
 /// Struct for holding the information of what to be displayed with the `info`
 /// command
 #[derive(Deserialize, Serialize, Debug)]
-struct FarmerSummary {
-    initial_plotting_finished: bool,
-    farmed_block_count: u64,
-    vote_count: u64,
-    total_rewards: Rewards,
-    user_space_pledged: ByteSize,
+pub(crate) struct Summary {
+    pub(crate) initial_plotting_finished: bool,
+    pub(crate) farmed_block_count: u64,
+    pub(crate) vote_count: u64,
+    pub(crate) total_rewards: Rewards,
+    pub(crate) user_space_pledged: ByteSize,
 }
 
 #[derive(Default, Debug)]
@@ -62,14 +62,17 @@ pub(crate) struct SummaryUpdateFields {
 /// utilizing persistent storage for the information to be displayed for the
 /// `info` command
 #[derive(Debug, Clone)]
-pub(crate) struct Summary {
+pub(crate) struct SummaryFilePointer {
     file: Arc<Mutex<PathBuf>>,
 }
 
-impl Summary {
-    /// creates new summary file
+impl SummaryFilePointer {
+    /// creates new summary file pointer
+    ///
+    /// if user_space_pledged is provided, it creates a new summary file
+    /// else, it tries to read the existing summary file
     #[instrument]
-    pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<Summary> {
+    pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFilePointer> {
         let summary_path = summary_path();
         let summary_dir = dirs::data_local_dir()
             .expect("couldn't get the default local data directory!")
@@ -81,10 +84,11 @@ impl Summary {
             // File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
             // in this case, create the file and necessary directories
+            // if file exists, we do nothing
             if File::open(&summary_path).await.is_err() {
                 let _ = create_dir_all(&summary_dir).await;
                 let _ = File::create(&summary_path).await;
-                let initialization = FarmerSummary {
+                let initialization = Summary {
                     initial_plotting_finished: false,
                     farmed_block_count: 0,
                     vote_count: 0,
@@ -103,7 +107,7 @@ impl Summary {
             }
         }
 
-        Ok(Summary { file: Arc::new(Mutex::new(summary_path)) })
+        Ok(SummaryFilePointer { file: Arc::new(Mutex::new(summary_path)) })
     }
 
     /// updates the summary file
@@ -150,47 +154,11 @@ impl Summary {
         Ok(())
     }
 
-    /// retrives how much space has user pledged to the network from the summary
-    /// file
-    #[instrument]
-    pub(crate) async fn get_user_space_pledged(&self) -> Result<ByteSize> {
-        let summary = self.parse_summary().await?;
-        Ok(summary.user_space_pledged)
-    }
-
-    /// retrieves how many blocks have been farmed, from the summary file
-    #[instrument]
-    pub(crate) async fn get_farmed_block_count(&self) -> Result<u64> {
-        let summary = self.parse_summary().await?;
-        Ok(summary.farmed_block_count)
-    }
-
-    /// retrieves the total amount of rewards in SSC
-    #[instrument]
-    pub(crate) async fn get_total_rewards(&self) -> Result<Rewards> {
-        let summary = self.parse_summary().await?;
-        Ok(summary.total_rewards)
-    }
-
-    /// retrives how many votes did farmer issue
-    #[instrument]
-    pub(crate) async fn get_vote_count(&self) -> Result<u64> {
-        let summary = self.parse_summary().await?;
-        Ok(summary.vote_count)
-    }
-
-    /// retrieves the status of the initial plotting, from the summary file
-    #[instrument]
-    pub(crate) async fn get_initial_plotting_progress(&self) -> Result<bool> {
-        let summary = self.parse_summary().await?;
-        Ok(summary.initial_plotting_finished)
-    }
-
     /// parses the summary file and returns [`FarmerSummary`]
     #[instrument]
-    async fn parse_summary(&self) -> Result<FarmerSummary> {
+    pub(crate) async fn parse_summary(&self) -> Result<Summary> {
         let guard = self.file.lock().await;
-        let summary: FarmerSummary = toml::from_str(&read_to_string(&*guard).await?)?;
+        let summary: Summary = toml::from_str(&read_to_string(&*guard).await?)?;
         Ok(summary)
     }
 }
