@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["FIELDS"],"enum":["__Field"],"fn":["delete_summary","summary_path"],"opaque":[""],"static":["CALLSITE","META"],"struct":["FarmerSummary","Rewards","Summary","SummaryUpdateFields","__DeserializeWith","__FieldVisitor","__SerializeWith","__Visitor"]};
+window.SIDEBAR_ITEMS = {"constant":["FIELDS"],"enum":["__Field"],"fn":["delete_summary","summary_path"],"opaque":[""],"static":["CALLSITE","META"],"struct":["Rewards","Summary","SummaryFilePointer","SummaryUpdateFields","__FieldVisitor","__Visitor"]};

@@ -200,13 +200,10 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
 
-<span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{eyre, Report, <span class="prelude-ty">Result</span>, WrapErr};
 <span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -214,14 +211,14 @@
 <span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Farmer};
 <span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
 <span class="kw">use </span>subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
-<span class="kw">use </span>subspace_sdk::{chain_spec, PlotDescription, PublicKey};
+<span class="kw">use </span>subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, provider_storage_dir_getter};
 
 <span class="doccomment">/// defaults for the user config file
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::gb(<span class="number">1</span>);
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: bytesize::ByteSize = bytesize::ByteSize::mib(<span class="number">32</span>);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">1</span>);
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: ByteSize = ByteSize::mib(<span class="number">32</span>);
 
 <span class="doccomment">/// structure of the config toml file
 </span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
@@ -301,8 +298,8 @@
 </span><span class="attr">#[derive(Deserialize, Serialize, Clone, Derivative, Debug, PartialEq)]
 #[derivative(Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedFarmerSettings {
-    <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>, default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
-    #[derivative(Default(value = <span class="string">&quot;bytesize::ByteSize::gb(1)&quot;</span>))]
+    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
+    #[derivative(Default(value = <span class="string">&quot;subspace_sdk::ByteSize::gb(1)&quot;</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) cache_size: ByteSize,
     <span class="attr">#[serde(default, flatten)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) extra: toml::Table,
@@ -313,8 +310,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FarmerConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) reward_address: PublicKey,
     <span class="kw">pub</span>(<span class="kw">crate</span>) plot_directory: PathBuf,
-    <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
     <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedFarmerSettings,
 }

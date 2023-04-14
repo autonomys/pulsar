@@ -176,39 +176,6 @@
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -218,9 +185,9 @@
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>bytesize::ByteSize;
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>subspace_sdk::ByteSize;
 <span class="kw">use </span>tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
 <span class="kw">use </span>tokio::io::AsyncWriteExt;
 <span class="kw">use </span>tokio::sync::Mutex;
@@ -254,13 +221,12 @@
 <span class="doccomment">/// Struct for holding the information of what to be displayed with the `info`
 /// command
 </span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
-</span><span class="kw">struct </span>FarmerSummary {
-    initial_plotting_finished: bool,
-    farmed_block_count: u64,
-    vote_count: u64,
-    total_rewards: Rewards,
-    <span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)]
-    </span>user_space_pledged: ByteSize,
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) initial_plotting_finished: bool,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) farmed_block_count: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) vote_count: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) total_rewards: Rewards,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) user_space_pledged: ByteSize,
 }
 
 <span class="attr">#[derive(Default, Debug)]
@@ -274,14 +240,17 @@
 <span class="doccomment">/// utilizing persistent storage for the information to be displayed for the
 /// `info` command
 </span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryFilePointer {
     file: Arc&lt;Mutex&lt;PathBuf&gt;&gt;,
 }
 
-<span class="kw">impl </span>Summary {
-    <span class="doccomment">/// creates new summary file
+<span class="kw">impl </span>SummaryFilePointer {
+    <span class="doccomment">/// creates new summary file pointer
+    ///
+    /// if user_space_pledged is provided, it creates a new summary file
+    /// else, it tries to read the existing summary file
     </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(user_space_pledged: <span class="prelude-ty">Option</span>&lt;ByteSize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(user_space_pledged: <span class="prelude-ty">Option</span>&lt;ByteSize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SummaryFilePointer&gt; {
         <span class="kw">let </span>summary_path = summary_path();
         <span class="kw">let </span>summary_dir = dirs::data_local_dir()
             .expect(<span class="string">&quot;couldn&#39;t get the default local data directory!&quot;</span>)
@@ -293,18 +262,19 @@
             <span class="comment">// File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
             // in this case, create the file and necessary directories
+            // if file exists, we do nothing
             </span><span class="kw">if </span>File::open(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>.is_err() {
                 <span class="kw">let _ </span>= create_dir_all(<span class="kw-2">&amp;</span>summary_dir).<span class="kw">await</span>;
                 <span class="kw">let _ </span>= File::create(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>;
-                <span class="kw">let </span>initialization = FarmerSummary {
+                <span class="kw">let </span>initialization = Summary {
                     initial_plotting_finished: <span class="bool-val">false</span>,
                     farmed_block_count: <span class="number">0</span>,
                     vote_count: <span class="number">0</span>,
                     total_rewards: Rewards(<span class="number">0</span>),
                     user_space_pledged,
                 };
-                <span class="kw">let </span>summary_text = toml::to_string(<span class="kw-2">&amp;</span>initialization)
-                    .context(<span class="string">&quot;Failed to serialize FarmerSummary&quot;</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span>summary_text =
+                    toml::to_string(<span class="kw-2">&amp;</span>initialization).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
                 OpenOptions::new()
                     .write(<span class="bool-val">true</span>)
                     .truncate(<span class="bool-val">true</span>)
@@ -315,7 +285,7 @@
             }
         }
 
-        <span class="prelude-val">Ok</span>(Summary { file: Arc::new(Mutex::new(summary_path)) })
+        <span class="prelude-val">Ok</span>(SummaryFilePointer { file: Arc::new(Mutex::new(summary_path)) })
     }
 
     <span class="doccomment">/// updates the summary file
@@ -348,7 +318,7 @@
             summary.total_rewards = new_reward;
         }
 
-        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize FarmerSummary&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
         OpenOptions::new()
@@ -362,47 +332,11 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// retrives how much space has user pledged to the network from the summary
-    /// file
+    <span class="doccomment">/// parses the summary file and returns [`Summary`]
     </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_user_space_pledged(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ByteSize&gt; {
-        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(summary.user_space_pledged)
-    }
-
-    <span class="doccomment">/// retrieves how many blocks have been farmed, from the summary file
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_farmed_block_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
-        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(summary.farmed_block_count)
-    }
-
-    <span class="doccomment">/// retrieves the total amount of rewards in SSC
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_total_rewards(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Rewards&gt; {
-        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(summary.total_rewards)
-    }
-
-    <span class="doccomment">/// retrives how many votes did farmer issue
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_vote_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
-        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(summary.vote_count)
-    }
-
-    <span class="doccomment">/// retrieves the status of the initial plotting, from the summary file
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>get_initial_plotting_progress(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(summary.initial_plotting_finished)
-    }
-
-    <span class="doccomment">/// parses the summary file and returns [`FarmerSummary`]
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">async fn </span>parse_summary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;FarmerSummary&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>parse_summary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
         <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>summary: FarmerSummary = toml::from_str(<span class="kw-2">&amp;</span>read_to_string(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>summary: Summary = toml::from_str(<span class="kw-2">&amp;</span>read_to_string(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(summary)
     }
 }
