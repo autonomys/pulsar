@@ -279,12 +279,8 @@ async fn subscribe_to_solutions(
                 summary_update_values.is_new_block_farmed = true;
             }
         }
-        let _ = summary.update(summary_update_values).await; // ignore the
-                                                             // error, we will
-                                                             // abandon this
-                                                             // mechanism
         let Summary { total_rewards, farmed_block_count, vote_count, .. } =
-            summary.parse_summary().await.context("couldn't parse summary")?;
+            summary.update(summary_update_values).await.context("couldn't update summary")?;
 
         if is_initial_progress_finished.load(Ordering::Relaxed) {
             print!(
