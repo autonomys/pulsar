@@ -60,7 +60,8 @@ fn get_config_from_user_inputs() -> Result<Config> {
     let default_plot_loc = plot_directory_getter();
     let plot_directory = get_user_input(
         &format!(
-            "Specify a plot location (press enter to use the default: `{default_plot_loc:?}`): ",
+            "Specify a path for storing plot files (press enter to use the default: \
+             `{default_plot_loc:?}`): ",
         ),
         Some(default_plot_loc),
         directory_parser,
@@ -69,7 +70,8 @@ fn get_config_from_user_inputs() -> Result<Config> {
     let default_node_loc = node_directory_getter();
     let node_directory = get_user_input(
         &format!(
-            "Specify a node location (press enter to use the default: `{default_node_loc:?}`): ",
+            "Specify a path for storing node files (press enter to use the default: \
+             `{default_node_loc:?}`): ",
         ),
         Some(default_node_loc),
         directory_parser,
