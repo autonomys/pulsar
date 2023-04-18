@@ -200,6 +200,7 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
@@ -209,7 +210,7 @@
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>strum_macros::EnumIter;
 <span class="kw">use </span>subspace_sdk::farmer::{CacheDescription, Farmer};
-<span class="kw">use </span>subspace_sdk::node::domains::core::ConfigBuilder;
+<span class="kw">use </span>subspace_sdk::node::domains::core_payments::ConfigBuilder;
 <span class="kw">use </span>subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
 <span class="kw">use </span>subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 <span class="kw">use </span>tracing::instrument;
@@ -273,8 +274,9 @@
         };
 
         <span class="kw">if </span>executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+            node = node.system_domain(
+                domains::ConfigBuilder::new().core_payments(ConfigBuilder::new().build()),
+            );
         }
 
         <span class="kw">if </span>is_verbose {
