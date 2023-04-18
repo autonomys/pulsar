@@ -9,8 +9,8 @@ use crate::config::{
     NodeConfig, DEFAULT_PLOT_SIZE,
 };
 use crate::utils::{
-    get_user_input, node_directory_getter, node_name_parser, plot_directory_getter,
-    plot_directory_parser, print_ascii_art, print_run_executable_command, print_version,
+    directory_parser, get_user_input, node_directory_getter, node_name_parser,
+    plot_directory_getter, print_ascii_art, print_run_executable_command, print_version,
     reward_address_parser, size_parser,
 };
 
@@ -60,10 +60,21 @@ fn get_config_from_user_inputs() -> Result<Config> {
     let default_plot_loc = plot_directory_getter();
     let plot_directory = get_user_input(
         &format!(
-            "Specify a plot location (press enter to use the default: `{default_plot_loc:?}`): ",
+            "Specify a path for storing plot files (press enter to use the default: \
+             `{default_plot_loc:?}`): ",
         ),
         Some(default_plot_loc),
-        plot_directory_parser,
+        directory_parser,
+    )?;
+
+    let default_node_loc = node_directory_getter();
+    let node_directory = get_user_input(
+        &format!(
+            "Specify a path for storing node files (press enter to use the default: \
+             `{default_node_loc:?}`): ",
+        ),
+        Some(default_node_loc),
+        directory_parser,
     )?;
 
     // get plot size
@@ -96,7 +107,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     };
     let node_config = NodeConfig {
         name: node_name,
-        directory: node_directory_getter(),
+        directory: node_directory,
         advanced: AdvancedNodeSettings::default(),
     };
 

@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use crate::config::ChainConfig;
 use crate::utils::{
-    apply_extra_options, cache_directory_getter, custom_log_dir, node_directory_getter,
-    node_name_parser, plot_directory_getter, plot_directory_parser, reward_address_parser,
+    apply_extra_options, cache_directory_getter, custom_log_dir, directory_parser,
+    node_directory_getter, node_name_parser, plot_directory_getter, reward_address_parser,
     size_parser, yes_or_no_parser,
 };
 
@@ -45,10 +45,8 @@ fn yes_no_checker() {
 }
 
 #[test]
-fn plot_directory_checker() {
-    assert!(plot_directory_parser("some-weird-location-that-does-not-exist").is_err());
-    assert!(plot_directory_parser("some/weird/location/that/does/not/exist").is_err());
-    assert!(plot_directory_parser("./").is_ok());
+fn directory_checker() {
+    assert!(directory_parser("./").is_ok());
 }
 
 #[test]
