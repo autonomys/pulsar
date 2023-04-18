@@ -309,6 +309,13 @@
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -411,11 +418,18 @@
 }
 
 <span class="doccomment">/// the provided path should be an existing directory
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>plot_directory_parser(location: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>directory_parser(location: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf&gt; {
     <span class="kw">let </span>path = Path::new(location).to_owned();
     <span class="kw">if </span>path.is_dir() {
         <span class="prelude-val">Ok</span>(path)
     } <span class="kw">else </span>{
+        <span class="comment">// prompt the user for creation of the given path
+        </span><span class="kw">let </span>prompt = <span class="string">&quot;The given path does not exist. Do you want to create it? (y/n): &quot;</span>;
+        <span class="kw">let </span>permission = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">if </span>permission {
+            create_dir_all(<span class="kw-2">&amp;</span>path)<span class="question-mark">?</span>;
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
+        }
         <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;supplied directory does not exist! Please enter a valid path.&quot;</span>))
     }
 }
