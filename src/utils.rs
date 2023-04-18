@@ -100,11 +100,18 @@ pub(crate) fn reward_address_parser(address: &str) -> Result<PublicKey> {
 }
 
 /// the provided path should be an existing directory
-pub(crate) fn plot_directory_parser(location: &str) -> Result<PathBuf> {
+pub(crate) fn directory_parser(location: &str) -> Result<PathBuf> {
     let path = Path::new(location).to_owned();
     if path.is_dir() {
         Ok(path)
     } else {
+        // prompt the user for creation of the given path
+        let prompt = "The given path does not exist. Do you want to create it? (y/n): ";
+        let permission = get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+        if permission {
+            create_dir_all(&path)?;
+            return Ok(path);
+        }
         Err(eyre!("supplied directory does not exist! Please enter a valid path."))
     }
 }
