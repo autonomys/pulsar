@@ -342,10 +342,6 @@
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -627,12 +623,8 @@
                 summary_update_values.is_new_block_farmed = <span class="bool-val">true</span>;
             }
         }
-        <span class="kw">let _ </span>= summary.update(summary_update_values).<span class="kw">await</span>; <span class="comment">// ignore the
-                                                             // error, we will
-                                                             // abandon this
-                                                             // mechanism
-        </span><span class="kw">let </span>Summary { total_rewards, farmed_block_count, vote_count, .. } =
-            summary.parse_summary().<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t parse summary&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>Summary { total_rewards, farmed_block_count, vote_count, .. } =
+            summary.update(summary_update_values).<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t update summary&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
             <span class="macro">print!</span>(

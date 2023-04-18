@@ -172,10 +172,6 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -257,7 +253,7 @@
             .join(<span class="string">&quot;subspace-cli&quot;</span>);
 
         <span class="comment">// providing `Some` value for `user_space_pledged` means, we are creating a new
-        // file
+        // file, so, first check if the file exists to not erase its content
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(user_space_pledged) = user_space_pledged {
             <span class="comment">// File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
@@ -288,7 +284,7 @@
         <span class="prelude-val">Ok</span>(SummaryFilePointer { file: Arc::new(Mutex::new(summary_path)) })
     }
 
-    <span class="doccomment">/// updates the summary file
+    <span class="doccomment">/// updates the summary file, and returns the content of the new summary
     ///
     /// this function will be called by the farmer when
     /// the status of the `plotting_finished`
@@ -302,7 +298,7 @@
             is_new_vote,
             maybe_new_reward,
         }: SummaryUpdateFields,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>is_plotting_finished {
@@ -321,15 +317,11 @@
         <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
-        OpenOptions::new()
-            .write(<span class="bool-val">true</span>)
-            .truncate(<span class="bool-val">true</span>)
-            .open(<span class="kw-2">&amp;*</span>guard)
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.write_all(new_summary.as_bytes())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer = OpenOptions::new().write(<span class="bool-val">true</span>).truncate(<span class="bool-val">true</span>).open(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>;
+        buffer.write_all(new_summary.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
+        buffer.flush().<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(summary)
     }
 
     <span class="doccomment">/// parses the summary file and returns [`Summary`]
