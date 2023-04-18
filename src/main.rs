@@ -20,7 +20,7 @@ use color_eyre::Help;
 use owo_colors::OwoColorize;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use termion::cursor;
+use termion::cursor::{self, DetectCursorPos};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
@@ -54,9 +54,6 @@ struct Cli {
 /// Available commands for the CLI
 #[derive(Debug, Subcommand, EnumIter)]
 enum Commands {
-    #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
-                       and status of initial plotting)")]
-    Info,
     #[command(about = "initializes the config file required for the farming")]
     Init,
     #[command(about = "starting the farming process (along with node in the background)")]
@@ -73,6 +70,9 @@ enum Commands {
         #[arg(long, action)]
         node: bool,
     },
+    #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
+                       and status of initial plotting)")]
+    Info,
 }
 
 #[tokio::main]
@@ -111,24 +111,27 @@ async fn arrow_key_mode() -> Result<(), Report> {
     // Selected option index
     let mut selected = 0;
 
+    // get the current location of the cursor
+    let (_, y) = stdout.cursor_pos()?;
+
     // Print options to the terminal
-    print_options(&mut stdout, &options, selected)?;
+    print_options(&mut stdout, &options, selected, y)?;
 
     // Process input events
     for c in io::stdin().keys() {
-        match c.unwrap() {
+        match c.context("failed to read input")? {
             Key::Up | Key::Char('k') => {
                 // Move selection up
                 if selected > 0 {
                     selected -= 1;
-                    print_options(&mut stdout, &options, selected)?;
+                    print_options(&mut stdout, &options, selected, y)?;
                 }
             }
             Key::Down | Key::Char('j') => {
                 // Move selection down
                 if selected < options.len() - 1 {
                     selected += 1;
-                    print_options(&mut stdout, &options, selected)?;
+                    print_options(&mut stdout, &options, selected, y)?;
                 }
             }
             Key::Char('\n') => {
@@ -146,12 +149,9 @@ async fn arrow_key_mode() -> Result<(), Report> {
 
     match selected {
         0 => {
-            info().await.suggestion(support_message())?;
-        }
-        1 => {
             init().suggestion(support_message())?;
         }
-        2 => {
+        1 => {
             let prompt = "Do you want to initialize farmer in verbose mode? [y/n]: ";
             let verbose =
                 get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
@@ -162,8 +162,11 @@ async fn arrow_key_mode() -> Result<(), Report> {
 
             farm(verbose, executor).await.suggestion(support_message())?;
         }
-        3 => {
+        2 => {
             wipe_config(false, false).await.suggestion(support_message())?;
+        }
+        3 => {
+            info().await.suggestion(support_message())?;
         }
         _ => {
             unreachable!("this number must stay in [0-4]")
@@ -178,25 +181,22 @@ fn print_options(
     stdout: &mut io::StdoutLock,
     options: &[String],
     selected: usize,
+    position: u16,
 ) -> io::Result<()> {
-    // Clear the screen
-    cursor::Goto(1, 6);
-    write!(stdout, "{}", termion::clear::AfterCursor)?;
-
     writeln!(
         stdout,
         "{}Please select an option below using arrow keys (or `j` and `k`):\n",
-        cursor::Goto(1, 6)
+        cursor::Goto(1, position + 2)
     )?;
 
     // Print options to the terminal
     for (i, option) in options.iter().enumerate() {
         if i == selected {
-            let output = format!(" > {}", option);
-            writeln!(stdout, "{} {}", cursor::Goto(1, (i + 9) as u16), output.green())?;
+            let output = format!(" > {} ", option);
+            writeln!(stdout, "{} {}", cursor::Goto(1, i as u16 + position + 4), output.green())?;
         } else {
-            let output = format!("  {}", option);
-            writeln!(stdout, "{} {}", cursor::Goto(1, (i + 9) as u16), output)?;
+            let output = format!("  {} ", option);
+            writeln!(stdout, "{} {}", cursor::Goto(1, i as u16 + position + 4), output)?;
         }
     }
     write!(stdout, "\n\r")?;
