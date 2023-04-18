@@ -79,7 +79,7 @@ impl SummaryFilePointer {
             .join("subspace-cli");
 
         // providing `Some` value for `user_space_pledged` means, we are creating a new
-        // file
+        // file, so, first check if the file exists to not erase its content
         if let Some(user_space_pledged) = user_space_pledged {
             // File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
@@ -110,7 +110,7 @@ impl SummaryFilePointer {
         Ok(SummaryFilePointer { file: Arc::new(Mutex::new(summary_path)) })
     }
 
-    /// updates the summary file
+    /// updates the summary file, and returns the content of the new summary
     ///
     /// this function will be called by the farmer when
     /// the status of the `plotting_finished`
@@ -124,7 +124,7 @@ impl SummaryFilePointer {
             is_new_vote,
             maybe_new_reward,
         }: SummaryUpdateFields,
-    ) -> Result<()> {
+    ) -> Result<Summary> {
         let mut summary = self.parse_summary().await?;
 
         if is_plotting_finished {
@@ -143,15 +143,11 @@ impl SummaryFilePointer {
         let new_summary = toml::to_string(&summary).context("Failed to serialize Summary")?;
 
         let guard = self.file.lock().await;
-        OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(&*guard)
-            .await?
-            .write_all(new_summary.as_bytes())
-            .await?;
+        let mut buffer = OpenOptions::new().write(true).truncate(true).open(&*guard).await?;
+        buffer.write_all(new_summary.as_bytes()).await?;
+        buffer.flush().await?;
 
-        Ok(())
+        Ok(summary)
     }
 
     /// parses the summary file and returns [`Summary`]
