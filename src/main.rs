@@ -12,15 +12,24 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
+use std::io::{self, Write};
+
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
+use owo_colors::OwoColorize;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+use termion::cursor;
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
 use tracing::instrument;
 
 use crate::commands::farm::farm;
 use crate::commands::info::info;
 use crate::commands::init::init;
-use crate::commands::wipe::wipe;
+use crate::commands::wipe::wipe_config;
 use crate::utils::{get_user_input, support_message, yes_or_no_parser};
 
 #[cfg(all(
@@ -33,18 +42,17 @@ use crate::utils::{get_user_input, support_message, yes_or_no_parser};
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 #[derive(Debug, Parser)]
-#[command(subcommand_required = true)]
-#[command(arg_required_else_help = true)]
+#[command(subcommand_required = false)]
 #[command(name = "subspace")]
 #[command(about = "Subspace CLI", long_about = None)]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 /// Available commands for the CLI
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Subcommand, EnumIter)]
 enum Commands {
     #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)")]
@@ -72,43 +80,136 @@ enum Commands {
 async fn main() -> Result<(), Report> {
     let args = Cli::parse();
     match args.command {
-        Commands::Info => {
-            info().await?;
+        Some(Commands::Info) => {
+            info().await.suggestion(support_message())?;
         }
-        Commands::Init => {
+        Some(Commands::Init) => {
             init().suggestion(support_message())?;
         }
-        Commands::Farm { verbose, executor } => {
+        Some(Commands::Farm { verbose, executor }) => {
             farm(verbose, executor).await.suggestion(support_message())?;
         }
-        Commands::Wipe { farmer, node } => {
-            if !farmer && !node {
-                // if user did not supply any argument, ask for everything
-                let prompt = "Do you want to wipe farmer (delete plot)? [y/n]: ";
-                let wipe_farmer =
-                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
-
-                let prompt = "Do you want to wipe node? [y/n]: ";
-                let wipe_node =
-                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
-
-                let prompt = "Do you want to wipe summary? [y/n]: ";
-                let wipe_summary =
-                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
-
-                let prompt = "Do you want to wipe config? [y/n]: ";
-                let wipe_config =
-                    get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
-
-                wipe(wipe_farmer, wipe_node, wipe_summary, wipe_config)
-                    .await
-                    .suggestion(support_message())?;
-            } else {
-                // don't delete summary and config if user supplied flags
-                wipe(farmer, node, false, false).await.suggestion(support_message())?;
-            }
+        Some(Commands::Wipe { farmer, node }) => {
+            wipe_config(farmer, node).await.suggestion(support_message())?;
+        }
+        None => {
+            arrow_key_mode().await.suggestion(support_message())?;
         }
     }
 
     Ok(())
+}
+
+#[instrument]
+async fn arrow_key_mode() -> Result<(), Report> {
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock().into_raw_mode()?;
+
+    // Options to be displayed
+    let options = Commands::iter().map(|command| command.to_string()).collect::<Vec<_>>();
+
+    // Selected option index
+    let mut selected = 0;
+
+    // Print options to the terminal
+    print_options(&mut stdout, &options, selected)?;
+
+    // Process input events
+    for c in io::stdin().keys() {
+        match c.unwrap() {
+            Key::Up | Key::Char('k') => {
+                // Move selection up
+                if selected > 0 {
+                    selected -= 1;
+                    print_options(&mut stdout, &options, selected)?;
+                }
+            }
+            Key::Down | Key::Char('j') => {
+                // Move selection down
+                if selected < options.len() - 1 {
+                    selected += 1;
+                    print_options(&mut stdout, &options, selected)?;
+                }
+            }
+            Key::Char('\n') => {
+                stdout.suspend_raw_mode()?;
+                break;
+            }
+            Key::Ctrl('c') => {
+                return Ok(());
+            }
+            _ => {}
+        }
+    }
+
+    stdout.suspend_raw_mode()?;
+
+    match selected {
+        0 => {
+            info().await.suggestion(support_message())?;
+        }
+        1 => {
+            init().suggestion(support_message())?;
+        }
+        2 => {
+            let prompt = "Do you want to initialize farmer in verbose mode? [y/n]: ";
+            let verbose =
+                get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+            let prompt = "Do you want to be an executor? [y/n]: ";
+            let executor =
+                get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+            farm(verbose, executor).await.suggestion(support_message())?;
+        }
+        3 => {
+            wipe_config(false, false).await.suggestion(support_message())?;
+        }
+        _ => {
+            unreachable!("this number must stay in [0-4]")
+        }
+    }
+
+    Ok(())
+}
+
+// Helper function to print options to the terminal
+fn print_options(
+    stdout: &mut io::StdoutLock,
+    options: &[String],
+    selected: usize,
+) -> io::Result<()> {
+    // Clear the screen
+    cursor::Goto(1, 6);
+    write!(stdout, "{}", termion::clear::AfterCursor)?;
+
+    writeln!(
+        stdout,
+        "{}Please select an option below using arrow keys (or `j` and `k`):\n",
+        cursor::Goto(1, 6)
+    )?;
+
+    // Print options to the terminal
+    for (i, option) in options.iter().enumerate() {
+        if i == selected {
+            let output = format!(" > {}", option);
+            writeln!(stdout, "{} {}", cursor::Goto(1, (i + 9) as u16), output.green())?;
+        } else {
+            let output = format!("  {}", option);
+            writeln!(stdout, "{} {}", cursor::Goto(1, (i + 9) as u16), output)?;
+        }
+    }
+    write!(stdout, "\n\r")?;
+    stdout.flush()
+}
+
+impl std::fmt::Display for Commands {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Commands::Farm { verbose: _, executor: _ } => write!(f, "farm"),
+            Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
+            Commands::Info => write!(f, "info"),
+            Commands::Init => write!(f, "init"),
+        }
+    }
 }
