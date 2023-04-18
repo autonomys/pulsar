@@ -7,7 +7,7 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::{CacheDescription, Farmer};
-use subspace_sdk::node::domains::core::ConfigBuilder;
+use subspace_sdk::node::domains::core_payments::ConfigBuilder;
 use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
 use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 use tracing::instrument;
@@ -71,8 +71,9 @@ impl NodeConfig {
         };
 
         if executor {
-            node = node
-                .system_domain(domains::ConfigBuilder::new().core(ConfigBuilder::new().build()));
+            node = node.system_domain(
+                domains::ConfigBuilder::new().core_payments(ConfigBuilder::new().build()),
+            );
         }
 
         if is_verbose {
