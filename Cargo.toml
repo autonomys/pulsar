@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.3.1"
+version = "0.3.3"
 edition = "2021"
 
 [dependencies]
@@ -30,7 +30,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "2858928134fd497094986b130c0622904561a5f3" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "3bccdb82af5dd5de7d84867cbb3c7ad5b316a13e" }
 termion = "2.0.1"
 
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
