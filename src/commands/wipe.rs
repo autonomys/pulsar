@@ -1,16 +1,50 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Context, Result};
 use owo_colors::OwoColorize;
 use subspace_sdk::farmer::CacheDescription;
 use subspace_sdk::{Node, PlotDescription};
 
 use crate::config::{delete_config, parse_config};
 use crate::summary::delete_summary;
-use crate::utils::{cache_directory_getter, node_directory_getter, plot_directory_getter};
+use crate::utils::{
+    cache_directory_getter, get_user_input, node_directory_getter, plot_directory_getter,
+    yes_or_no_parser,
+};
+
+/// wipe configurator
+///
+/// sets the `farmer`, `node`, `summary`, and `config` flags for the `wipe`
+/// command
+pub(crate) async fn wipe_config(farmer: bool, node: bool) -> Result<()> {
+    if !farmer && !node {
+        // if user did not supply any argument, ask for everything
+        let prompt = "Do you want to wipe farmer (delete plot)? [y/n]: ";
+        let wipe_farmer =
+            get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+        let prompt = "Do you want to wipe node? [y/n]: ";
+        let wipe_node = get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+        let prompt = "Do you want to wipe summary? [y/n]: ";
+        let wipe_summary =
+            get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+        let prompt = "Do you want to wipe config? [y/n]: ";
+        let wipe_config =
+            get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
+
+        wipe(wipe_farmer, wipe_node, wipe_summary, wipe_config).await?;
+    } else {
+        // don't delete summary and config if user supplied flags
+        wipe(farmer, node, false, false).await?;
+    }
+
+    Ok(())
+}
 
 /// implementation of the `wipe` command
 ///
 /// can wipe farmer, node, summary and plot
-pub(crate) async fn wipe(
+async fn wipe(
     wipe_farmer: bool,
     wipe_node: bool,
     wipe_summary: bool,

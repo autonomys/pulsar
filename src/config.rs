@@ -1,6 +1,5 @@
 use std::fs::{create_dir_all, remove_file, File};
 use std::path::PathBuf;
-use std::str::FromStr;
 
 use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
@@ -140,7 +139,7 @@ pub(crate) enum ChainConfig {
     DevNet,
 }
 
-impl FromStr for ChainConfig {
+impl std::str::FromStr for ChainConfig {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

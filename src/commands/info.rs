@@ -23,7 +23,10 @@ pub(crate) async fn info() -> Result<()> {
         vote_count,
         total_rewards,
         initial_plotting_finished,
-    } = summary.parse_summary().await.context("couldn't parse summary file")?;
+    } = summary
+        .parse_summary()
+        .await
+        .context("couldn't parse summary file, are you sure you have ran `farm` command?")?;
 
     println!("You have pledged to the network: {user_space_pledged}");
 
