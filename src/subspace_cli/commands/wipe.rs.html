@@ -76,19 +76,87 @@
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
-</pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::Result;
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+</pre><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>owo_colors::OwoColorize;
 <span class="kw">use </span>subspace_sdk::farmer::CacheDescription;
 <span class="kw">use </span>subspace_sdk::{Node, PlotDescription};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{delete_config, parse_config};
 <span class="kw">use </span><span class="kw">crate</span>::summary::delete_summary;
-<span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, node_directory_getter, plot_directory_getter};
+<span class="kw">use </span><span class="kw">crate</span>::utils::{
+    cache_directory_getter, get_user_input, node_directory_getter, plot_directory_getter,
+    yes_or_no_parser,
+};
+
+<span class="doccomment">/// wipe configurator
+///
+/// sets the `farmer`, `node`, `summary`, and `config` flags for the `wipe`
+/// command
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>wipe_config(farmer: bool, node: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">if </span>!farmer &amp;&amp; !node {
+        <span class="comment">// if user did not supply any argument, ask for everything
+        </span><span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe farmer (delete plot)? [y/n]: &quot;</span>;
+        <span class="kw">let </span>wipe_farmer =
+            get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe node? [y/n]: &quot;</span>;
+        <span class="kw">let </span>wipe_node = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe summary? [y/n]: &quot;</span>;
+        <span class="kw">let </span>wipe_summary =
+            get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe config? [y/n]: &quot;</span>;
+        <span class="kw">let </span>wipe_config =
+            get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+        wipe(wipe_farmer, wipe_node, wipe_summary, wipe_config).<span class="kw">await</span><span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="comment">// don&#39;t delete summary and config if user supplied flags
+        </span>wipe(farmer, node, <span class="bool-val">false</span>, <span class="bool-val">false</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+    }
+
+    <span class="prelude-val">Ok</span>(())
+}
 
 <span class="doccomment">/// implementation of the `wipe` command
 ///
 /// can wipe farmer, node, summary and plot
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>wipe(
+</span><span class="kw">async fn </span>wipe(
     wipe_farmer: bool,
     wipe_node: bool,
     wipe_summary: bool,

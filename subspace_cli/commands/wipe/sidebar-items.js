@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["wipe"],"opaque":[""]};
+window.SIDEBAR_ITEMS = {"fn":["wipe","wipe_config"],"opaque":[""]};
