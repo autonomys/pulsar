@@ -30,7 +30,7 @@ use crate::commands::farm::farm;
 use crate::commands::info::info;
 use crate::commands::init::init;
 use crate::commands::wipe::wipe_config;
-use crate::utils::{get_user_input, support_message, yes_or_no_parser};
+use crate::utils::{get_user_input, open_log_dir, support_message, yes_or_no_parser};
 
 #[cfg(all(
     target_arch = "x86_64",
@@ -73,6 +73,7 @@ enum Commands {
     #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)")]
     Info,
+    OpenLogs,
 }
 
 #[tokio::main]
@@ -91,6 +92,9 @@ async fn main() -> Result<(), Report> {
         }
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
+        }
+        Some(Commands::OpenLogs) => {
+            open_log_dir().suggestion(support_message())?;
         }
         None => {
             arrow_key_mode().await.suggestion(support_message())?;
@@ -168,6 +172,9 @@ async fn arrow_key_mode() -> Result<(), Report> {
         3 => {
             info().await.suggestion(support_message())?;
         }
+        4 => {
+            open_log_dir().suggestion(support_message())?;
+        }
         _ => {
             unreachable!("this number must stay in [0-4]")
         }
@@ -210,6 +217,7 @@ impl std::fmt::Display for Commands {
             Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
+            Commands::OpenLogs => write!(f, "open logs directory"),
         }
     }
 }

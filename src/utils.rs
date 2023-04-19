@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use color_eyre::eyre::{eyre, Context, Result};
 use futures::prelude::*;
+use open;
 use owo_colors::OwoColorize;
 use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
@@ -177,6 +178,12 @@ pub(crate) fn custom_log_dir() -> PathBuf {
     // evaluates to: `C:/Users/Username/AppData/Local/${id}/logs/
 
     path.expect("Could not resolve custom log directory path!")
+}
+
+/// opens log directory
+pub(crate) fn open_log_dir() -> Result<()> {
+    let path = custom_log_dir();
+    open::that(path).context("couldn't open the directory")
 }
 
 /// in case of any error, display this message
