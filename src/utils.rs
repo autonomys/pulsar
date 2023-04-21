@@ -179,6 +179,12 @@ pub(crate) fn custom_log_dir() -> PathBuf {
     path.expect("Could not resolve custom log directory path!")
 }
 
+/// opens log directory
+pub(crate) fn open_log_dir() -> Result<()> {
+    let path = custom_log_dir();
+    open::that(path).context("couldn't open the directory")
+}
+
 /// in case of any error, display this message
 pub(crate) fn support_message() -> String {
     format!(
