@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use color_eyre::eyre::{eyre, Context, Result};
+use futures::prelude::*;
 use owo_colors::OwoColorize;
 use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
@@ -316,3 +317,44 @@ where
     let _ = name;
     tokio::task::spawn(future)
 }
+
+fn into_eyre_err(err: anyhow::Error) -> color_eyre::eyre::Error {
+    eyre!(Box::<dyn std::error::Error + Send + Sync>::from(err))
+}
+
+pub trait IntoEyre: Sized {
+    type Ok;
+    fn into_eyre(self) -> Result<Self::Ok>;
+}
+
+impl<T> IntoEyre for anyhow::Result<T> {
+    type Ok = T;
+
+    fn into_eyre(self) -> Result<T> {
+        self.map_err(into_eyre_err)
+    }
+}
+
+pub trait IntoEyreFuture: TryFuture<Error = anyhow::Error> + Sized {
+    fn into_eyre(
+        self,
+    ) -> futures::future::MapErr<Self, fn(anyhow::Error) -> color_eyre::eyre::Error> {
+        use futures::TryFutureExt;
+
+        self.map_err(into_eyre_err)
+    }
+}
+
+impl<T> IntoEyreFuture for T where T: TryFuture<Error = anyhow::Error> + Sized {}
+
+pub trait IntoEyreStream: TryStream<Error = anyhow::Error> + Sized {
+    fn into_eyre(
+        self,
+    ) -> futures::stream::MapErr<Self, fn(anyhow::Error) -> color_eyre::eyre::Error> {
+        use futures::TryStreamExt;
+
+        self.map_err(into_eyre_err)
+    }
+}
+
+impl<T> IntoEyreStream for T where T: TryStream<Error = anyhow::Error> + Sized {}
