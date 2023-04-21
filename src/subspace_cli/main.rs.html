@@ -213,6 +213,14 @@
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
 <a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -245,7 +253,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::commands::info::info;
 <span class="kw">use </span><span class="kw">crate</span>::commands::init::init;
 <span class="kw">use </span><span class="kw">crate</span>::commands::wipe::wipe_config;
-<span class="kw">use </span><span class="kw">crate</span>::utils::{get_user_input, support_message, yes_or_no_parser};
+<span class="kw">use </span><span class="kw">crate</span>::utils::{get_user_input, open_log_dir, support_message, yes_or_no_parser};
 
 <span class="attr">#[cfg(all(
     target_arch = <span class="string">&quot;x86_64&quot;</span>,
@@ -288,6 +296,7 @@
     <span class="attr">#[command(about = <span class="string">&quot;displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)&quot;</span>)]
     </span>Info,
+    OpenLogs,
 }
 
 <span class="attr">#[tokio::main]
@@ -306,6 +315,9 @@
         }
         <span class="prelude-val">Some</span>(Commands::Wipe { farmer, node }) =&gt; {
             wipe_config(farmer, node).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Some</span>(Commands::OpenLogs) =&gt; {
+            open_log_dir().suggestion(support_message())<span class="question-mark">?</span>;
         }
         <span class="prelude-val">None </span>=&gt; {
             arrow_key_mode().<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
@@ -383,6 +395,9 @@
         <span class="number">3 </span>=&gt; {
             info().<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
+        <span class="number">4 </span>=&gt; {
+            open_log_dir().suggestion(support_message())<span class="question-mark">?</span>;
+        }
         <span class="kw">_ </span>=&gt; {
             <span class="macro">unreachable!</span>(<span class="string">&quot;this number must stay in [0-4]&quot;</span>)
         }
@@ -425,6 +440,7 @@
             Commands::Wipe { farmer: <span class="kw">_</span>, node: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;wipe&quot;</span>),
             Commands::Info =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;info&quot;</span>),
             Commands::Init =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;init&quot;</span>),
+            Commands::OpenLogs =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;open logs directory&quot;</span>),
         }
     }
 }
