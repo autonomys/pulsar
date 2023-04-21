@@ -11,7 +11,7 @@ use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
 use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 use tracing::instrument;
 
-use crate::utils::{cache_directory_getter, provider_storage_dir_getter};
+use crate::utils::{cache_directory_getter, provider_storage_dir_getter, IntoEyre};
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(1);
@@ -88,7 +88,8 @@ impl NodeConfig {
             .context("Failed to deserialize node config")?
             .build(directory, chain_spec)
             .await
-            .map_err(color_eyre::Report::msg)
+            .into_eyre()
+            .wrap_err("Failed to build subspace node")
     }
 }
 
@@ -163,7 +164,7 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
 
     if let Err(err) = create_dir_all(&config_path) {
         let config_path = config_path.to_str().expect("couldn't get subspace-cli config path!");
-        return Err(eyre!("could not create the directory: `{config_path}`, because: {err}"));
+        return Err(err).wrap_err(format!("could not create the directory: `{config_path}`"));
     }
 
     let file = File::create(config_path.join("settings.toml"))?;

@@ -2,7 +2,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Context, Report, Result};
+use color_eyre::eyre::{eyre, Context, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
@@ -15,7 +15,7 @@ use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{Rewards, Summary, SummaryFilePointer, SummaryUpdateFields};
-use crate::utils::{install_tracing, raise_fd_limit, spawn_task};
+use crate::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
@@ -63,7 +63,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         if !is_verbose {
             subscribe_to_node_syncing(&node).await?;
         } else {
-            node.sync().await.map_err(|err| eyre!("Node syncing failed: {err}"))?;
+            node.sync().await.into_eyre().context("Node syncing failed")?;
         }
     }
 
@@ -76,7 +76,8 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     let maybe_handles = if !is_verbose {
         // this will be shared between the two subscriptions
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
-        let sector_size_bytes = farmer.get_info().await.map_err(Report::msg)?.sector_size;
+        let sector_size_bytes =
+            farmer.get_info().await.into_eyre().context("Failed to get farmer into")?.sector_size;
 
         let plotting_sub_handle = spawn_task(
             "plotting_subscriber",
@@ -171,16 +172,17 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
     let mut syncing_progress = node
         .subscribe_syncing_progress()
         .await
-        .map_err(|err| eyre!("Failed to subscribe to node syncing: {err}"))?
-        .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _))
-        .map_err(|err| eyre!("Sync failed because: {err}"));
+        .into_eyre()
+        .context("Failed to subscribe to node syncing")?
+        .into_eyre()
+        .map_ok(|SyncingProgress { at, target, status: _ }| (target as _, at as _));
 
     if let Some(syncing_result) = syncing_progress.next().await {
-        let (target_block, current_block) = syncing_result?;
+        let (target_block, current_block) = syncing_result.context("Sync failed")?;
         let syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
         while let Some(stream_result) = syncing_progress.next().await {
-            let (target_block, current_block) = stream_result?;
+            let (target_block, current_block) = stream_result.context("Sync failed")?;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
@@ -246,14 +248,17 @@ async fn subscribe_to_solutions(
     let mut new_blocks = node
         .subscribe_new_blocks()
         .await
-        .map_err(|err| eyre!("couldn't subscribe to new blocks, because: {err}"))?;
+        .into_eyre()
+        .context("couldn't subscribe to new blocks")?;
+
     while let Some(new_block) = new_blocks.next().await {
         let mut summary_update_values: SummaryUpdateFields = Default::default();
 
         let events = node
             .get_events(Some(new_block.hash))
             .await
-            .map_err(|err| eyre!("couldn't get events from node, because: {err}"))?;
+            .into_eyre()
+            .context("couldn't get events from node")?;
 
         for event in events {
             // subscription is active when plotting is started, only print out rewards after
