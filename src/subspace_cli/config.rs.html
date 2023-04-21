@@ -200,6 +200,7 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::path::PathBuf;
 
@@ -213,7 +214,7 @@
 <span class="kw">use </span>subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 <span class="kw">use </span>tracing::instrument;
 
-<span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, provider_storage_dir_getter};
+<span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, provider_storage_dir_getter, IntoEyre};
 
 <span class="doccomment">/// defaults for the user config file
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">1</span>);
@@ -290,7 +291,8 @@
             .context(<span class="string">&quot;Failed to deserialize node config&quot;</span>)<span class="question-mark">?
             </span>.build(directory, chain_spec)
             .<span class="kw">await
-            </span>.map_err(color_eyre::Report::msg)
+            </span>.into_eyre()
+            .wrap_err(<span class="string">&quot;Failed to build subspace node&quot;</span>)
     }
 }
 
@@ -365,7 +367,7 @@
 
     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = create_dir_all(<span class="kw-2">&amp;</span>config_path) {
         <span class="kw">let </span>config_path = config_path.to_str().expect(<span class="string">&quot;couldn&#39;t get subspace-cli config path!&quot;</span>);
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not create the directory: `{config_path}`, because: {err}&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(err).wrap_err(<span class="macro">format!</span>(<span class="string">&quot;could not create the directory: `{config_path}`&quot;</span>));
     }
 
     <span class="kw">let </span>file = File::create(config_path.join(<span class="string">&quot;settings.toml&quot;</span>))<span class="question-mark">?</span>;

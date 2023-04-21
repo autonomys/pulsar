@@ -342,11 +342,16 @@
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
 
-<span class="kw">use </span>color_eyre::eyre::{eyre, Context, Report, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>color_eyre::eyre::{eyre, Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>indicatif::{ProgressBar, ProgressStyle};
 <span class="kw">use </span>owo_colors::OwoColorize;
@@ -359,7 +364,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{validate_config, ChainConfig, Config};
 <span class="kw">use </span><span class="kw">crate</span>::summary::{Rewards, Summary, SummaryFilePointer, SummaryUpdateFields};
-<span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, raise_fd_limit, spawn_task};
+<span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 <span class="doccomment">/// allows us to detect multiple instances of the farmer and act on it
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SINGLE_INSTANCE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;.subspaceFarmer&quot;</span>;
@@ -407,7 +412,7 @@
         <span class="kw">if </span>!is_verbose {
             subscribe_to_node_syncing(<span class="kw-2">&amp;</span>node).<span class="kw">await</span><span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            node.sync().<span class="kw">await</span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Node syncing failed: {err}&quot;</span>))<span class="question-mark">?</span>;
+            node.sync().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;Node syncing failed&quot;</span>)<span class="question-mark">?</span>;
         }
     }
 
@@ -420,7 +425,8 @@
     <span class="kw">let </span>maybe_handles = <span class="kw">if </span>!is_verbose {
         <span class="comment">// this will be shared between the two subscriptions
         </span><span class="kw">let </span>is_initial_progress_finished = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
-        <span class="kw">let </span>sector_size_bytes = farmer.get_info().<span class="kw">await</span>.map_err(Report::msg)<span class="question-mark">?</span>.sector_size;
+        <span class="kw">let </span>sector_size_bytes =
+            farmer.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;Failed to get farmer into&quot;</span>)<span class="question-mark">?</span>.sector_size;
 
         <span class="kw">let </span>plotting_sub_handle = spawn_task(
             <span class="string">&quot;plotting_subscriber&quot;</span>,
@@ -515,16 +521,17 @@
     <span class="kw">let </span><span class="kw-2">mut </span>syncing_progress = node
         .subscribe_syncing_progress()
         .<span class="kw">await
-        </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Failed to subscribe to node syncing: {err}&quot;</span>))<span class="question-mark">?
-        </span>.map_ok(|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>))
-        .map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;Sync failed because: {err}&quot;</span>));
+        </span>.into_eyre()
+        .context(<span class="string">&quot;Failed to subscribe to node syncing&quot;</span>)<span class="question-mark">?
+        </span>.into_eyre()
+        .map_ok(|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>));
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(syncing_result) = syncing_progress.next().<span class="kw">await </span>{
-        <span class="kw">let </span>(target_block, current_block) = syncing_result<span class="question-mark">?</span>;
+        <span class="kw">let </span>(target_block, current_block) = syncing_result.context(<span class="string">&quot;Sync failed&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(stream_result) = syncing_progress.next().<span class="kw">await </span>{
-            <span class="kw">let </span>(target_block, current_block) = stream_result<span class="question-mark">?</span>;
+            <span class="kw">let </span>(target_block, current_block) = stream_result.context(<span class="string">&quot;Sync failed&quot;</span>)<span class="question-mark">?</span>;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
@@ -590,14 +597,17 @@
     <span class="kw">let </span><span class="kw-2">mut </span>new_blocks = node
         .subscribe_new_blocks()
         .<span class="kw">await
-        </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;couldn&#39;t subscribe to new blocks, because: {err}&quot;</span>))<span class="question-mark">?</span>;
+        </span>.into_eyre()
+        .context(<span class="string">&quot;couldn&#39;t subscribe to new blocks&quot;</span>)<span class="question-mark">?</span>;
+
     <span class="kw">while let </span><span class="prelude-val">Some</span>(new_block) = new_blocks.next().<span class="kw">await </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>summary_update_values: SummaryUpdateFields = Default::default();
 
         <span class="kw">let </span>events = node
             .get_events(<span class="prelude-val">Some</span>(new_block.hash))
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">eyre!</span>(<span class="string">&quot;couldn&#39;t get events from node, because: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.into_eyre()
+            .context(<span class="string">&quot;couldn&#39;t get events from node&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="kw">for </span>event <span class="kw">in </span>events {
             <span class="comment">// subscription is active when plotting is started, only print out rewards after
