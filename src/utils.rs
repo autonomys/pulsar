@@ -5,7 +5,6 @@ use std::str::FromStr;
 
 use color_eyre::eyre::{eyre, Context, Result};
 use futures::prelude::*;
-use open;
 use owo_colors::OwoColorize;
 use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
