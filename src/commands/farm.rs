@@ -14,7 +14,7 @@ use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::{Rewards, Summary, SummaryFilePointer, SummaryUpdateFields};
+use crate::summary::{Rewards, Summary, SummaryFile, SummaryInner, SummaryUpdateFields};
 use crate::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 /// allows us to detect multiple instances of the farmer and act on it
@@ -67,7 +67,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         }
     }
 
-    let summary = SummaryFilePointer::new(Some(farmer_config.plot_size)).await?;
+    let summary = Summary::new(SummaryFile::new(Some(farmer_config.plot_size)).await?).await?;
 
     println!("Starting farmer ...");
     let farmer = Arc::new(farmer_config.build(&node).await?);
@@ -194,7 +194,7 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
 }
 
 async fn subscribe_to_plotting_progress(
-    summary: SummaryFilePointer,
+    mut summary: Summary,
     farmer: Arc<Farmer>,
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
@@ -239,30 +239,28 @@ async fn subscribe_to_plotting_progress(
 }
 
 async fn subscribe_to_solutions(
-    summary: SummaryFilePointer,
+    mut summary: Summary,
     node: Arc<Node>,
     is_initial_progress_finished: Arc<AtomicBool>,
     reward_address: PublicKey,
 ) -> Result<()> {
+    // necessary for spacing
     println!();
-    let mut new_blocks = node
-        .subscribe_new_blocks()
-        .await
-        .into_eyre()
-        .context("couldn't subscribe to new blocks")?;
 
-    while let Some(new_block) = new_blocks.next().await {
+    let SummaryInner { last_block_num, .. } =
+        summary.parse_summary().await.context("couldn't acquire the lock")?;
+
+    for block_num in last_block_num as u32
+        ..node.get_info().await.into_eyre().context("couldn't get block from node")?.best_block.1
+    {
         let mut summary_update_values: SummaryUpdateFields = Default::default();
-
-        let events = node
-            .get_events(Some(new_block.hash))
+        let block_hash = node.block_hash(block_num).into_eyre()?.expect("Block hash always exists");
+        for event in node
+            .get_events(Some(block_hash))
             .await
             .into_eyre()
-            .context("couldn't get events from node")?;
-
-        for event in events {
-            // subscription is active when plotting is started, only print out rewards after
-            // plotting finishes to not corrup the progress bars
+            .context("couldn't get event from node")?
+        {
             if is_initial_progress_finished.load(Ordering::Relaxed) {
                 match event {
                     Event::Rewards(
@@ -279,12 +277,18 @@ async fn subscribe_to_solutions(
             }
         }
 
-        if let Some(pre_digest) = new_block.pre_digest {
+        if let Some(pre_digest) = node
+            .block_header(block_hash)
+            .into_eyre()
+            .context("couldn't get block header from the hash")?
+            .expect("this block always exist")
+            .pre_digest
+        {
             if pre_digest.solution.reward_address == reward_address {
                 summary_update_values.is_new_block_farmed = true;
             }
         }
-        let Summary { total_rewards, farmed_block_count, vote_count, .. } =
+        let SummaryInner { total_rewards, farmed_block_count, vote_count, .. } =
             summary.update(summary_update_values).await.context("couldn't update summary")?;
 
         if is_initial_progress_finished.load(Ordering::Relaxed) {
@@ -292,15 +296,13 @@ async fn subscribe_to_solutions(
                 "\rYou have earned: {total_rewards} SSC(s), farmed {farmed_block_count} block(s), \
                  and voted on {vote_count} block(s)!"
             );
-            // use
-            // carriage return to overwrite the current value
-            // instead of inserting
-            // a new line
+            // use carriage return to overwrite the current value
+            // instead of inserting a new line
             std::io::stdout().flush().expect("Failed to flush stdout");
-            // flush the
-            // stdout to make sure values are printed
+            // flush the stdout to make sure values are printed
         }
     }
+
     Ok(())
 }
 

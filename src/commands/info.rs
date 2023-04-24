@@ -2,7 +2,7 @@ use color_eyre::eyre::{Context, Result};
 use single_instance::SingleInstance;
 
 use crate::commands::farm::SINGLE_INSTANCE;
-use crate::summary::{Summary, SummaryFilePointer};
+use crate::summary::{SummaryFile, SummaryInner};
 
 /// implementation of the `init` command.
 ///
@@ -16,15 +16,16 @@ pub(crate) async fn info() -> Result<()> {
         println!("There is no active farmer instance...");
     }
 
-    let summary = SummaryFilePointer::new(None).await?;
-    let Summary {
+    let summary_file = SummaryFile::new(None).await?;
+    let SummaryInner {
         user_space_pledged,
         farmed_block_count,
         vote_count,
         total_rewards,
         initial_plotting_finished,
-    } = summary
-        .parse_summary()
+        last_block_num: last_block_parsed,
+    } = summary_file
+        .parse_summary_file()
         .await
         .context("couldn't parse summary file, are you sure you have ran `farm` command?")?;
 
@@ -35,6 +36,8 @@ pub(crate) async fn info() -> Result<()> {
     println!("Voted on {vote_count} block(s)");
 
     println!("{total_rewards} SSC(s) earned!",);
+
+    println!("This data is derived from the first {last_block_parsed} blocks in the chain!",);
 
     if initial_plotting_finished {
         println!("Initial plotting is finished!");

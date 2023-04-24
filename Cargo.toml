@@ -31,7 +31,7 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "3bccdb82af5dd5de7d84867cbb3c7ad5b316a13e" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ac22c753a3e6f0a4fbbc4255da1678297ed93fa3" }
 termion = "2.0.1"
 open = "4.0.2"
 
@@ -127,7 +127,10 @@ zeroize = { opt-level = 3 }
 frame-benchmarking = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 frame-support = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 frame-system = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-api = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 sp-core = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-inherents = { version = "4.0.0-dev", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
+sp-state-machine = { version = "0.13.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 sp-std = { version = "5.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 sp-io = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 sp-runtime = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
