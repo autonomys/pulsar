@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
+use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
 use tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -47,7 +48,7 @@ pub(crate) struct SummaryUpdateFields {
     pub(crate) is_new_block_farmed: bool,
     pub(crate) is_new_vote: bool,
     pub(crate) maybe_new_reward: Option<Rewards>,
-    pub(crate) maybe_last_block: Option<u64>,
+    pub(crate) maybe_last_block: Option<BlockNumber>,
 }
 
 /// Struct for holding the info of what to be displayed with the `info` command,
@@ -65,7 +66,7 @@ pub(crate) struct SummaryInner {
     pub(crate) vote_count: u64,
     pub(crate) total_rewards: Rewards,
     pub(crate) user_space_pledged: ByteSize,
-    pub(crate) last_block_num: u64,
+    pub(crate) last_block_num: BlockNumber,
 }
 
 impl Summary {

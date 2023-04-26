@@ -10764,6 +10764,7 @@ name = "subspace-cli"
 version = "0.4.0"
 dependencies = [
  "anyhow",
+ "async-stream",
  "bytesize",
  "bytesize-serde",
  "clap",
@@ -10781,6 +10782,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "single-instance",
+ "sp-consensus-subspace",
  "strum",
  "strum_macros",
  "subspace-sdk",
