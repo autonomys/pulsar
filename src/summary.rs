@@ -41,26 +41,26 @@ impl std::fmt::Display for Rewards {
     }
 }
 
+impl Default for Rewards {
+    fn default() -> Self {
+        Rewards(0)
+    }
+}
+
 /// struct for flexibly updating the fields of the summary
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
-    pub(crate) is_new_block_farmed: bool,
-    pub(crate) is_new_vote: bool,
-    pub(crate) maybe_new_reward: Option<Rewards>,
+    pub(crate) maybe_farmed_block_count: Option<u64>,
+    pub(crate) maybe_vote_count: Option<u64>,
+    pub(crate) maybe_reward: Option<Rewards>,
     pub(crate) maybe_last_block: Option<BlockNumber>,
 }
 
 /// Struct for holding the info of what to be displayed with the `info` command,
 /// and printing rewards to user in `farm` command
-#[derive(Clone, Debug)]
+#[derive(Deserialize, Serialize, Default, Debug, Clone, Copy)]
 pub(crate) struct Summary {
-    pub(crate) inner: Arc<Mutex<SummaryInner>>,
-}
-
-/// inner struct for the `Summary`
-#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
-pub(crate) struct SummaryInner {
     pub(crate) initial_plotting_finished: bool,
     pub(crate) farmed_block_count: u64,
     pub(crate) vote_count: u64,
@@ -72,66 +72,7 @@ pub(crate) struct SummaryInner {
 impl Summary {
     #[instrument]
     pub(crate) async fn new(summary_file: SummaryFile) -> Result<Summary> {
-        let inner = summary_file.parse_summary_file().await?;
-        Ok(Summary { inner: Arc::new(Mutex::new(inner)) })
-    }
-
-    /// updates the summary file, and returns the content of the new summary
-    ///
-    /// this function will be called by the farmer when
-    /// the status of the `plotting_finished`
-    /// or value of `farmed_block_count` changes
-    #[instrument]
-    pub(crate) async fn update(
-        &mut self,
-        SummaryUpdateFields {
-            is_plotting_finished,
-            is_new_block_farmed,
-            is_new_vote,
-            maybe_new_reward,
-            maybe_last_block,
-        }: SummaryUpdateFields,
-    ) -> Result<SummaryInner> {
-        let mut guard = self.inner.lock().await;
-        if is_plotting_finished {
-            guard.initial_plotting_finished = true;
-        }
-        if is_new_block_farmed {
-            guard.farmed_block_count += 1;
-        }
-        if is_new_vote {
-            guard.vote_count += 1;
-        }
-        if let Some(new_reward) = maybe_new_reward {
-            guard.total_rewards = new_reward;
-        }
-        if let Some(last_block) = maybe_last_block {
-            guard.last_block_num = last_block;
-
-            // write to persistent storage at every 100 blocks
-            if last_block % 100 == 0 {
-                let new_summary =
-                    toml::to_string(&*guard).context("Failed to serialize Summary")?;
-
-                // this will only create the pointer, and will not override the file
-                let summary_file = SummaryFile::new(None).await?;
-                let guard = summary_file.inner.lock().await;
-                let mut buffer =
-                    OpenOptions::new().write(true).truncate(true).open(&*guard).await?;
-                buffer.write_all(new_summary.as_bytes()).await?;
-                buffer.flush().await?;
-            }
-        }
-
-        Ok(*guard)
-    }
-
-    /// parses the summary struct and returns [`SummaryInner`]
-    #[instrument]
-    pub(crate) async fn parse_summary(&self) -> Result<SummaryInner> {
-        let guard = self.inner.lock().await;
-
-        Ok(*guard)
+        Ok(summary_file.parse_summary_file().await?)
     }
 }
 
@@ -150,7 +91,7 @@ impl SummaryFile {
     #[instrument]
     pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
         let summary_path = summary_path();
-        let summary_dir = dirs::data_local_dir()
+        let summary_dir = dirs::cache_dir()
             .expect("couldn't get the default local data directory!")
             .join("subspace-cli");
 
@@ -164,7 +105,7 @@ impl SummaryFile {
             if File::open(&summary_path).await.is_err() {
                 let _ = create_dir_all(&summary_dir).await;
                 let _ = File::create(&summary_path).await;
-                let initialization = SummaryInner {
+                let initialization = Summary {
                     initial_plotting_finished: false,
                     farmed_block_count: 0,
                     vote_count: 0,
@@ -189,11 +130,59 @@ impl SummaryFile {
 
     /// parses the summary file and returns [`SummaryInner`]
     #[instrument]
-    pub(crate) async fn parse_summary_file(&self) -> Result<SummaryInner> {
+    pub(crate) async fn parse_summary_file(&self) -> Result<Summary> {
         let guard = self.inner.lock().await;
-        let inner: SummaryInner = toml::from_str(&read_to_string(&*guard).await?)?;
+        let inner: Summary = toml::from_str(&read_to_string(&*guard).await?)?;
 
         Ok(inner)
+    }
+
+    /// updates the summary file, and returns the content of the new summary
+    ///
+    /// this function will be called by the farmer when
+    /// the status of the `plotting_finished`
+    /// or value of `farmed_block_count` changes
+    #[instrument]
+    pub(crate) async fn update(
+        &self,
+        SummaryUpdateFields {
+            is_plotting_finished,
+            maybe_farmed_block_count,
+            maybe_vote_count,
+            maybe_reward,
+            maybe_last_block,
+        }: SummaryUpdateFields,
+    ) -> Result<Summary> {
+        let mut summary = Summary { ..Default::default() };
+
+        if is_plotting_finished {
+            summary.initial_plotting_finished = true;
+        }
+
+        if let Some(new_farmed_block_count) = maybe_farmed_block_count {
+            summary.farmed_block_count = new_farmed_block_count;
+        }
+
+        if let Some(new_vote_count) = maybe_vote_count {
+            summary.vote_count = new_vote_count;
+        }
+
+        if let Some(new_reward) = maybe_reward {
+            summary.total_rewards = new_reward;
+        }
+        if let Some(last_block) = maybe_last_block {
+            summary.last_block_num = last_block;
+        }
+
+        let serialized_summary =
+            toml::to_string(&summary).context("Failed to serialize Summary")?;
+        // this will only create the pointer, and will not override the file
+        let guard = self.inner.lock().await;
+        let mut buffer = OpenOptions::new().write(true).truncate(true).open(&*guard).await?;
+        buffer.write_all(serialized_summary.as_bytes()).await?;
+        buffer.flush().await?;
+
+        Ok(summary)
     }
 }
 

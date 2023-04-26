@@ -10,11 +10,13 @@ use single_instance::SingleInstance;
 use subspace_sdk::node::{Event, RewardsEvent, SubspaceEvent, SyncingProgress};
 use subspace_sdk::{Farmer, Node, PublicKey};
 use tokio::signal;
+use tokio::sync::mpsc::channel;
 use tokio::task::JoinHandle;
+use tokio_stream::wrappers::ReceiverStream;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::{Rewards, Summary, SummaryFile, SummaryInner, SummaryUpdateFields};
+use crate::summary::{Rewards, Summary, SummaryFile, SummaryUpdateFields};
 use crate::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 /// allows us to detect multiple instances of the farmer and act on it
@@ -67,7 +69,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         }
     }
 
-    let summary = Summary::new(SummaryFile::new(Some(farmer_config.plot_size)).await?).await?;
+    let summary_file = SummaryFile::new(Some(farmer_config.plot_size)).await?;
 
     println!("Starting farmer ...");
     let farmer = Arc::new(farmer_config.build(&node).await?);
@@ -82,7 +84,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         let plotting_sub_handle = spawn_task(
             "plotting_subscriber",
             subscribe_to_plotting_progress(
-                summary.clone(),
+                summary_file.clone(),
                 farmer.clone(),
                 is_initial_progress_finished.clone(),
                 sector_size_bytes,
@@ -92,7 +94,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         let solution_sub_handle = spawn_task(
             "solution_subscriber",
             subscribe_to_solutions(
-                summary.clone(),
+                summary_file.clone(),
                 node.clone(),
                 is_initial_progress_finished.clone(),
                 reward_address,
@@ -194,7 +196,7 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
 }
 
 async fn subscribe_to_plotting_progress(
-    mut summary: Summary,
+    summary_file: SummaryFile,
     farmer: Arc<Farmer>,
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
@@ -230,7 +232,7 @@ async fn subscribe_to_plotting_progress(
         progress_bar.finish_with_message("Initial plotting finished!\n");
     }
     is_initial_progress_finished.store(true, Ordering::Relaxed);
-    summary
+    summary_file
         .update(SummaryUpdateFields { is_plotting_finished: true, ..Default::default() })
         .await
         .context("couldn't update the summary")?;
@@ -239,7 +241,7 @@ async fn subscribe_to_plotting_progress(
 }
 
 async fn subscribe_to_solutions(
-    mut summary: Summary,
+    summary_file: SummaryFile,
     node: Arc<Node>,
     is_initial_progress_finished: Arc<AtomicBool>,
     reward_address: PublicKey,
@@ -247,60 +249,97 @@ async fn subscribe_to_solutions(
     // necessary for spacing
     println!();
 
-    let SummaryInner { last_block_num, .. } =
-        summary.parse_summary().await.context("couldn't acquire the lock")?;
+    let Summary { last_block_num, .. } = summary_file.parse_summary_file().await?;
 
-    for block_num in last_block_num as u32
-        ..node.get_info().await.into_eyre().context("couldn't get block from node")?.best_block.1
-    {
-        let mut summary_update_values: SummaryUpdateFields = Default::default();
-        let block_hash = node.block_hash(block_num).into_eyre()?.expect("Block hash always exists");
-        for event in node
-            .get_events(Some(block_hash))
-            .await
-            .into_eyre()
-            .context("couldn't get event from node")?
-        {
-            if is_initial_progress_finished.load(Ordering::Relaxed) {
-                match event {
-                    Event::Rewards(
-                        RewardsEvent::VoteReward { voter: author, reward }
-                        | RewardsEvent::BlockReward { block_author: author, reward },
-                    ) if author == reward_address.into() =>
-                        summary_update_values.maybe_new_reward = Some(Rewards(reward)),
-                    Event::Subspace(SubspaceEvent::FarmerVote {
-                        reward_address: author, ..
-                    }) if author == reward_address.into() =>
-                        summary_update_values.is_new_vote = true,
-                    _ => (),
-                }
+    let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+
+    let (send1, recv1) = channel(1000);
+    let (send2, recv2) = channel(1000);
+
+    tokio::spawn(async move {
+        tokio::pin!(stream);
+        while let Some(item) = stream.next().await {
+            if let Ok(item) = item {
+                send1.send(item).await.expect("receiver does not hangs up");
+                send2.send(item).await.expect("receiver does not hangs up");
             }
         }
+    });
 
-        if let Some(pre_digest) = node
-            .block_header(block_hash)
-            .into_eyre()
-            .context("couldn't get block header from the hash")?
-            .expect("this block always exist")
-            .pre_digest
-        {
-            if pre_digest.solution.reward_address == reward_address {
-                summary_update_values.is_new_block_farmed = true;
-            }
-        }
-        let SummaryInner { total_rewards, farmed_block_count, vote_count, .. } =
-            summary.update(summary_update_values).await.context("couldn't update summary")?;
+    let event_stream = ReceiverStream::new(recv1);
+    let header_stream = ReceiverStream::new(recv2);
 
-        if is_initial_progress_finished.load(Ordering::Relaxed) {
-            print!(
-                "\rYou have earned: {total_rewards} SSC(s), farmed {farmed_block_count} block(s), \
-                 and voted on {vote_count} block(s)!"
-            );
-            // use carriage return to overwrite the current value
-            // instead of inserting a new line
-            std::io::stdout().flush().expect("Failed to flush stdout");
-            // flush the stdout to make sure values are printed
-        }
+    let concurrency_parameter = 16;
+
+    futures::pin_mut!(event_stream);
+    futures::pin_mut!(header_stream);
+
+    let missed_rewards_and_votes: (u128, u64) = event_stream
+        .map(|block_number| {
+            Ok(node.get_events(Some(
+                node.block_hash(block_number)?
+                    .expect("Should be always present if no pruning enabled"),
+            )))
+        })
+        .try_buffer_unordered(concurrency_parameter)
+        .map_ok(|events| futures::stream::iter(events).map(anyhow::Result::Ok)) // why there is `.map(Ok)` here? `iter` does not return (_,_) ?
+        .try_flatten()
+        .map_ok(|event| match event {
+            Event::Rewards(
+                RewardsEvent::VoteReward { voter: author, reward }
+                | RewardsEvent::BlockReward { block_author: author, reward },
+            ) if author == reward_address.into() => (reward, 0),
+            Event::Subspace(SubspaceEvent::FarmerVote { reward_address: author, .. })
+                if author == reward_address.into() =>
+                (0, 1),
+            _ => (0, 0),
+        })
+        .try_fold((0u128, 0u64), |acc: (u128, u64), rewards_and_votes: (u128, u64)| {
+            futures::future::ready::<anyhow::Result<_>>(Ok((
+                acc.0 + rewards_and_votes.0,
+                acc.1 + rewards_and_votes.1,
+            )))
+        })
+        .await
+        .into_eyre()?;
+
+    let missed_farmed_block_count: u64 = header_stream
+        .map(|block_number| {
+            node.block_header(
+                node
+                    .block_hash(block_number)?
+                    .expect("Should be always present if no pruning enabled"),
+            )
+        })
+        .map_ok(|maybe_block_header| {
+            if matches!(maybe_block_header.expect("this block always exists").pre_digest, Some(pre_digest) if pre_digest.solution.reward_address == reward_address) { 1 } else { 0 }
+        })
+        .try_fold(0u64, |acc, total_farmed| {
+            futures::future::ready::<anyhow::Result<_>>(Ok(acc + total_farmed))
+        })
+        .await
+        .into_eyre()?;
+
+    let summary_update_values = SummaryUpdateFields {
+        maybe_farmed_block_count: Some(missed_farmed_block_count),
+        maybe_last_block: Some(todo!()),
+        maybe_reward: Some(Rewards(missed_rewards_and_votes.0)),
+        maybe_vote_count: Some(missed_rewards_and_votes.1),
+        ..Default::default()
+    };
+
+    let Summary { total_rewards, farmed_block_count, vote_count, .. } =
+        summary_file.update(summary_update_values).await.context("couldn't update summary")?;
+
+    if is_initial_progress_finished.load(Ordering::Relaxed) {
+        print!(
+            "\rYou have earned: {total_rewards} SSC(s), farmed {farmed_block_count} block(s), and \
+             voted on {vote_count} block(s)!"
+        );
+        // use carriage return to overwrite the current value
+        // instead of inserting a new line
+        std::io::stdout().flush().expect("Failed to flush stdout");
+        // flush the stdout to make sure values are printed
     }
 
     Ok(())
@@ -348,4 +387,24 @@ fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
     pb.set_message("syncing");
     pb.set_position(current_block);
     pb
+}
+
+fn not_yet_processed_block_nums_stream(
+    node: std::sync::Arc<Node>,
+    mut last_block_num: subspace_sdk::node::BlockNumber,
+) -> impl Stream<Item = anyhow::Result<subspace_sdk::node::BlockNumber>> {
+    async_stream::try_stream! {
+        loop {
+            let last_retrieved_num = node.get_info().await?.finalized_block.1;
+
+            if last_block_num == last_retrieved_num {
+                break;
+            }
+
+            while last_block_num < last_retrieved_num {
+                yield last_block_num;
+                last_block_num += 1;
+            }
+        }
+    }
 }

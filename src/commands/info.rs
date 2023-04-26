@@ -2,7 +2,7 @@ use color_eyre::eyre::{Context, Result};
 use single_instance::SingleInstance;
 
 use crate::commands::farm::SINGLE_INSTANCE;
-use crate::summary::{SummaryFile, SummaryInner};
+use crate::summary::{Summary, SummaryFile};
 
 /// implementation of the `init` command.
 ///
@@ -17,7 +17,7 @@ pub(crate) async fn info() -> Result<()> {
     }
 
     let summary_file = SummaryFile::new(None).await?;
-    let SummaryInner {
+    let Summary {
         user_space_pledged,
         farmed_block_count,
         vote_count,
