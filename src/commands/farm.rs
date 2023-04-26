@@ -253,80 +253,84 @@ async fn subscribe_to_solutions(
 
     let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
 
-    let (send1, recv1) = channel(1000);
-    let (send2, recv2) = channel(1000);
+    futures::pin_mut!(stream);
 
-    tokio::spawn(async move {
-        tokio::pin!(stream);
-        while let Some(item) = stream.next().await {
-            if let Ok(item) = item {
-                send1.send(item).await.expect("receiver does not hangs up");
-                send2.send(item).await.expect("receiver does not hangs up");
-            }
-        }
-    });
+    let n_blocks = 1000;
+    let n_tasks = 10;
 
-    let event_stream = ReceiverStream::new(recv1);
-    let header_stream = ReceiverStream::new(recv2);
-
-    let concurrency_parameter = 16;
-
-    futures::pin_mut!(event_stream);
-    futures::pin_mut!(header_stream);
-
-    let missed_rewards_and_votes: (u128, u64) = event_stream
-        .map(|block_number| {
-            Ok(node.get_events(Some(
-                node.block_hash(block_number)?
-                    .expect("Should be always present if no pruning enabled"),
-            )))
+    stream
+        // Map block number to block hash
+        .and_then(|block| {
+            node.block_hash(block)
+                .transpose()
+                .map(futures::future::ready)
+                .expect("TODO: Account for missing blocks somehow or check pruning")
         })
-        .try_buffer_unordered(concurrency_parameter)
-        .map_ok(|events| futures::stream::iter(events).map(anyhow::Result::Ok)) // why there is `.map(Ok)` here? `iter` does not return (_,_) ?
-        .try_flatten()
-        .map_ok(|event| match event {
-            Event::Rewards(
-                RewardsEvent::VoteReward { voter: author, reward }
-                | RewardsEvent::BlockReward { block_author: author, reward },
-            ) if author == reward_address.into() => (reward, 0),
-            Event::Subspace(SubspaceEvent::FarmerVote { reward_address: author, .. })
-                if author == reward_address.into() =>
-                (0, 1),
-            _ => (0, 0),
-        })
-        .try_fold((0u128, 0u64), |acc: (u128, u64), rewards_and_votes: (u128, u64)| {
-            futures::future::ready::<anyhow::Result<_>>(Ok((
-                acc.0 + rewards_and_votes.0,
-                acc.1 + rewards_and_votes.1,
-            )))
+        // Chunk block hashes in chunks of `n_blocks`
+        .try_chunks(n_blocks)
+        .map_err(anyhow::Error::from)
+        // For each block's chunk
+        .try_for_each(|blocks| async move {
+            // We iterate over hashes
+            let (rewards, votes, author) = futures::stream::iter(blocks)
+                // We scan each hash and find 3 things:
+                // - Total amount of rewards
+                // - Number of votes
+                // - Number of times we authored a block
+                .map(|hash| {
+                    // Auth
+                    let is_author = node
+                        .block_header(hash)?
+                        .expect("TODO: Account for missing blocks somehow or check pruning")
+                        .pre_digest
+                        .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
+                        .unwrap_or_default();
+
+                    let rewards_future = node
+                        .get_events(Some(hash))
+                        .map_ok(|events| {
+                            events
+                            .into_iter()
+                            .map(|event| match event {
+                                Event::Rewards(
+                                    RewardsEvent::VoteReward { voter: author, reward }
+                                    | RewardsEvent::BlockReward { block_author: author, reward },
+                                ) if author == reward_address.into() => (reward, 0),
+                                Event::Subspace(SubspaceEvent::FarmerVote {
+                                    reward_address: author,
+                                    ..
+                                }) if author == reward_address.into() => (0, 1),
+                                _ => (0, 0),
+                            })
+                            .fold((0, 0), |(rewards, votes), (new_rewards, new_votes)| {
+                                (rewards + new_rewards, votes + new_votes)
+                            })
+                        })
+                        .map_ok(|(rewards, votes)| (rewards, votes, if is_author { 1 } else { 0 }));
+
+                    Ok(rewards_future)
+                })
+                // We calculate each block in parallel
+                .try_buffer_unordered(n_tasks)
+                // After that we sum up result
+                .try_fold(
+                    (0, 0, 0),
+                    |(rewards, votes, author), (new_rewards, new_votes, new_author)| {
+                        futures::future::ok((
+                            rewards + new_rewards,
+                            votes + new_votes,
+                            author + new_author,
+                        ))
+                    },
+                )
+                .await?;
+
+            // TODO: update cache on disk here
+
+            Ok(())
         })
         .await
         .into_eyre()?;
-
-    let missed_farmed_block_count: u64 = header_stream
-        .map(|block_number| {
-            node.block_header(
-                node
-                    .block_hash(block_number)?
-                    .expect("Should be always present if no pruning enabled"),
-            )
-        })
-        .map_ok(|maybe_block_header| {
-            if matches!(maybe_block_header.expect("this block always exists").pre_digest, Some(pre_digest) if pre_digest.solution.reward_address == reward_address) { 1 } else { 0 }
-        })
-        .try_fold(0u64, |acc, total_farmed| {
-            futures::future::ready::<anyhow::Result<_>>(Ok(acc + total_farmed))
-        })
-        .await
-        .into_eyre()?;
-
-    let summary_update_values = SummaryUpdateFields {
-        maybe_farmed_block_count: Some(missed_farmed_block_count),
-        maybe_last_block: Some(todo!()),
-        maybe_reward: Some(Rewards(missed_rewards_and_votes.0)),
-        maybe_vote_count: Some(missed_rewards_and_votes.1),
-        ..Default::default()
-    };
 
     let Summary { total_rewards, farmed_block_count, vote_count, .. } =
         summary_file.update(summary_update_values).await.context("couldn't update summary")?;
