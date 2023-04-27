@@ -282,7 +282,6 @@ async fn subscribe_to_solutions(
                     // - Number of votes
                     // - Number of times we authored a block
                     .map(|hash| {
-                        // Auth
                         let is_author = node_clone
                             .block_header(hash)?
                             .expect("TODO: Account for missing blocks somehow or check pruning")
