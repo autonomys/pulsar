@@ -264,7 +264,7 @@ async fn subscribe_to_solutions(
             node.block_hash(block)
                 .transpose()
                 .map(futures::future::ready)
-                .expect("TODO: Account for missing blocks somehow or check pruning")
+                .expect("Header is not in the chain")
         })
         // Chunk block hashes in chunks of `n_blocks`
         .try_chunks(n_blocks)
