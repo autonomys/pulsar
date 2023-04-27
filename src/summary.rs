@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 use tracing::instrument;
 
 // TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
-#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, Default)]
 #[serde(try_from = "String", into = "String")]
 pub(crate) struct Rewards(pub(crate) u128);
 
@@ -38,12 +38,6 @@ impl From<Rewards> for String {
 impl std::fmt::Display for Rewards {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-impl Default for Rewards {
-    fn default() -> Self {
-        Rewards(0)
     }
 }
 
@@ -78,7 +72,7 @@ pub(crate) struct Summary {
 impl Summary {
     #[instrument]
     pub(crate) async fn new(summary_file: SummaryFile) -> Result<Summary> {
-        Ok(summary_file.parse().await?)
+        summary_file.parse().await
     }
 }
 
@@ -134,7 +128,7 @@ impl SummaryFile {
         Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_path)) })
     }
 
-    /// parses the summary file and returns [`SummaryInner`]
+    /// parses the summary file and returns [`Summary`]
     #[instrument]
     pub(crate) async fn parse(&self) -> Result<Summary> {
         let guard = self.inner.lock().await;
@@ -159,7 +153,7 @@ impl SummaryFile {
             maybe_new_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
-        let mut summary = Summary { ..Default::default() };
+        let mut summary: Summary = Default::default();
 
         if is_plotting_finished {
             summary.initial_plotting_finished = true;
