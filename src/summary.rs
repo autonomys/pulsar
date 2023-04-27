@@ -47,6 +47,12 @@ impl Default for Rewards {
     }
 }
 
+impl std::ops::AddAssign for Rewards {
+    fn add_assign(&mut self, other: Rewards) {
+        self.0 += other.0;
+    }
+}
+
 /// struct for flexibly updating the fields of the summary
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
