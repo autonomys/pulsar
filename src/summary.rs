@@ -51,10 +51,10 @@ impl Default for Rewards {
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
-    pub(crate) maybe_farmed_block_count: Option<u64>,
+    pub(crate) maybe_authored_count: Option<u64>,
     pub(crate) maybe_vote_count: Option<u64>,
     pub(crate) maybe_reward: Option<Rewards>,
-    pub(crate) maybe_last_block: Option<BlockNumber>,
+    pub(crate) maybe_new_blocks: Option<BlockNumber>,
 }
 
 /// Struct for holding the info of what to be displayed with the `info` command,
@@ -62,17 +62,17 @@ pub(crate) struct SummaryUpdateFields {
 #[derive(Deserialize, Serialize, Default, Debug, Clone, Copy)]
 pub(crate) struct Summary {
     pub(crate) initial_plotting_finished: bool,
-    pub(crate) farmed_block_count: u64,
+    pub(crate) authored_count: u64,
     pub(crate) vote_count: u64,
     pub(crate) total_rewards: Rewards,
     pub(crate) user_space_pledged: ByteSize,
-    pub(crate) last_block_num: BlockNumber,
+    pub(crate) last_processed_block_num: BlockNumber,
 }
 
 impl Summary {
     #[instrument]
     pub(crate) async fn new(summary_file: SummaryFile) -> Result<Summary> {
-        Ok(summary_file.parse_summary_file().await?)
+        Ok(summary_file.parse().await?)
     }
 }
 
@@ -107,11 +107,11 @@ impl SummaryFile {
                 let _ = File::create(&summary_path).await;
                 let initialization = Summary {
                     initial_plotting_finished: false,
-                    farmed_block_count: 0,
+                    authored_count: 0,
                     vote_count: 0,
                     total_rewards: Rewards(0),
                     user_space_pledged,
-                    last_block_num: 0,
+                    last_processed_block_num: 0,
                 };
                 let summary_text =
                     toml::to_string(&initialization).context("Failed to serialize Summary")?;
@@ -130,7 +130,7 @@ impl SummaryFile {
 
     /// parses the summary file and returns [`SummaryInner`]
     #[instrument]
-    pub(crate) async fn parse_summary_file(&self) -> Result<Summary> {
+    pub(crate) async fn parse(&self) -> Result<Summary> {
         let guard = self.inner.lock().await;
         let inner: Summary = toml::from_str(&read_to_string(&*guard).await?)?;
 
@@ -147,10 +147,10 @@ impl SummaryFile {
         &self,
         SummaryUpdateFields {
             is_plotting_finished,
-            maybe_farmed_block_count,
+            maybe_authored_count,
             maybe_vote_count,
             maybe_reward,
-            maybe_last_block,
+            maybe_new_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
         let mut summary = Summary { ..Default::default() };
@@ -159,19 +159,19 @@ impl SummaryFile {
             summary.initial_plotting_finished = true;
         }
 
-        if let Some(new_farmed_block_count) = maybe_farmed_block_count {
-            summary.farmed_block_count = new_farmed_block_count;
+        if let Some(new_authored_count) = maybe_authored_count {
+            summary.authored_count += new_authored_count;
         }
 
         if let Some(new_vote_count) = maybe_vote_count {
-            summary.vote_count = new_vote_count;
+            summary.vote_count += new_vote_count;
         }
 
         if let Some(new_reward) = maybe_reward {
-            summary.total_rewards = new_reward;
+            summary.total_rewards += new_reward;
         }
-        if let Some(last_block) = maybe_last_block {
-            summary.last_block_num = last_block;
+        if let Some(new_parsed_blocks) = maybe_new_blocks {
+            summary.last_processed_block_num += new_parsed_blocks;
         }
 
         let serialized_summary =

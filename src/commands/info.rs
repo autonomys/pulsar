@@ -19,19 +19,19 @@ pub(crate) async fn info() -> Result<()> {
     let summary_file = SummaryFile::new(None).await?;
     let Summary {
         user_space_pledged,
-        farmed_block_count,
+        authored_count,
         vote_count,
         total_rewards,
         initial_plotting_finished,
-        last_block_num: last_block_parsed,
+        last_processed_block_num: last_block_parsed,
     } = summary_file
-        .parse_summary_file()
+        .parse()
         .await
         .context("couldn't parse summary file, are you sure you have ran `farm` command?")?;
 
     println!("You have pledged to the network: {user_space_pledged}");
 
-    println!("Farmed {farmed_block_count} block(s)");
+    println!("Farmed {authored_count} block(s)");
 
     println!("Voted on {vote_count} block(s)");
 
