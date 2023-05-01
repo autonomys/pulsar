@@ -10935,6 +10935,7 @@ dependencies = [
  "color-eyre",
  "console-subscriber",
  "derivative",
+ "derive_more",
  "dirs 4.0.0",
  "fdlimit",
  "futures",

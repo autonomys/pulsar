@@ -2,7 +2,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Context, Result};
+use color_eyre::eyre::{eyre, Context, Error, Result};
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
@@ -15,7 +15,9 @@ use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
 use crate::summary::{Rewards, Summary, SummaryFile, SummaryUpdateFields};
-use crate::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
+use crate::utils::{
+    install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreFuture, IntoEyreStream,
+};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
@@ -53,6 +55,8 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         node_config.advanced.executor = true;
     }
 
+    let node_config2 = node_config.clone();
+
     println!("Starting node ...");
     let node = Arc::new(
         node_config.build(chain.clone(), is_verbose).await.context("error building the node")?,
@@ -74,6 +78,16 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     println!("Farmer started successfully!");
 
     let maybe_handles = if !is_verbose {
+        // we need this to handle errors when block is not found
+        let blocks_pruning =
+            node_config2.advanced.extra.get("blocks_pruning").is_some_and(|value| {
+                value.as_table().is_some_and(|table| {
+                    table
+                        .get("Some")
+                        .is_some_and(|value| value.as_integer().is_some_and(|int| int == 1024))
+                })
+            });
+
         // this will be shared between the two subscriptions
         let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes =
@@ -96,6 +110,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
                 node.clone(),
                 is_initial_progress_finished.clone(),
                 reward_address,
+                blocks_pruning,
             ),
         );
 
@@ -243,6 +258,7 @@ async fn subscribe_to_solutions(
     node: Arc<Node>,
     is_initial_progress_finished: Arc<AtomicBool>,
     reward_address: PublicKey,
+    blocks_pruning: bool,
 ) -> Result<()> {
     // necessary for spacing
     println!();
@@ -261,14 +277,29 @@ async fn subscribe_to_solutions(
     stream
         // Map block number to block hash
         .and_then(|block| {
-            node.block_hash(block)
-                .transpose()
-                .map(futures::future::ready)
-                .expect("Header is not in the chain")
+            match node.block_hash(block).into_eyre().transpose().map(futures::future::ready) {
+                Some(block_hash) => future::ok(Some(block_hash)),
+                None =>
+                    if !blocks_pruning {
+                        future::err(eyre!(
+                            "node database is probably corrupted, try wiping the node"
+                        ))
+                    } else {
+                        future::ok(None)
+                    },
+            }
         })
+        .filter_map(|res| async {
+            match res {
+                Ok(Some(block_hash)) => Some(block_hash),
+                Ok(None) => None,
+                Err(err) => Some(future::ready(Err(err))),
+            }
+        })
+        .map(|x| x.into_inner())
         // Chunk block hashes in chunks of `n_blocks`
         .try_chunks(n_blocks)
-        .map_err(anyhow::Error::from)
+        .map_err(Error::from)
         // For each n_blocks
         .try_for_each(|blocks| {
             let node_clone = node.clone();
@@ -283,7 +314,8 @@ async fn subscribe_to_solutions(
                     // - Number of times we authored a block
                     .map(|hash| {
                         let is_author = node_clone
-                            .block_header(hash)?
+                            .block_header(hash)
+                            .into_eyre()?
                             .expect("TODO: Account for missing blocks somehow or check pruning")
                             .pre_digest
                             .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
@@ -291,6 +323,7 @@ async fn subscribe_to_solutions(
 
                         let rewards_future = node_clone
                             .get_events(Some(hash))
+                            .into_eyre()
                             .map_ok(|events| {
                                 events
                                     .into_iter()
@@ -316,7 +349,7 @@ async fn subscribe_to_solutions(
                                 (rewards, votes, if is_author { 1 } else { 0 })
                             });
 
-                        Ok(rewards_future)
+                        Result::Ok(rewards_future)
                     })
                     // We calculate each block in parallel
                     .try_buffer_unordered(n_tasks)
@@ -335,20 +368,18 @@ async fn subscribe_to_solutions(
 
                 summary_clone
                     .update(SummaryUpdateFields {
-                        maybe_authored_count: Some(author),
-                        maybe_vote_count: Some(votes),
-                        maybe_reward: Some(Rewards(rewards)),
-                        maybe_new_blocks: Some(current_iter * 1000),
+                        new_authored_count: author,
+                        new_vote_count: votes,
+                        new_reward: Rewards(rewards),
+                        new_parsed_blocks: current_iter * 1000,
                         ..Default::default()
                     })
-                    .await
-                    .expect("opsie");
+                    .await?;
 
                 Ok(())
             }
         })
-        .await
-        .into_eyre()?;
+        .await?;
 
     let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
         summary_file.parse().await.context("couldn't update summary")?;
@@ -415,10 +446,10 @@ fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
 fn not_yet_processed_block_nums_stream(
     node: std::sync::Arc<Node>,
     mut last_block_num: subspace_sdk::node::BlockNumber,
-) -> impl Stream<Item = anyhow::Result<subspace_sdk::node::BlockNumber>> {
+) -> impl Stream<Item = Result<subspace_sdk::node::BlockNumber>> {
     async_stream::try_stream! {
         loop {
-            let last_retrieved_num = node.get_info().await?.finalized_block.1;
+            let last_retrieved_num = node.get_info().await.into_eyre()?.finalized_block.1;
 
             if last_block_num == last_retrieved_num {
                 break;

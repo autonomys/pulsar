@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use color_eyre::eyre::{Context, Result};
+use derive_more::{AddAssign, Display, From, FromStr};
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
@@ -17,44 +18,17 @@ use tokio::sync::Mutex;
 use tracing::instrument;
 
 // TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, Default)]
-#[serde(try_from = "String", into = "String")]
+#[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 pub(crate) struct Rewards(pub(crate) u128);
 
-impl TryFrom<String> for Rewards {
-    type Error = <u128 as std::str::FromStr>::Err;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        s.parse().map(Self)
-    }
-}
-
-impl From<Rewards> for String {
-    fn from(Rewards(r): Rewards) -> Self {
-        r.to_string()
-    }
-}
-
-impl std::fmt::Display for Rewards {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::ops::AddAssign for Rewards {
-    fn add_assign(&mut self, other: Rewards) {
-        self.0 += other.0;
-    }
-}
-
-/// struct for flexibly updating the fields of the summary
+/// struct for updating the fields of the summary
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
-    pub(crate) maybe_authored_count: Option<u64>,
-    pub(crate) maybe_vote_count: Option<u64>,
-    pub(crate) maybe_reward: Option<Rewards>,
-    pub(crate) maybe_new_blocks: Option<BlockNumber>,
+    pub(crate) new_authored_count: u64,
+    pub(crate) new_vote_count: u64,
+    pub(crate) new_reward: Rewards,
+    pub(crate) new_parsed_blocks: BlockNumber,
 }
 
 /// Struct for holding the info of what to be displayed with the `info` command,
@@ -67,13 +41,6 @@ pub(crate) struct Summary {
     pub(crate) total_rewards: Rewards,
     pub(crate) user_space_pledged: ByteSize,
     pub(crate) last_processed_block_num: BlockNumber,
-}
-
-impl Summary {
-    #[instrument]
-    pub(crate) async fn new(summary_file: SummaryFile) -> Result<Summary> {
-        summary_file.parse().await
-    }
 }
 
 /// utilizing persistent storage for the information to be displayed for the
@@ -147,10 +114,10 @@ impl SummaryFile {
         &self,
         SummaryUpdateFields {
             is_plotting_finished,
-            maybe_authored_count,
-            maybe_vote_count,
-            maybe_reward,
-            maybe_new_blocks,
+            new_authored_count,
+            new_vote_count,
+            new_reward,
+            new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
         let mut summary: Summary = Default::default();
@@ -159,20 +126,13 @@ impl SummaryFile {
             summary.initial_plotting_finished = true;
         }
 
-        if let Some(new_authored_count) = maybe_authored_count {
-            summary.authored_count += new_authored_count;
-        }
+        summary.authored_count += new_authored_count;
 
-        if let Some(new_vote_count) = maybe_vote_count {
-            summary.vote_count += new_vote_count;
-        }
+        summary.vote_count += new_vote_count;
 
-        if let Some(new_reward) = maybe_reward {
-            summary.total_rewards += new_reward;
-        }
-        if let Some(new_parsed_blocks) = maybe_new_blocks {
-            summary.last_processed_block_num += new_parsed_blocks;
-        }
+        summary.total_rewards += new_reward;
+
+        summary.last_processed_block_num += new_parsed_blocks;
 
         let serialized_summary =
             toml::to_string(&summary).context("Failed to serialize Summary")?;

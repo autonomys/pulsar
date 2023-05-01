@@ -6,6 +6,7 @@ use std::str::FromStr;
 use color_eyre::eyre::{eyre, Context, Result};
 use futures::prelude::*;
 use owo_colors::OwoColorize;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -16,6 +17,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 use crate::config::MIN_PLOT_SIZE;
+use crate::summary::Rewards;
 
 /// for how long a log file should be valid
 const KEEP_LAST_N_FILE: usize = 7;
@@ -294,7 +296,7 @@ pub fn apply_extra_options<T: serde::Serialize + serde::de::DeserializeOwned>(
 
     let mut table: toml::Table =
         toml::from_str(&toml::to_string(config).expect("Config is always toml serializable"))
-            .expect("Config is always toml serializable");
+            .expect("Config is always toml deserializable");
 
     apply_extra_options_inner(&mut table, extra);
 
@@ -364,3 +366,28 @@ pub trait IntoEyreStream: TryStream<Error = anyhow::Error> + Sized {
 }
 
 impl<T> IntoEyreStream for T where T: TryStream<Error = anyhow::Error> + Sized {}
+
+impl Serialize for Rewards {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // You can choose how you want to serialize the data.
+        // Here, we're just serializing the u128 as a string.
+        let s = self.0.to_string();
+        serializer.serialize_str(&s)
+    }
+}
+
+impl<'de> Deserialize<'de> for Rewards {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Choose how you want to deserialize the data.
+        // Here, we're deserializing the string back to u128.
+        let s = String::deserialize(deserializer)?;
+        let value = s.parse::<u128>().map_err(serde::de::Error::custom)?;
+        Ok(Rewards(value))
+    }
+}
