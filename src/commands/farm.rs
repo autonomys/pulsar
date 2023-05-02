@@ -38,7 +38,8 @@ type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     install_tracing(is_verbose);
-    color_eyre::install().expect("first installment always succeeds");
+    color_eyre::install()
+        .context("color eyre installment failed, it should have been the first one")?;
 
     let instance = SingleInstance::new(SINGLE_INSTANCE)
         .context("Cannot take the instance lock from the OS! Aborting...")?;
@@ -406,12 +407,11 @@ async fn process_block_stream(
             Ok(None) =>
                 future::err(eyre!("node database is probably corrupted, try wiping the node")),
             // Err(err) => future::err(err.context("block hash couldn't found")),
-            Err(err) => future::err(eyre!("couldn't get block hash from node, because: {err}")),
+            Err(err) => future::err(err.wrap_err("couldn't get block hash from node")),
         })
         // Chunk block hashes in chunks of `n_blocks`
         .try_chunks(batch_blocks)
-        .map(|x| x.context("try chunks failed"))
-        .map_err(Error::from)
+        .map_err(|err| Error::from(err).wrap_err("Fetching blocks failed"))
         // For each n_blocks
         .try_for_each(|blocks| {
             let node_clone = node.clone();

@@ -102,7 +102,7 @@ impl SummaryFile {
             .open(&summary_path)
             .await
             .context("couldn't open existing summary file")?;
-        return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
+        Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
     }
 
     /// parses the summary file and returns [`Summary`]
