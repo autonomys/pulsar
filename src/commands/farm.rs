@@ -22,6 +22,9 @@ use crate::utils::{
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
+const BATCH_BLOCKS: usize = 1000;
+const N_TASKS: usize = 10;
+
 type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
 
 /// implementation of the `farm` command
@@ -35,7 +38,7 @@ type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
 #[instrument]
 pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     install_tracing(is_verbose);
-    color_eyre::install()?;
+    color_eyre::install().expect("first installment always succeeds");
 
     let instance = SingleInstance::new(SINGLE_INSTANCE)
         .context("Cannot take the instance lock from the OS! Aborting...")?;
@@ -47,7 +50,8 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     // raise file limit
     raise_fd_limit();
 
-    let Config { chain, farmer: farmer_config, node: mut node_config } = validate_config()?;
+    let Config { chain, farmer: farmer_config, node: mut node_config } =
+        validate_config().context("couldn't validate config")?;
     let reward_address = farmer_config.reward_address;
 
     // apply advanced options (flags)
@@ -68,26 +72,27 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
 
     if !matches!(chain, ChainConfig::Dev) {
         if !is_verbose {
-            subscribe_to_node_syncing(&node).await?;
+            subscribe_to_node_syncing(&node).await.context("couldn't subscribe to syncing")?;
         } else {
             node.sync().await.into_eyre().context("Node syncing failed")?;
         }
     }
 
-    let summary_file = SummaryFile::new(Some(farmer_config.plot_size)).await?;
+    let summary_file = SummaryFile::new(Some(farmer_config.plot_size))
+        .await
+        .context("constructing new SummaryFile failed")?;
 
     println!("Starting farmer ...");
-    let farmer = Arc::new(farmer_config.build(&node).await?);
+    let farmer = Arc::new(farmer_config.build(&node).await.context("farmer couldn't be build")?);
     println!("Farmer started successfully!");
 
     let maybe_handles = if !is_verbose {
         // we need this to handle errors when block is not found
+        // if this fails, it might be due to: https://github.com/toml-rs/toml/issues/405 and https://github.com/toml-rs/toml/issues/329
         let blocks_pruning =
             node_config.advanced.clone().extra.get("blocks_pruning").is_some_and(|value| {
                 value.as_table().is_some_and(|table| {
-                    table
-                        .get("Some")
-                        .is_some_and(|value| value.as_integer().is_some_and(|int| int == 1024))
+                    table.get("Some").is_some_and(|value| value.as_integer().is_some())
                 })
             });
 
@@ -123,7 +128,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         None
     };
 
-    wait_on_farmer(maybe_handles, farmer, node).await?;
+    wait_on_farmer(maybe_handles, farmer, node).await.context("waiting on farmer failed")?;
 
     Ok(())
 }
@@ -153,7 +158,7 @@ async fn wait_on_farmer(
         }
     } else {
         // if there are not subscriptions, just wait on the kill signal
-        signal::ctrl_c().await?;
+        signal::ctrl_c().await.context("failed to listen ctrl-c event")?
     }
 
     // shutting down the farmer and the node
@@ -266,7 +271,8 @@ async fn subscribe_to_solutions(
     // necessary for spacing
     println!();
 
-    let Summary { last_processed_block_num: last_block_num, .. } = summary_file.parse().await?;
+    let Summary { last_processed_block_num: last_block_num, .. } =
+        summary_file.parse().await.context("parsing the summary failed")?;
 
     // first, process the stream in a parallelized fashion,
     // after that, there will be new blocks arrived
@@ -277,10 +283,11 @@ async fn subscribe_to_solutions(
         blocks_pruning,
         summary_file.clone(),
         reward_address,
-        1000,
-        10,
+        BATCH_BLOCKS,
+        N_TASKS,
     )
-    .await?;
+    .await
+    .context("parallel block stream couldn't be processed")?;
 
     loop {
         let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
@@ -307,7 +314,8 @@ async fn subscribe_to_solutions(
                 1,
                 1,
             )
-            .await?;
+            .await
+            .context("sequential block stream couldn't be processed")?;
         }
     }
 }
@@ -362,7 +370,7 @@ fn not_yet_processed_block_nums_stream(
 ) -> impl Stream<Item = Result<subspace_sdk::node::BlockNumber>> {
     async_stream::try_stream! {
         loop {
-            let last_retrieved_num = node.get_info().await.into_eyre()?.finalized_block.1;
+            let last_retrieved_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
 
             if last_block_num == last_retrieved_num {
                 break;
@@ -390,31 +398,19 @@ async fn process_block_stream(
     futures::pin_mut!(stream);
 
     let mut current_iter = 0;
+
     stream
-        // Map block number to block hash
-        .and_then(|block| {
-            match node.block_hash(block).into_eyre().transpose().map(futures::future::ready) {
-                Some(block_hash) => future::ok(Some(block_hash)),
-                None =>
-                    if !blocks_pruning {
-                        future::err(eyre!(
-                            "node database is probably corrupted, try wiping the node"
-                        ))
-                    } else {
-                        future::ok(None)
-                    },
-            }
+        .try_filter_map(|block| match node.block_hash(block).into_eyre() {
+            Ok(Some(block_hash)) => future::ok(Some(block_hash)),
+            Ok(None) if blocks_pruning => future::ok(None),
+            Ok(None) =>
+                future::err(eyre!("node database is probably corrupted, try wiping the node")),
+            // Err(err) => future::err(err.context("block hash couldn't found")),
+            Err(err) => future::err(eyre!("couldn't get block hash from node, because: {err}")),
         })
-        .filter_map(|res| async {
-            match res {
-                Ok(Some(block_hash)) => Some(block_hash),
-                Ok(None) => None,
-                Err(err) => Some(future::ready(Err(err))),
-            }
-        })
-        .map(|x| x.into_inner())
         // Chunk block hashes in chunks of `n_blocks`
         .try_chunks(batch_blocks)
+        .map(|x| x.context("try chunks failed"))
         .map_err(Error::from)
         // For each n_blocks
         .try_for_each(|blocks| {
@@ -428,8 +424,10 @@ async fn process_block_stream(
                     blocks,
                     reward_address,
                     n_tasks,
+                    blocks_pruning,
                 )
-                .await?;
+                .await
+                .context("couldn't get rewards, votes and author info")?;
 
                 summary_clone
                     .update(SummaryUpdateFields {
@@ -439,7 +437,8 @@ async fn process_block_stream(
                         new_parsed_blocks: current_iter * batch_blocks as u32,
                         ..Default::default()
                     })
-                    .await?;
+                    .await
+                    .context("couldn't update the summary")?;
 
                 Ok(())
             }
@@ -452,6 +451,7 @@ async fn get_rewards_votes_author_info_from_blocks(
     blocks: Vec<H256>,
     reward_address: PublicKey,
     n_tasks: usize,
+    blocks_pruning: bool,
 ) -> Result<(u128, u64, u64)> {
     let (rewards, votes, author) = futures::stream::iter(blocks)
         // We scan each hash and find 3 things:
@@ -459,13 +459,19 @@ async fn get_rewards_votes_author_info_from_blocks(
         // - Number of votes
         // - Number of times we authored a block
         .map(|hash| {
-            let is_author = node
+            let is_author = match node
                 .block_header(hash)
-                .into_eyre()?
-                .expect("TODO: Account for missing blocks somehow or check pruning")
-                .pre_digest
-                .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
-                .unwrap_or_default();
+                .into_eyre()
+                .context("failed to retrieve block header from node")?
+            {
+                Some(block_header) => Ok(block_header
+                    .pre_digest
+                    .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
+                    .unwrap_or_default()),
+                None if blocks_pruning => Ok(false),
+                None => Err(eyre!("node database is probably corrupted, try wiping the node")),
+            }
+            .context("couldn't get the author info from block header")?;
 
             let rewards_future = node
                 .get_events(Some(hash))
@@ -498,7 +504,8 @@ async fn get_rewards_votes_author_info_from_blocks(
         .try_fold((0, 0, 0), |(rewards, votes, author), (new_rewards, new_votes, new_author)| {
             futures::future::ok((rewards + new_rewards, votes + new_votes, author + new_author))
         })
-        .await?;
+        .await
+        .context("error in stream encountered in try_fold step")?;
 
     Ok((rewards, votes, author))
 }

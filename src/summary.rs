@@ -12,8 +12,8 @@ use derive_more::{AddAssign, Display, From, FromStr};
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
-use tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
-use tokio::io::AsyncWriteExt;
+use tokio::fs::{create_dir_all, File, OpenOptions};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::Mutex;
 use tracing::instrument;
 
@@ -47,14 +47,14 @@ pub(crate) struct Summary {
 /// `info` command
 #[derive(Debug, Clone)]
 pub(crate) struct SummaryFile {
-    inner: Arc<Mutex<PathBuf>>,
+    inner: Arc<Mutex<File>>,
 }
 
 impl SummaryFile {
-    /// creates new summary file pointer
+    /// creates a new summary file Mutex
     ///
     /// if user_space_pledged is provided, it creates a new summary file
-    /// else, it tries to read the existing summary file
+    /// else, it tries to open the existing summary file
     #[instrument]
     pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
         let summary_path = summary_path();
@@ -62,13 +62,13 @@ impl SummaryFile {
             .expect("couldn't get the default local data directory!")
             .join("subspace-cli");
 
+        let mut summary_file;
         // providing `Some` value for `user_space_pledged` means, we are creating a new
         // file, so, first check if the file exists to not erase its content
         if let Some(user_space_pledged) = user_space_pledged {
             // File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
             // in this case, create the file and necessary directories
-            // if file exists, we do nothing
             if File::open(&summary_path).await.is_err() {
                 let _ = create_dir_all(&summary_dir).await;
                 let _ = File::create(&summary_path).await;
@@ -82,26 +82,42 @@ impl SummaryFile {
                 };
                 let summary_text =
                     toml::to_string(&initialization).context("Failed to serialize Summary")?;
-                OpenOptions::new()
+                summary_file = OpenOptions::new()
                     .write(true)
                     .truncate(true)
                     .open(&summary_path)
-                    .await?
+                    .await
+                    .context("couldn't open new summary file")?;
+                summary_file
                     .write_all(summary_text.as_bytes())
-                    .await?;
+                    .await
+                    .context("write to summary failed")?;
+
+                return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
             }
         }
-
-        Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_path)) })
+        // for all the other cases, the SummaryFile should be there
+        summary_file = OpenOptions::new()
+            .write(true)
+            .open(&summary_path)
+            .await
+            .context("couldn't open existing summary file")?;
+        return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
     }
 
     /// parses the summary file and returns [`Summary`]
     #[instrument]
     pub(crate) async fn parse(&self) -> Result<Summary> {
-        let guard = self.inner.lock().await;
-        let inner: Summary = toml::from_str(&read_to_string(&*guard).await?)?;
+        let mut guard = self.inner.lock().await;
+        let mut contents = String::new();
+        guard
+            .read_to_string(&mut contents)
+            .await
+            .context("couldn't read the contents of the summary file")?;
+        let summary: Summary =
+            toml::from_str(&contents).context("couldn't serialize the summary content")?;
 
-        Ok(inner)
+        Ok(summary)
     }
 
     /// updates the summary file, and returns the content of the new summary
@@ -137,10 +153,14 @@ impl SummaryFile {
         let serialized_summary =
             toml::to_string(&summary).context("Failed to serialize Summary")?;
         // this will only create the pointer, and will not override the file
-        let guard = self.inner.lock().await;
-        let mut buffer = OpenOptions::new().write(true).truncate(true).open(&*guard).await?;
-        buffer.write_all(serialized_summary.as_bytes()).await?;
-        buffer.flush().await?;
+        let mut guard = self.inner.lock().await;
+        // truncate the file
+        guard.set_len(0).await.context("couldn't truncate the summary file")?;
+        guard
+            .write_all(serialized_summary.as_bytes())
+            .await
+            .context("couldn't write to summary file")?;
+        guard.flush().await.context("flushing failed for summary file")?;
 
         Ok(summary)
     }
