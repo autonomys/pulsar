@@ -7,6 +7,7 @@ use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
+use sp_core::H256;
 use subspace_sdk::node::{Event, RewardsEvent, SubspaceEvent, SyncingProgress};
 use subspace_sdk::{Farmer, Node, PublicKey};
 use tokio::signal;
@@ -55,11 +56,13 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         node_config.advanced.executor = true;
     }
 
-    let node_config2 = node_config.clone();
-
     println!("Starting node ...");
     let node = Arc::new(
-        node_config.build(chain.clone(), is_verbose).await.context("error building the node")?,
+        node_config
+            .clone()
+            .build(chain.clone(), is_verbose)
+            .await
+            .context("error building the node")?,
     );
     println!("Node started successfully!");
 
@@ -80,7 +83,7 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
     let maybe_handles = if !is_verbose {
         // we need this to handle errors when block is not found
         let blocks_pruning =
-            node_config2.advanced.extra.get("blocks_pruning").is_some_and(|value| {
+            node_config.advanced.clone().extra.get("blocks_pruning").is_some_and(|value| {
                 value.as_table().is_some_and(|table| {
                     table
                         .get("Some")
@@ -265,138 +268,48 @@ async fn subscribe_to_solutions(
 
     let Summary { last_processed_block_num: last_block_num, .. } = summary_file.parse().await?;
 
-    let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+    // first, process the stream in a parallelized fashion,
+    // after that, there will be new blocks arrived
+    // process these new blocks sequentially
+    process_block_stream(
+        last_block_num,
+        node.clone(),
+        blocks_pruning,
+        summary_file.clone(),
+        reward_address,
+        1000,
+        10,
+    )
+    .await?;
 
-    futures::pin_mut!(stream);
+    loop {
+        let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
+            summary_file.parse().await.context("couldn't parse summary")?;
 
-    // to update the last scanned block, we keep a counter
-    let mut current_iter = 0;
-    let n_blocks = 1000;
-    let n_tasks = 10;
+        if is_initial_progress_finished.load(Ordering::Relaxed) {
+            print!(
+                "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
+                 voted on {vote_count} block(s)! This data is derived from the first \
+                 {last_processed_block_num} blocks.\n",
+            );
+            // use carriage return to overwrite the current value
+            // instead of inserting a new line
+            std::io::stdout().flush().expect("Failed to flush stdout");
+            // flush the stdout to make sure values are printed
 
-    stream
-        // Map block number to block hash
-        .and_then(|block| {
-            match node.block_hash(block).into_eyre().transpose().map(futures::future::ready) {
-                Some(block_hash) => future::ok(Some(block_hash)),
-                None =>
-                    if !blocks_pruning {
-                        future::err(eyre!(
-                            "node database is probably corrupted, try wiping the node"
-                        ))
-                    } else {
-                        future::ok(None)
-                    },
-            }
-        })
-        .filter_map(|res| async {
-            match res {
-                Ok(Some(block_hash)) => Some(block_hash),
-                Ok(None) => None,
-                Err(err) => Some(future::ready(Err(err))),
-            }
-        })
-        .map(|x| x.into_inner())
-        // Chunk block hashes in chunks of `n_blocks`
-        .try_chunks(n_blocks)
-        .map_err(Error::from)
-        // For each n_blocks
-        .try_for_each(|blocks| {
-            let node_clone = node.clone();
-            let summary_clone = summary_file.clone();
-            async move {
-                current_iter += 1;
-                // We iterate over hashes
-                let (rewards, votes, author) = futures::stream::iter(blocks)
-                    // We scan each hash and find 3 things:
-                    // - Total amount of rewards
-                    // - Number of votes
-                    // - Number of times we authored a block
-                    .map(|hash| {
-                        let is_author = node_clone
-                            .block_header(hash)
-                            .into_eyre()?
-                            .expect("TODO: Account for missing blocks somehow or check pruning")
-                            .pre_digest
-                            .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
-                            .unwrap_or_default();
-
-                        let rewards_future = node_clone
-                            .get_events(Some(hash))
-                            .into_eyre()
-                            .map_ok(|events| {
-                                events
-                                    .into_iter()
-                                    .map(|event| match event {
-                                        Event::Rewards(
-                                            RewardsEvent::VoteReward { voter: author, reward }
-                                            | RewardsEvent::BlockReward {
-                                                block_author: author,
-                                                reward,
-                                            },
-                                        ) if author == reward_address.into() => (reward, 0),
-                                        Event::Subspace(SubspaceEvent::FarmerVote {
-                                            reward_address: author,
-                                            ..
-                                        }) if author == reward_address.into() => (0, 1),
-                                        _ => (0, 0),
-                                    })
-                                    .fold((0, 0), |(rewards, votes), (new_rewards, new_votes)| {
-                                        (rewards + new_rewards, votes + new_votes)
-                                    })
-                            })
-                            .map_ok(move |(rewards, votes)| {
-                                (rewards, votes, if is_author { 1 } else { 0 })
-                            });
-
-                        Result::Ok(rewards_future)
-                    })
-                    // We calculate each block in parallel
-                    .try_buffer_unordered(n_tasks)
-                    // After that we sum up result
-                    .try_fold(
-                        (0, 0, 0),
-                        |(rewards, votes, author), (new_rewards, new_votes, new_author)| {
-                            futures::future::ok((
-                                rewards + new_rewards,
-                                votes + new_votes,
-                                author + new_author,
-                            ))
-                        },
-                    )
-                    .await?;
-
-                summary_clone
-                    .update(SummaryUpdateFields {
-                        new_authored_count: author,
-                        new_vote_count: votes,
-                        new_reward: Rewards(rewards),
-                        new_parsed_blocks: current_iter * 1000,
-                        ..Default::default()
-                    })
-                    .await?;
-
-                Ok(())
-            }
-        })
-        .await?;
-
-    let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
-        summary_file.parse().await.context("couldn't update summary")?;
-
-    if is_initial_progress_finished.load(Ordering::Relaxed) {
-        print!(
-            "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
-             voted on {vote_count} block(s)! This data is derived from the first \
-             {last_processed_block_num} blocks.\n",
-        );
-        // use carriage return to overwrite the current value
-        // instead of inserting a new line
-        std::io::stdout().flush().expect("Failed to flush stdout");
-        // flush the stdout to make sure values are printed
+            // now, process the blocks without paralellization
+            process_block_stream(
+                last_block_num,
+                node.clone(),
+                blocks_pruning,
+                summary_file.clone(),
+                reward_address,
+                1,
+                1,
+            )
+            .await?;
+        }
     }
-
-    Ok(())
 }
 
 /// nice looking progress bar for the initial plotting :)
@@ -461,4 +374,131 @@ fn not_yet_processed_block_nums_stream(
             }
         }
     }
+}
+
+async fn process_block_stream(
+    last_block_num: subspace_sdk::node::BlockNumber,
+    node: Arc<Node>,
+    blocks_pruning: bool,
+    summary_file: SummaryFile,
+    reward_address: PublicKey,
+    batch_blocks: usize,
+    n_tasks: usize,
+) -> Result<()> {
+    let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+
+    futures::pin_mut!(stream);
+
+    let mut current_iter = 0;
+    stream
+        // Map block number to block hash
+        .and_then(|block| {
+            match node.block_hash(block).into_eyre().transpose().map(futures::future::ready) {
+                Some(block_hash) => future::ok(Some(block_hash)),
+                None =>
+                    if !blocks_pruning {
+                        future::err(eyre!(
+                            "node database is probably corrupted, try wiping the node"
+                        ))
+                    } else {
+                        future::ok(None)
+                    },
+            }
+        })
+        .filter_map(|res| async {
+            match res {
+                Ok(Some(block_hash)) => Some(block_hash),
+                Ok(None) => None,
+                Err(err) => Some(future::ready(Err(err))),
+            }
+        })
+        .map(|x| x.into_inner())
+        // Chunk block hashes in chunks of `n_blocks`
+        .try_chunks(batch_blocks)
+        .map_err(Error::from)
+        // For each n_blocks
+        .try_for_each(|blocks| {
+            let node_clone = node.clone();
+            let summary_clone = summary_file.clone();
+            async move {
+                current_iter += 1;
+                // We iterate over hashes
+                let (rewards, votes, author) = get_rewards_votes_author_info_from_blocks(
+                    node_clone,
+                    blocks,
+                    reward_address,
+                    n_tasks,
+                )
+                .await?;
+
+                summary_clone
+                    .update(SummaryUpdateFields {
+                        new_authored_count: author,
+                        new_vote_count: votes,
+                        new_reward: Rewards(rewards),
+                        new_parsed_blocks: current_iter * batch_blocks as u32,
+                        ..Default::default()
+                    })
+                    .await?;
+
+                Ok(())
+            }
+        })
+        .await
+}
+
+async fn get_rewards_votes_author_info_from_blocks(
+    node: Arc<Node>,
+    blocks: Vec<H256>,
+    reward_address: PublicKey,
+    n_tasks: usize,
+) -> Result<(u128, u64, u64)> {
+    let (rewards, votes, author) = futures::stream::iter(blocks)
+        // We scan each hash and find 3 things:
+        // - Total amount of rewards
+        // - Number of votes
+        // - Number of times we authored a block
+        .map(|hash| {
+            let is_author = node
+                .block_header(hash)
+                .into_eyre()?
+                .expect("TODO: Account for missing blocks somehow or check pruning")
+                .pre_digest
+                .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
+                .unwrap_or_default();
+
+            let rewards_future = node
+                .get_events(Some(hash))
+                .into_eyre()
+                .map_ok(|events| {
+                    events
+                        .into_iter()
+                        .map(|event| match event {
+                            Event::Rewards(
+                                RewardsEvent::VoteReward { voter: author, reward }
+                                | RewardsEvent::BlockReward { block_author: author, reward },
+                            ) if author == reward_address.into() => (reward, 0),
+                            Event::Subspace(SubspaceEvent::FarmerVote {
+                                reward_address: author,
+                                ..
+                            }) if author == reward_address.into() => (0, 1),
+                            _ => (0, 0),
+                        })
+                        .fold((0, 0), |(rewards, votes), (new_rewards, new_votes)| {
+                            (rewards + new_rewards, votes + new_votes)
+                        })
+                })
+                .map_ok(move |(rewards, votes)| (rewards, votes, if is_author { 1 } else { 0 }));
+
+            Result::Ok(rewards_future)
+        })
+        // We calculate each block in parallel
+        .try_buffer_unordered(n_tasks)
+        // After that we sum up result
+        .try_fold((0, 0, 0), |(rewards, votes, author), (new_rewards, new_votes, new_author)| {
+            futures::future::ok((rewards + new_rewards, votes + new_votes, author + new_author))
+        })
+        .await?;
+
+    Ok((rewards, votes, author))
 }
