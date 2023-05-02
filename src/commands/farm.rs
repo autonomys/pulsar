@@ -7,8 +7,7 @@ use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
-use sp_core::H256;
-use subspace_sdk::node::{Event, RewardsEvent, SubspaceEvent, SyncingProgress};
+use subspace_sdk::node::{Event, Hash, RewardsEvent, SubspaceEvent, SyncingProgress};
 use subspace_sdk::{Farmer, Node, PublicKey};
 use tokio::signal;
 use tokio::task::JoinHandle;
@@ -166,7 +165,6 @@ async fn wait_on_farmer(
     let graceful_close_handle = spawn_task("graceful_shutdown_listener", async move {
         // if one of the subscriptions have not aborted yet, wait
         // Plotting might end, so we ignore result here
-
         if let Some((plotting_handle, solution_handle)) = maybe_handles {
             let _ = plotting_handle.await;
             solution_handle.await.expect_err("Solution subscription never ends");
@@ -295,15 +293,15 @@ async fn subscribe_to_solutions(
             summary_file.parse().await.context("couldn't parse summary")?;
 
         if is_initial_progress_finished.load(Ordering::Relaxed) {
+            // use carriage return to overwrite the current value
+            // instead of inserting a new line
             print!(
                 "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
                  voted on {vote_count} block(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.\n",
             );
-            // use carriage return to overwrite the current value
-            // instead of inserting a new line
-            std::io::stdout().flush().expect("Failed to flush stdout");
             // flush the stdout to make sure values are printed
+            std::io::stdout().flush().expect("Failed to flush stdout");
 
             // now, process the blocks without paralellization
             process_block_stream(
@@ -406,7 +404,6 @@ async fn process_block_stream(
             Ok(None) if blocks_pruning => future::ok(None),
             Ok(None) =>
                 future::err(eyre!("node database is probably corrupted, try wiping the node")),
-            // Err(err) => future::err(err.context("block hash couldn't found")),
             Err(err) => future::err(err.wrap_err("couldn't get block hash from node")),
         })
         // Chunk block hashes in chunks of `n_blocks`
@@ -448,7 +445,7 @@ async fn process_block_stream(
 
 async fn get_rewards_votes_author_info_from_blocks(
     node: Arc<Node>,
-    blocks: Vec<H256>,
+    blocks: Vec<Hash>,
     reward_address: PublicKey,
     n_tasks: usize,
     blocks_pruning: bool,

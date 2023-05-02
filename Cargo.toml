@@ -36,7 +36,6 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 
 subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "ae2c1f6bd975f3471ee0d7243f2753b10593e194" }
-sp-core = { version = "7.0.0", git = "https://github.com/subspace/substrate", rev = "fdb68194ab6995447610b3dbdee70559711dbd63" }
 
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
 [target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
