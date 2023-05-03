@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["FIELDS"],"enum":["__Field"],"fn":["delete_summary","summary_path"],"opaque":[""],"static":["CALLSITE","META"],"struct":["Rewards","Summary","SummaryFilePointer","SummaryUpdateFields","__FieldVisitor","__Visitor"]};
+window.SIDEBAR_ITEMS = {"fn":["delete_summary","summary_path"],"opaque":[""],"static":["CALLSITE","META"],"struct":["Rewards","Summary","SummaryFile","SummaryUpdateFields"]};

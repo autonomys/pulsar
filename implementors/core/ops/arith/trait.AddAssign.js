@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"subspace_cli":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/ops/arith/trait.AddAssign.html\" title=\"trait core::ops::arith::AddAssign\">AddAssign</a>&lt;<a class=\"struct\" href=\"subspace_cli/summary/struct.Rewards.html\" title=\"struct subspace_cli::summary::Rewards\">Rewards</a>&gt; for <a class=\"struct\" href=\"subspace_cli/summary/struct.Rewards.html\" title=\"struct subspace_cli::summary::Rewards\">Rewards</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

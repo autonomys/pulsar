@@ -172,6 +172,13 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -182,106 +189,116 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>derive_more::{AddAssign, Display, From, FromStr};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>subspace_sdk::node::BlockNumber;
 <span class="kw">use </span>subspace_sdk::ByteSize;
-<span class="kw">use </span>tokio::fs::{create_dir_all, read_to_string, File, OpenOptions};
-<span class="kw">use </span>tokio::io::AsyncWriteExt;
+<span class="kw">use </span>tokio::fs::{create_dir_all, File, OpenOptions};
+<span class="kw">use </span>tokio::io::{AsyncReadExt, AsyncWriteExt};
 <span class="kw">use </span>tokio::sync::Mutex;
 <span class="kw">use </span>tracing::instrument;
 
 <span class="comment">// TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
-</span><span class="attr">#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-#[serde(try_from = <span class="string">&quot;String&quot;</span>, into = <span class="string">&quot;String&quot;</span>)]
+</span><span class="attr">#[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Rewards(<span class="kw">pub</span>(<span class="kw">crate</span>) u128);
 
-<span class="kw">impl </span>TryFrom&lt;String&gt; <span class="kw">for </span>Rewards {
-    <span class="kw">type </span>Error = &lt;u128 <span class="kw">as </span>std::str::FromStr&gt;::Err;
-
-    <span class="kw">fn </span>try_from(s: String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        s.parse().map(<span class="self">Self</span>)
-    }
+<span class="doccomment">/// struct for updating the fields of the summary
+</span><span class="attr">#[derive(Default, Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryUpdateFields {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) is_plotting_finished: bool,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) new_authored_count: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) new_vote_count: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) new_reward: Rewards,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) new_parsed_blocks: BlockNumber,
 }
 
-<span class="kw">impl </span>From&lt;Rewards&gt; <span class="kw">for </span>String {
-    <span class="kw">fn </span>from(Rewards(r): Rewards) -&gt; <span class="self">Self </span>{
-        r.to_string()
-    }
-}
-
-<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Rewards {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
-    }
-}
-
-<span class="doccomment">/// Struct for holding the information of what to be displayed with the `info`
-/// command
-</span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
+<span class="doccomment">/// Struct for holding the info of what to be displayed with the `info` command,
+/// and printing rewards to user in `farm` command
+</span><span class="attr">#[derive(Deserialize, Serialize, Default, Debug, Clone, Copy)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
     <span class="kw">pub</span>(<span class="kw">crate</span>) initial_plotting_finished: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) farmed_block_count: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) authored_count: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) vote_count: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) total_rewards: Rewards,
     <span class="kw">pub</span>(<span class="kw">crate</span>) user_space_pledged: ByteSize,
-}
-
-<span class="attr">#[derive(Default, Debug)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryUpdateFields {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) is_plotting_finished: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) is_new_block_farmed: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) is_new_vote: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) maybe_new_reward: <span class="prelude-ty">Option</span>&lt;Rewards&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) last_processed_block_num: BlockNumber,
 }
 
 <span class="doccomment">/// utilizing persistent storage for the information to be displayed for the
 /// `info` command
 </span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryFilePointer {
-    file: Arc&lt;Mutex&lt;PathBuf&gt;&gt;,
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryFile {
+    inner: Arc&lt;Mutex&lt;File&gt;&gt;,
 }
 
-<span class="kw">impl </span>SummaryFilePointer {
-    <span class="doccomment">/// creates new summary file pointer
+<span class="kw">impl </span>SummaryFile {
+    <span class="doccomment">/// creates a new summary file Mutex
     ///
     /// if user_space_pledged is provided, it creates a new summary file
-    /// else, it tries to read the existing summary file
+    /// else, it tries to open the existing summary file
     </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(user_space_pledged: <span class="prelude-ty">Option</span>&lt;ByteSize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SummaryFilePointer&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new(user_space_pledged: <span class="prelude-ty">Option</span>&lt;ByteSize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SummaryFile&gt; {
         <span class="kw">let </span>summary_path = summary_path();
-        <span class="kw">let </span>summary_dir = dirs::data_local_dir()
+        <span class="kw">let </span>summary_dir = dirs::cache_dir()
             .expect(<span class="string">&quot;couldn&#39;t get the default local data directory!&quot;</span>)
             .join(<span class="string">&quot;subspace-cli&quot;</span>);
 
+        <span class="kw">let </span><span class="kw-2">mut </span>summary_file;
         <span class="comment">// providing `Some` value for `user_space_pledged` means, we are creating a new
         // file, so, first check if the file exists to not erase its content
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(user_space_pledged) = user_space_pledged {
             <span class="comment">// File::create will truncate the existing file, so first
             // check if the file exists, if not, `open` will return an error
             // in this case, create the file and necessary directories
-            // if file exists, we do nothing
             </span><span class="kw">if </span>File::open(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>.is_err() {
                 <span class="kw">let _ </span>= create_dir_all(<span class="kw-2">&amp;</span>summary_dir).<span class="kw">await</span>;
                 <span class="kw">let _ </span>= File::create(<span class="kw-2">&amp;</span>summary_path).<span class="kw">await</span>;
                 <span class="kw">let </span>initialization = Summary {
                     initial_plotting_finished: <span class="bool-val">false</span>,
-                    farmed_block_count: <span class="number">0</span>,
+                    authored_count: <span class="number">0</span>,
                     vote_count: <span class="number">0</span>,
                     total_rewards: Rewards(<span class="number">0</span>),
                     user_space_pledged,
+                    last_processed_block_num: <span class="number">0</span>,
                 };
                 <span class="kw">let </span>summary_text =
                     toml::to_string(<span class="kw-2">&amp;</span>initialization).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
-                OpenOptions::new()
+                summary_file = OpenOptions::new()
                     .write(<span class="bool-val">true</span>)
                     .truncate(<span class="bool-val">true</span>)
                     .open(<span class="kw-2">&amp;</span>summary_path)
-                    .<span class="kw">await</span><span class="question-mark">?
-                    </span>.write_all(summary_text.as_bytes())
-                    .<span class="kw">await</span><span class="question-mark">?</span>;
+                    .<span class="kw">await
+                    </span>.context(<span class="string">&quot;couldn&#39;t open new summary file&quot;</span>)<span class="question-mark">?</span>;
+                summary_file
+                    .write_all(summary_text.as_bytes())
+                    .<span class="kw">await
+                    </span>.context(<span class="string">&quot;write to summary failed&quot;</span>)<span class="question-mark">?</span>;
+
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
             }
         }
+        <span class="comment">// for all the other cases, the SummaryFile should be there
+        </span>summary_file = OpenOptions::new()
+            .write(<span class="bool-val">true</span>)
+            .open(<span class="kw-2">&amp;</span>summary_path)
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;couldn&#39;t open existing summary file&quot;</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
+    }
 
-        <span class="prelude-val">Ok</span>(SummaryFilePointer { file: Arc::new(Mutex::new(summary_path)) })
+    <span class="doccomment">/// parses the summary file and returns [`Summary`]
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>contents = String::new();
+        guard
+            .read_to_string(<span class="kw-2">&amp;mut </span>contents)
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;couldn&#39;t read the contents of the summary file&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>summary: Summary =
+            toml::from_str(<span class="kw-2">&amp;</span>contents).context(<span class="string">&quot;couldn&#39;t serialize the summary content&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(summary)
     }
 
     <span class="doccomment">/// updates the summary file, and returns the content of the new summary
@@ -294,41 +311,38 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         SummaryUpdateFields {
             is_plotting_finished,
-            is_new_block_farmed,
-            is_new_vote,
-            maybe_new_reward,
+            new_authored_count,
+            new_vote_count,
+            new_reward,
+            new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>summary = <span class="self">self</span>.parse_summary().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>summary: Summary = Default::default();
 
         <span class="kw">if </span>is_plotting_finished {
             summary.initial_plotting_finished = <span class="bool-val">true</span>;
         }
-        <span class="kw">if </span>is_new_block_farmed {
-            summary.farmed_block_count += <span class="number">1</span>;
-        }
-        <span class="kw">if </span>is_new_vote {
-            summary.vote_count += <span class="number">1</span>;
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(new_reward) = maybe_new_reward {
-            summary.total_rewards = new_reward;
-        }
 
-        <span class="kw">let </span>new_summary = toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
+        summary.authored_count += new_authored_count;
 
-        <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>buffer = OpenOptions::new().write(<span class="bool-val">true</span>).truncate(<span class="bool-val">true</span>).open(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>;
-        buffer.write_all(new_summary.as_bytes()).<span class="kw">await</span><span class="question-mark">?</span>;
-        buffer.flush().<span class="kw">await</span><span class="question-mark">?</span>;
+        summary.vote_count += new_vote_count;
 
-        <span class="prelude-val">Ok</span>(summary)
-    }
+        summary.total_rewards += new_reward;
 
-    <span class="doccomment">/// parses the summary file and returns [`Summary`]
-    </span><span class="attr">#[instrument]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>parse_summary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
-        <span class="kw">let </span>guard = <span class="self">self</span>.file.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>summary: Summary = toml::from_str(<span class="kw-2">&amp;</span>read_to_string(<span class="kw-2">&amp;*</span>guard).<span class="kw">await</span><span class="question-mark">?</span>)<span class="question-mark">?</span>;
+        summary.last_processed_block_num += new_parsed_blocks;
+
+        <span class="kw">let </span>serialized_summary =
+            toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
+        <span class="comment">// this will only create the pointer, and will not override the file
+        </span><span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
+        <span class="comment">// truncate the file
+        </span>guard.set_len(<span class="number">0</span>).<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t truncate the summary file&quot;</span>)<span class="question-mark">?</span>;
+        guard
+            .write_all(serialized_summary.as_bytes())
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;couldn&#39;t write to summary file&quot;</span>)<span class="question-mark">?</span>;
+        guard.flush().<span class="kw">await</span>.context(<span class="string">&quot;flushing failed for summary file&quot;</span>)<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(summary)
     }
 }

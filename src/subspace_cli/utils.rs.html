@@ -364,6 +364,33 @@
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -372,6 +399,7 @@
 <span class="kw">use </span>color_eyre::eyre::{eyre, Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>owo_colors::OwoColorize;
+<span class="kw">use </span>serde::{Deserialize, Deserializer, Serialize, Serializer};
 <span class="kw">use </span>subspace_sdk::{ByteSize, PublicKey};
 <span class="kw">use </span>tracing::level_filters::LevelFilter;
 <span class="kw">use </span>tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -382,6 +410,7 @@
 <span class="kw">use </span>tracing_subscriber::{fmt, EnvFilter, Layer};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::MIN_PLOT_SIZE;
+<span class="kw">use </span><span class="kw">crate</span>::summary::Rewards;
 
 <span class="doccomment">/// for how long a log file should be valid
 </span><span class="kw">const </span>KEEP_LAST_N_FILE: usize = <span class="number">7</span>;
@@ -660,7 +689,7 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>table: toml::Table =
         toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(config).expect(<span class="string">&quot;Config is always toml serializable&quot;</span>))
-            .expect(<span class="string">&quot;Config is always toml serializable&quot;</span>);
+            .expect(<span class="string">&quot;Config is always toml deserializable&quot;</span>);
 
     apply_extra_options_inner(<span class="kw-2">&amp;mut </span>table, extra);
 
@@ -730,4 +759,29 @@
 }
 
 <span class="kw">impl</span>&lt;T&gt; IntoEyreStream <span class="kw">for </span>T <span class="kw">where </span>T: TryStream&lt;Error = anyhow::Error&gt; + Sized {}
+
+<span class="kw">impl </span>Serialize <span class="kw">for </span>Rewards {
+    <span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
+    <span class="kw">where
+        </span>S: Serializer,
+    {
+        <span class="comment">// You can choose how you want to serialize the data.
+        // Here, we&#39;re just serializing the u128 as a string.
+        </span><span class="kw">let </span>s = <span class="self">self</span>.<span class="number">0</span>.to_string();
+        serializer.serialize_str(<span class="kw-2">&amp;</span>s)
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Rewards {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+    {
+        <span class="comment">// Choose how you want to deserialize the data.
+        // Here, we&#39;re deserializing the string back to u128.
+        </span><span class="kw">let </span>s = String::deserialize(deserializer)<span class="question-mark">?</span>;
+        <span class="kw">let </span>value = s.parse::&lt;u128&gt;().map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Rewards(value))
+    }
+}
 </code></pre></div></section></main></body></html>
