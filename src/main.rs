@@ -63,7 +63,7 @@ enum Commands {
         verbose: bool,
         #[arg(short, long, action)]
         executor: bool,
-        #[arg(short, long, action)]
+        #[arg(long, action)]
         debug: bool,
     },
     #[command(about = "wipes the node and farm instance (along with your plots)")]
