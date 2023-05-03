@@ -35,8 +35,8 @@ type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
 /// lastly, depending on the verbosity, it subscribes to plotting progress and
 /// new solutions
 #[instrument]
-pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
-    install_tracing(is_verbose);
+pub(crate) async fn farm(is_verbose: bool, executor: bool, debug: bool) -> Result<()> {
+    install_tracing(is_verbose, debug);
     color_eyre::install()
         .context("color eyre installment failed, it should have been the first one")?;
 

@@ -63,6 +63,8 @@ enum Commands {
         verbose: bool,
         #[arg(short, long, action)]
         executor: bool,
+        #[arg(short, long, action)]
+        debug: bool,
     },
     #[command(about = "wipes the node and farm instance (along with your plots)")]
     Wipe {
@@ -88,8 +90,8 @@ async fn main() -> Result<(), Report> {
         Some(Commands::Init) => {
             init().suggestion(support_message())?;
         }
-        Some(Commands::Farm { verbose, executor }) => {
-            farm(verbose, executor).await.suggestion(support_message())?;
+        Some(Commands::Farm { verbose, executor, debug }) => {
+            farm(verbose, executor, debug).await.suggestion(support_message())?;
         }
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
@@ -165,7 +167,7 @@ async fn arrow_key_mode() -> Result<(), Report> {
             let executor =
                 get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
-            farm(verbose, executor).await.suggestion(support_message())?;
+            farm(verbose, executor, false).await.suggestion(support_message())?;
         }
         2 => {
             wipe_config(false, false).await.suggestion(support_message())?;
@@ -214,7 +216,7 @@ fn print_options(
 impl std::fmt::Display for Commands {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            Commands::Farm { verbose: _, executor: _ } => write!(f, "farm"),
+            Commands::Farm { verbose: _, executor: _, debug: _ } => write!(f, "farm"),
             Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),

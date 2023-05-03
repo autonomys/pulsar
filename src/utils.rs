@@ -218,7 +218,7 @@ pub(crate) fn raise_fd_limit() {
 }
 
 /// install a logger for the application
-pub(crate) fn install_tracing(is_verbose: bool) {
+pub(crate) fn install_tracing(is_verbose: bool, enable_console_subscriber: bool) {
     let log_dir = custom_log_dir();
     let _ = create_dir_all(&log_dir);
 
@@ -239,7 +239,14 @@ pub(crate) fn install_tracing(is_verbose: bool) {
 
     // start logger, after we acquire the bundle identifier
     #[cfg(tokio_unstable)]
-    let tracing_layer = tracing_subscriber::registry().with(console_subscriber::spawn());
+    {
+        // TODO: get rid of this if-else when this issue is resolved: https://github.com/tokio-rs/console/issues/299
+        if enable_console_subscriber {
+            let tracing_layer = tracing_subscriber::registry().with(console_subscriber::spawn());
+        } else {
+            let tracing_layer = tracing_subscriber::registry();
+        }
+    }
 
     #[cfg(not(tokio_unstable))]
     let tracing_layer = tracing_subscriber::registry();
