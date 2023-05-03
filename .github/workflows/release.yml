@@ -56,7 +56,9 @@ jobs:
     runs-on: ${{ matrix.build.os }}
 
     env:
-      RUSTFLAGS: ${{ matrix.build.rustflags }} --cfg tokio_unstable
+      RUSTFLAGS: ${{ matrix.build.rustflags }}
+    # TODO: use the commented out one when this issue is resolved: https://github.com/tokio-rs/console/issues/299
+    # RUSTFLAGS: ${{ matrix.build.rustflags }} --cfg tokio_unstable
 
     steps:
       - name: Checkout
