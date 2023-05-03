@@ -3,6 +3,7 @@
 
 #![deny(missing_docs, clippy::unwrap_used)]
 #![feature(concat_idents)]
+#![feature(is_some_and)]
 
 mod commands;
 mod config;
