@@ -18,13 +18,12 @@ use std::io::{self, Write};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
+use crossterm::event::{Event, KeyCode};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::{cursor, execute};
 use owo_colors::OwoColorize;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use termion::cursor::{self, DetectCursorPos};
-use termion::event::Key;
-use termion::input::TermRead;
-use termion::raw::IntoRawMode;
 use tracing::instrument;
 
 use crate::commands::farm::farm;
@@ -97,9 +96,7 @@ async fn main() -> Result<(), Report> {
         Some(Commands::OpenLogs) => {
             open_log_dir().suggestion(support_message())?;
         }
-        None => {
-            arrow_key_mode().await.suggestion(support_message())?;
-        }
+        None => arrow_key_mode().await.suggestion(support_message())?,
     }
 
     Ok(())
@@ -107,8 +104,7 @@ async fn main() -> Result<(), Report> {
 
 #[instrument]
 async fn arrow_key_mode() -> Result<(), Report> {
-    let stdout = io::stdout();
-    let mut stdout = stdout.lock().into_raw_mode()?;
+    let mut stdout = io::stdout();
 
     // Options to be displayed
     let options = Commands::iter().map(|command| command.to_string()).collect::<Vec<_>>();
@@ -117,40 +113,48 @@ async fn arrow_key_mode() -> Result<(), Report> {
     let mut selected = 0;
 
     // get the current location of the cursor
-    let (_, y) = stdout.cursor_pos()?;
+    let position = cursor::position()?.1;
+
+    enable_raw_mode()?;
 
     // Print options to the terminal
-    print_options(&mut stdout, &options, selected, y)?;
+    print_options(&mut stdout, &options, selected, position)?;
 
     // Process input events
-    for c in io::stdin().keys() {
-        match c.context("failed to read input")? {
-            Key::Up | Key::Char('k') => {
-                // Move selection up
-                if selected > 0 {
-                    selected -= 1;
-                    print_options(&mut stdout, &options, selected, y)?;
+    loop {
+        if let Event::Key(event) = crossterm::event::read()? {
+            match event.code {
+                KeyCode::Up | KeyCode::Char('k') => {
+                    // Move selection up
+                    if selected > 0 {
+                        selected -= 1;
+                        print_options(&mut stdout, &options, selected, position)?;
+                    }
                 }
-            }
-            Key::Down | Key::Char('j') => {
-                // Move selection down
-                if selected < options.len() - 1 {
-                    selected += 1;
-                    print_options(&mut stdout, &options, selected, y)?;
+                KeyCode::Down | KeyCode::Char('j') => {
+                    // Move selection down
+                    if selected < options.len() - 1 {
+                        selected += 1;
+                        print_options(&mut stdout, &options, selected, position)?;
+                    }
                 }
+                KeyCode::Enter => {
+                    break;
+                }
+                KeyCode::Char('c')
+                    if event.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
+                {
+                    return Ok(());
+                }
+                _ => {}
             }
-            Key::Char('\n') => {
-                stdout.suspend_raw_mode()?;
-                break;
-            }
-            Key::Ctrl('c') => {
-                return Ok(());
-            }
-            _ => {}
         }
     }
 
-    stdout.suspend_raw_mode()?;
+    disable_raw_mode()?;
+
+    // Move the cursor two lines below the options
+    execute!(stdout, cursor::MoveTo(0, position + options.len() as u16 + 6))?;
 
     match selected {
         0 => {
@@ -186,29 +190,30 @@ async fn arrow_key_mode() -> Result<(), Report> {
 
 // Helper function to print options to the terminal
 fn print_options(
-    stdout: &mut io::StdoutLock,
+    stdout: &mut io::Stdout,
     options: &[String],
     selected: usize,
     position: u16,
 ) -> io::Result<()> {
-    writeln!(
-        stdout,
-        "{}Please select an option below using arrow keys (or `j` and `k`):\n",
-        cursor::Goto(1, position + 2)
-    )?;
+    execute!(stdout, cursor::MoveTo(1, position + 2), cursor::SavePosition)?;
+    writeln!(stdout, "Please select an option below using arrow keys (or `j` and `k`):\n",)?;
 
     // Print options to the terminal
     for (i, option) in options.iter().enumerate() {
         if i == selected {
             let output = format!(" > {} ", option);
-            writeln!(stdout, "{} {}", cursor::Goto(1, i as u16 + position + 4), output.green())?;
+            writeln!(stdout, "{} {}", cursor::MoveTo(1, i as u16 + position + 4), output.green())?;
         } else {
             let output = format!("  {} ", option);
-            writeln!(stdout, "{} {}", cursor::Goto(1, i as u16 + position + 4), output)?;
+            writeln!(stdout, "{} {}", cursor::MoveTo(1, i as u16 + position + 4), output)?;
         }
     }
-    write!(stdout, "\n\r")?;
-    stdout.flush()
+    writeln!(stdout, "\n\r")?;
+    stdout.flush()?;
+
+    execute!(stdout, cursor::RestorePosition)?;
+
+    Ok(())
 }
 
 impl std::fmt::Display for Commands {
