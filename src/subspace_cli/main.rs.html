@@ -222,6 +222,11 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -242,13 +247,12 @@
 <span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>color_eyre::eyre::{Context, Report};
 <span class="kw">use </span>color_eyre::Help;
+<span class="kw">use </span>crossterm::event::{Event, KeyCode};
+<span class="kw">use </span>crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+<span class="kw">use </span>crossterm::{cursor, execute};
 <span class="kw">use </span>owo_colors::OwoColorize;
 <span class="kw">use </span>strum::IntoEnumIterator;
 <span class="kw">use </span>strum_macros::EnumIter;
-<span class="kw">use </span>termion::cursor::{<span class="self">self</span>, DetectCursorPos};
-<span class="kw">use </span>termion::event::Key;
-<span class="kw">use </span>termion::input::TermRead;
-<span class="kw">use </span>termion::raw::IntoRawMode;
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span><span class="kw">crate</span>::commands::farm::farm;
@@ -321,9 +325,7 @@
         <span class="prelude-val">Some</span>(Commands::OpenLogs) =&gt; {
             open_log_dir().suggestion(support_message())<span class="question-mark">?</span>;
         }
-        <span class="prelude-val">None </span>=&gt; {
-            arrow_key_mode().<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
-        }
+        <span class="prelude-val">None </span>=&gt; arrow_key_mode().<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>,
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -331,8 +333,7 @@
 
 <span class="attr">#[instrument]
 </span><span class="kw">async fn </span>arrow_key_mode() -&gt; <span class="prelude-ty">Result</span>&lt;(), Report&gt; {
-    <span class="kw">let </span>stdout = io::stdout();
-    <span class="kw">let </span><span class="kw-2">mut </span>stdout = stdout.lock().into_raw_mode()<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>stdout = io::stdout();
 
     <span class="comment">// Options to be displayed
     </span><span class="kw">let </span>options = Commands::iter().map(|command| command.to_string()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -341,40 +342,48 @@
     </span><span class="kw">let </span><span class="kw-2">mut </span>selected = <span class="number">0</span>;
 
     <span class="comment">// get the current location of the cursor
-    </span><span class="kw">let </span>(<span class="kw">_</span>, y) = stdout.cursor_pos()<span class="question-mark">?</span>;
+    </span><span class="kw">let </span>position = cursor::position()<span class="question-mark">?</span>.<span class="number">1</span>;
+
+    enable_raw_mode()<span class="question-mark">?</span>;
 
     <span class="comment">// Print options to the terminal
-    </span>print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, y)<span class="question-mark">?</span>;
+    </span>print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, position)<span class="question-mark">?</span>;
 
     <span class="comment">// Process input events
-    </span><span class="kw">for </span>c <span class="kw">in </span>io::stdin().keys() {
-        <span class="kw">match </span>c.context(<span class="string">&quot;failed to read input&quot;</span>)<span class="question-mark">? </span>{
-            Key::Up | Key::Char(<span class="string">&#39;k&#39;</span>) =&gt; {
-                <span class="comment">// Move selection up
-                </span><span class="kw">if </span>selected &gt; <span class="number">0 </span>{
-                    selected -= <span class="number">1</span>;
-                    print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, y)<span class="question-mark">?</span>;
+    </span><span class="kw">loop </span>{
+        <span class="kw">if let </span>Event::Key(event) = crossterm::event::read()<span class="question-mark">? </span>{
+            <span class="kw">match </span>event.code {
+                KeyCode::Up | KeyCode::Char(<span class="string">&#39;k&#39;</span>) =&gt; {
+                    <span class="comment">// Move selection up
+                    </span><span class="kw">if </span>selected &gt; <span class="number">0 </span>{
+                        selected -= <span class="number">1</span>;
+                        print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, position)<span class="question-mark">?</span>;
+                    }
                 }
-            }
-            Key::Down | Key::Char(<span class="string">&#39;j&#39;</span>) =&gt; {
-                <span class="comment">// Move selection down
-                </span><span class="kw">if </span>selected &lt; options.len() - <span class="number">1 </span>{
-                    selected += <span class="number">1</span>;
-                    print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, y)<span class="question-mark">?</span>;
+                KeyCode::Down | KeyCode::Char(<span class="string">&#39;j&#39;</span>) =&gt; {
+                    <span class="comment">// Move selection down
+                    </span><span class="kw">if </span>selected &lt; options.len() - <span class="number">1 </span>{
+                        selected += <span class="number">1</span>;
+                        print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, position)<span class="question-mark">?</span>;
+                    }
                 }
+                KeyCode::Enter =&gt; {
+                    <span class="kw">break</span>;
+                }
+                KeyCode::Char(<span class="string">&#39;c&#39;</span>)
+                    <span class="kw">if </span>event.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =&gt;
+                {
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+                }
+                <span class="kw">_ </span>=&gt; {}
             }
-            Key::Char(<span class="string">&#39;\n&#39;</span>) =&gt; {
-                stdout.suspend_raw_mode()<span class="question-mark">?</span>;
-                <span class="kw">break</span>;
-            }
-            Key::Ctrl(<span class="string">&#39;c&#39;</span>) =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-            }
-            <span class="kw">_ </span>=&gt; {}
         }
     }
 
-    stdout.suspend_raw_mode()<span class="question-mark">?</span>;
+    disable_raw_mode()<span class="question-mark">?</span>;
+
+    <span class="comment">// Move the cursor two lines below the options
+    </span><span class="macro">execute!</span>(stdout, cursor::MoveTo(<span class="number">0</span>, position + options.len() <span class="kw">as </span>u16 + <span class="number">6</span>))<span class="question-mark">?</span>;
 
     <span class="kw">match </span>selected {
         <span class="number">0 </span>=&gt; {
@@ -410,29 +419,30 @@
 
 <span class="comment">// Helper function to print options to the terminal
 </span><span class="kw">fn </span>print_options(
-    stdout: <span class="kw-2">&amp;mut </span>io::StdoutLock,
+    stdout: <span class="kw-2">&amp;mut </span>io::Stdout,
     options: <span class="kw-2">&amp;</span>[String],
     selected: usize,
     position: u16,
 ) -&gt; io::Result&lt;()&gt; {
-    <span class="macro">writeln!</span>(
-        stdout,
-        <span class="string">&quot;{}Please select an option below using arrow keys (or `j` and `k`):\n&quot;</span>,
-        cursor::Goto(<span class="number">1</span>, position + <span class="number">2</span>)
-    )<span class="question-mark">?</span>;
+    <span class="macro">execute!</span>(stdout, cursor::MoveTo(<span class="number">1</span>, position + <span class="number">2</span>), cursor::SavePosition)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(stdout, <span class="string">&quot;Please select an option below using arrow keys (or `j` and `k`):\n&quot;</span>,)<span class="question-mark">?</span>;
 
     <span class="comment">// Print options to the terminal
     </span><span class="kw">for </span>(i, option) <span class="kw">in </span>options.iter().enumerate() {
         <span class="kw">if </span>i == selected {
             <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">&quot; &gt; {} &quot;</span>, option);
-            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::Goto(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output.green())<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output.green())<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">&quot;  {} &quot;</span>, option);
-            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::Goto(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output)<span class="question-mark">?</span>;
         }
     }
-    <span class="macro">write!</span>(stdout, <span class="string">&quot;\n\r&quot;</span>)<span class="question-mark">?</span>;
-    stdout.flush()
+    <span class="macro">writeln!</span>(stdout, <span class="string">&quot;\n\r&quot;</span>)<span class="question-mark">?</span>;
+    stdout.flush()<span class="question-mark">?</span>;
+
+    <span class="macro">execute!</span>(stdout, cursor::RestorePosition)<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Commands {
