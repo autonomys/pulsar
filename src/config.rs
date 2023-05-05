@@ -116,8 +116,7 @@ pub(crate) struct FarmerConfig {
 
 impl FarmerConfig {
     pub async fn build(self, node: &Node) -> Result<Farmer> {
-        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
-            .wrap_err("Plot size is too low")?];
+        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)];
         let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
 
         // currently we do not have different configuration for the farmer w.r.t
