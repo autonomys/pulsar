@@ -70,6 +70,13 @@ codegen-units = 1
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
+ark-bls12-381 = { opt-level = 3 }
+ark-ec = { opt-level = 3 }
+ark-ff = { opt-level = 3 }
+ark-ff-asm = { opt-level = 3 }
+ark-poly = { opt-level = 3 }
+ark-serialize = { opt-level = 3 }
+ark-std = { opt-level = 3 }
 blake2 = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }
 chacha20poly1305 = { opt-level = 3 }
