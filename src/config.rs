@@ -71,8 +71,10 @@ impl NodeConfig {
 
         if executor {
             node = node.system_domain(
-                domains::ConfigBuilder::new().core_payments(ConfigBuilder::new().build()),
-            );
+                domains::ConfigBuilder::new()
+                    .core_payments(ConfigBuilder::new().build())
+                    .role(Role::Authority),
+            )
         }
 
         if is_verbose {
