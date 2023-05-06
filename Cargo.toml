@@ -37,6 +37,9 @@ whoami = "1"
 
 subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "faf31d4e8079c45f4512ebe77aa77bfb27326b01" }
 
+[dev-dependencies]
+rand = "0.8.5"
+
 # The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
 [target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
 jemallocator = "0.5.0"
