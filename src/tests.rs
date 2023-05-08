@@ -39,10 +39,8 @@ async fn summary_file_integration() {
 
     // create summary file
     let plot_size = ByteSize::gb(1);
-    let summary_file = SummaryFile::new(Some(plot_size)).await;
-    assert!(summary_file.is_ok(), "Failed to create summary file");
-
-    let summary_file = summary_file.unwrap();
+    let summary_file =
+        SummaryFile::new(Some(plot_size)).await.expect("Failed to create summary file");
 
     // sequential update trial
     let update_fields = SummaryUpdateFields {
