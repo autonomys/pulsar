@@ -1,11 +1,73 @@
 use std::str::FromStr;
 
+use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
+use subspace_sdk::ByteSize;
+
 use crate::config::ChainConfig;
+use crate::summary::*;
 use crate::utils::{
     apply_extra_options, cache_directory_getter, custom_log_dir, directory_parser,
     node_directory_getter, node_name_parser, plot_directory_getter, reward_address_parser,
     size_parser, yes_or_no_parser,
 };
+
+async fn update_summary_file_randomly(summary_file: SummaryFile) {
+    let mut rng = SmallRng::from_entropy();
+
+    for _ in 0..5 {
+        let update_fields = SummaryUpdateFields {
+            is_plotting_finished: false,
+            new_authored_count: rng.gen_range(1..10),
+            new_vote_count: rng.gen_range(1..10),
+            new_reward: Rewards(rng.gen_range(1..1000)),
+            new_parsed_blocks: rng.gen_range(1..100),
+        };
+        let result = summary_file.update(update_fields).await;
+        assert!(result.is_ok(), "Failed to update summary file");
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn summary_file_integration() {
+    // this test is mainly for CI, in which, summary file won't exist
+    // if there is a summary file (user env), we don't want to modify the existing
+    // summary file for test
+    if SummaryFile::new(None).await.is_ok() {
+        return;
+    }
+
+    // create summary file
+    let plot_size = ByteSize::gb(1);
+    let summary_file =
+        SummaryFile::new(Some(plot_size)).await.expect("Failed to create summary file");
+
+    // sequential update trial
+    let update_fields = SummaryUpdateFields {
+        is_plotting_finished: true,
+        new_authored_count: 11,
+        new_vote_count: 11,
+        new_reward: Rewards(1001),
+        new_parsed_blocks: 101,
+    };
+    summary_file.update(update_fields).await.expect("Failed to update summary file");
+
+    // create two concurrent tasks, they try to write to summary file 5 times each
+    let task1 = tokio::spawn(update_summary_file_randomly(summary_file.clone()));
+    let task2 = tokio::spawn(update_summary_file_randomly(summary_file.clone()));
+
+    // Wait for both tasks to complete concurrently
+    let (result1, result2) = tokio::join!(task1, task2);
+
+    assert!(result1.is_ok(), "Task 1 encountered an error: {:?}", result1.unwrap_err());
+    assert!(result2.is_ok(), "Task 2 encountered an error: {:?}", result2.unwrap_err());
+
+    // parse the summary after updates
+    summary_file.parse().await.expect("Failed to parse the summary file after updates");
+
+    // Clean up the summary file
+    delete_summary().expect("summary deletion failed");
+}
 
 #[test]
 fn extra_options() {

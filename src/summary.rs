@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
 use tokio::fs::{create_dir_all, File, OpenOptions};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 use tokio::sync::Mutex;
 use tracing::instrument;
 
@@ -58,9 +58,7 @@ impl SummaryFile {
     #[instrument]
     pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
         let summary_path = summary_path();
-        let summary_dir = dirs::cache_dir()
-            .expect("couldn't get the default local data directory!")
-            .join("subspace-cli");
+        let summary_dir = summary_dir();
 
         let mut summary_file;
         // providing `Some` value for `user_space_pledged` means, we are creating a new
@@ -83,6 +81,7 @@ impl SummaryFile {
                 let summary_text =
                     toml::to_string(&initialization).context("Failed to serialize Summary")?;
                 summary_file = OpenOptions::new()
+                    .read(true)
                     .write(true)
                     .truncate(true)
                     .open(&summary_path)
@@ -92,12 +91,18 @@ impl SummaryFile {
                     .write_all(summary_text.as_bytes())
                     .await
                     .context("write to summary failed")?;
+                summary_file.flush().await.context("flush at creation failed")?;
+                summary_file
+                    .seek(std::io::SeekFrom::Start(0))
+                    .await
+                    .context("couldn't seek to the beginning of the summary file")?;
 
                 return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
             }
         }
         // for all the other cases, the SummaryFile should be there
         summary_file = OpenOptions::new()
+            .read(true)
             .write(true)
             .open(&summary_path)
             .await
@@ -110,12 +115,18 @@ impl SummaryFile {
     pub(crate) async fn parse(&self) -> Result<Summary> {
         let mut guard = self.inner.lock().await;
         let mut contents = String::new();
+
         guard
             .read_to_string(&mut contents)
             .await
             .context("couldn't read the contents of the summary file")?;
         let summary: Summary =
             toml::from_str(&contents).context("couldn't serialize the summary content")?;
+
+        guard
+            .seek(std::io::SeekFrom::Start(0))
+            .await
+            .context("couldn't seek to the beginning of the summary file")?;
 
         Ok(summary)
     }
@@ -136,7 +147,7 @@ impl SummaryFile {
             new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
-        let mut summary: Summary = Default::default();
+        let mut summary = self.parse().await.context("couldn't parse summary in update method")?;
 
         if is_plotting_finished {
             summary.initial_plotting_finished = true;
@@ -152,14 +163,16 @@ impl SummaryFile {
 
         let serialized_summary =
             toml::to_string(&summary).context("Failed to serialize Summary")?;
-        // this will only create the pointer, and will not override the file
         let mut guard = self.inner.lock().await;
-        // truncate the file
         guard.set_len(0).await.context("couldn't truncate the summary file")?;
         guard
             .write_all(serialized_summary.as_bytes())
             .await
             .context("couldn't write to summary file")?;
+        guard
+            .seek(std::io::SeekFrom::Start(0))
+            .await
+            .context("couldn't seek to the beginning of the summary file")?;
         guard.flush().await.context("flushing failed for summary file")?;
 
         Ok(summary)
@@ -174,8 +187,11 @@ pub(crate) fn delete_summary() -> Result<()> {
 
 /// returns the path for the summary file
 #[instrument]
-fn summary_path() -> PathBuf {
-    let summary_path =
-        dirs::data_local_dir().expect("couldn't get the default local data directory!");
-    summary_path.join("subspace-cli").join("summary.toml")
+pub(crate) fn summary_path() -> PathBuf {
+    summary_dir().join("summary.toml")
+}
+
+#[instrument]
+fn summary_dir() -> PathBuf {
+    dirs::cache_dir().expect("couldn't get the  directory!").join("subspace-cli")
 }
