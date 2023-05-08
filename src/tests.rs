@@ -50,8 +50,7 @@ async fn summary_file_integration() {
         new_reward: Rewards(1001),
         new_parsed_blocks: 101,
     };
-    let update_result =
-        summary_file.update(update_fields).await.expect("Failed to update summary file");
+    summary_file.update(update_fields).await.expect("Failed to update summary file");
 
     // create two concurrent tasks, they try to write to summary file 5 times each
     let task1 = tokio::spawn(update_summary_file_randomly(summary_file.clone()));
@@ -64,8 +63,7 @@ async fn summary_file_integration() {
     assert!(result2.is_ok(), "Task 2 encountered an error: {:?}", result2.unwrap_err());
 
     // parse the summary after updates
-    let parse_result =
-        summary_file.parse().await.expect("Failed to parse the summary file after updates");
+    summary_file.parse().await.expect("Failed to parse the summary file after updates");
 
     // Clean up the summary file
     delete_summary().expect("summary deletion failed");
