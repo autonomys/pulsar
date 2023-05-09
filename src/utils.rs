@@ -20,7 +20,7 @@ use crate::config::MIN_PLOT_SIZE;
 use crate::summary::Rewards;
 
 /// for how long a log file should be valid
-const KEEP_LAST_N_FILE: usize = 7;
+const KEEP_LAST_N_FILE: usize = 72;
 
 /// <3
 pub(crate) fn print_ascii_art() {
@@ -225,6 +225,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
     let file_appender = RollingFileAppender::builder()
         .max_log_files(KEEP_LAST_N_FILE)
         .rotation(Rotation::HOURLY)
+        .zipping(true)
         .filename_prefix("subspace-cli.log")
         .build(log_dir)
         .expect("building should always succeed");
