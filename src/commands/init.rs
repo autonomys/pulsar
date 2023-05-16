@@ -8,7 +8,7 @@ use rand::prelude::IteratorRandom;
 use sp_core::Pair;
 use strum::IntoEnumIterator;
 use subspace_sdk::PublicKey;
-use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 use crate::config::{
     create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
@@ -141,8 +141,13 @@ fn generate_or_get_reward_address(reward_address_exist: bool) -> Result<PublicKe
     }
 
     // generate new mnemonic and key pair
-    let (pair, mut phrase, _): (sp_core::sr25519::Pair, String, _) =
-        Pair::generate_with_phrase(None);
+    let (pair, phrase, seed): (
+        sp_core::sr25519::Pair,
+        String,
+        <sp_core::sr25519::Pair as Pair>::Seed,
+    ) = Pair::generate_with_phrase(None);
+    let _seed = Zeroizing::new(seed);
+    let phrase = Zeroizing::new(phrase);
     let words: Vec<&str> = phrase.split_whitespace().collect();
 
     println!(
@@ -158,7 +163,7 @@ fn generate_or_get_reward_address(reward_address_exist: bool) -> Result<PublicKe
     // saving position, since we will later clear the mnemonic
     println!("Here is your mnemonic:");
     execute!(std::io::stdout(), cursor::SavePosition).context("save position failed")?;
-    println!("{phrase}");
+    println!("{}", phrase.as_str());
     std::io::stdin().lock().lines().next();
 
     // clear the mnemonic
@@ -191,6 +196,5 @@ fn generate_or_get_reward_address(reward_address_exist: bool) -> Result<PublicKe
     // print the public key and return it
     println!("Your new public key is: {}", pair.public());
     let public_key_array = pair.public().0;
-    phrase.zeroize();
     Ok(public_key_array.into())
 }
