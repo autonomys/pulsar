@@ -11163,6 +11163,7 @@ dependencies = [
  "tracing-error",
  "tracing-subscriber 0.3.17",
  "whoami",
+ "zeroize",
 ]
 
 [[package]]

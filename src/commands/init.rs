@@ -8,6 +8,7 @@ use rand::prelude::IteratorRandom;
 use sp_core::Pair;
 use strum::IntoEnumIterator;
 use subspace_sdk::PublicKey;
+use zeroize::Zeroize;
 
 use crate::config::{
     create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
@@ -126,73 +127,70 @@ fn get_config_from_user_inputs() -> Result<Config> {
 
 fn generate_or_get_reward_address(reward_address_exist: bool) -> Result<PublicKey> {
     if reward_address_exist {
-        // if reward address exists, get reward address
-        get_user_input("Enter your farmer/reward address: ", None, reward_address_parser)
-    } else {
-        // else, try to create a reward address for the user
-        let wants_new_key = get_user_input(
-            "Do you want to create a new farmer/reward key? [y/n]: ",
-            None,
-            yes_or_no_parser,
-        )?;
+        return get_user_input("Enter your farmer/reward address: ", None, reward_address_parser);
+    }
 
-        if wants_new_key {
-            // generate new mnemonic and key pair
-            let (pair, phrase, _): (sp_core::sr25519::Pair, String, _) =
-                Pair::generate_with_phrase(None);
-            let words: Vec<&str> = phrase.split_whitespace().collect();
+    let wants_new_key = get_user_input(
+        "Do you want to create a new farmer/reward key? [y/n]: ",
+        None,
+        yes_or_no_parser,
+    )?;
 
-            println!(
-                "IMPORTANT NOTICE: The mnemonic displayed below is crucial to regain access to \
-                 your account in case you forget your credentials. It's highly recommended to \
-                 store it in a secure and retrievable location. Failure to do so may result in \
-                 permanent loss of access to your account.\n"
-            );
-            println!(
-                "Please press 'Enter' after you've securely stored the mnemonic. Once you press \
-                 'Enter', the mnemonic will no longer be visible in this interface for security \
-                 reasons.\n"
-            );
-            // saving position, since we will later clear the mnemonic
-            println!("Here is your mnemonic:");
-            execute!(std::io::stdout(), cursor::SavePosition).context("save position failed")?;
-            println!("{phrase}");
-            std::io::stdin().lock().lines().next();
+    if !wants_new_key {
+        return Err(eyre!("New key creation was not confirmed"));
+    }
 
-            // clear the mnemonic
-            execute!(std::io::stdout(), cursor::RestorePosition)
-                .context("restore cursor failed")?;
-            execute!(std::io::stdout(), Clear(ClearType::FromCursorDown))
-                .context("clear mnemonic failed")?;
+    // generate new mnemonic and key pair
+    let (pair, mut phrase, _): (sp_core::sr25519::Pair, String, _) =
+        Pair::generate_with_phrase(None);
+    let words: Vec<&str> = phrase.split_whitespace().collect();
 
-            println!("...redacted...");
+    println!(
+        "IMPORTANT NOTICE: The mnemonic displayed below is crucial to regain access to your \
+         account in case you forget your credentials. It's highly recommended to store it in a \
+         secure and retrievable location. Failure to do so may result in permanent loss of access \
+         to your account.\n"
+    );
+    println!(
+        "Please press 'Enter' after you've securely stored the mnemonic. Once you press 'Enter', \
+         the mnemonic will no longer be visible in this interface for security reasons.\n"
+    );
+    // saving position, since we will later clear the mnemonic
+    println!("Here is your mnemonic:");
+    execute!(std::io::stdout(), cursor::SavePosition).context("save position failed")?;
+    println!("{phrase}");
+    std::io::stdin().lock().lines().next();
 
-            // User has to provide 3 randomly selected words from the mnemonic
-            let mut rng = rand::thread_rng();
-            let word_indexes: Vec<usize> = (0..words.len()).choose_multiple(&mut rng, 3);
+    // clear the mnemonic
+    execute!(std::io::stdout(), cursor::RestorePosition).context("restore cursor failed")?;
+    execute!(std::io::stdout(), Clear(ClearType::FromCursorDown))
+        .context("clear mnemonic failed")?;
 
-            for index in &word_indexes {
-                loop {
-                    let word = get_user_input(
-                        &format!("Enter the {}th word in the mnemonic: ", index + 1),
-                        None,
-                        |input| Ok::<String, Error>(input.to_owned()),
-                    )?;
+    println!("...redacted...");
 
-                    if word == words[*index] {
-                        break;
-                    } else {
-                        println!("incorrect word, please try again.")
-                    }
-                }
+    // User has to provide 3 randomly selected words from the mnemonic
+    let mut rng = rand::thread_rng();
+    let word_indexes: Vec<usize> = (0..words.len()).choose_multiple(&mut rng, 3);
+
+    for index in &word_indexes {
+        loop {
+            let word = get_user_input(
+                &format!("Enter the {}th word in the mnemonic: ", index + 1),
+                None,
+                |input| Ok::<String, Error>(input.to_owned()),
+            )?;
+
+            if word == words[*index] {
+                break;
+            } else {
+                println!("incorrect word, please try again.")
             }
-
-            // print the public key and return it
-            println!("Your new public key is: {}", pair.public());
-            let public_key_array = pair.public().0;
-            Ok(public_key_array.into())
-        } else {
-            Err(eyre!("New key creation was not confirmed"))
         }
     }
+
+    // print the public key and return it
+    println!("Your new public key is: {}", pair.public());
+    let public_key_array = pair.public().0;
+    phrase.zeroize();
+    Ok(public_key_array.into())
 }
