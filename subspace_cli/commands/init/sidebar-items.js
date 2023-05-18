@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_config_from_user_inputs","init"]};
+window.SIDEBAR_ITEMS = {"fn":["generate_or_get_reward_address","get_config_from_user_inputs","init"]};
