@@ -218,16 +218,18 @@ pub(crate) fn raise_fd_limit() {
 }
 
 /// install a logger for the application
-pub(crate) fn install_tracing(is_verbose: bool) {
+pub(crate) fn install_tracing(is_verbose: bool, no_rotation: bool) {
     let log_dir = custom_log_dir();
     let _ = create_dir_all(&log_dir);
 
-    let file_appender = RollingFileAppender::builder()
-        .max_log_files(KEEP_LAST_N_FILE)
-        .rotation(Rotation::HOURLY)
-        .filename_prefix("subspace-cli.log")
-        .build(log_dir)
-        .expect("building should always succeed");
+    let file_appender = if no_rotation {
+        RollingFileAppender::builder().rotation(Rotation::NEVER)
+    } else {
+        RollingFileAppender::builder().max_log_files(KEEP_LAST_N_FILE).rotation(Rotation::HOURLY)
+    }
+    .filename_prefix("subspace-cli.log")
+    .build(log_dir)
+    .expect("building should always succeed");
 
     // filter for logging
     let filter = || {
