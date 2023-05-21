@@ -1,9 +1,5 @@
-/// Stores the summary of the farming process into a file.
-/// This allows to retrieve farming information with `info` command,
-/// and also store the amount of potentially farmed blocks during the initial
-/// plotting progress, so that progress bar won't be affected with `println!`,
-/// and user will still know about them when initial plotting is finished.
-use std::fs::remove_file;
+use std::fs::{remove_file, File};
+use std::io::SeekFrom;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -12,16 +8,14 @@ use derive_more::{AddAssign, Display, From, FromStr};
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
-use tokio::fs::{create_dir_all, File, OpenOptions};
+use tokio::fs::{create_dir_all, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 use tokio::sync::Mutex;
 use tracing::instrument;
 
-// TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
 #[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 pub(crate) struct Rewards(pub(crate) u128);
 
-/// struct for updating the fields of the summary
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
@@ -31,8 +25,6 @@ pub(crate) struct SummaryUpdateFields {
     pub(crate) new_parsed_blocks: BlockNumber,
 }
 
-/// Struct for holding the info of what to be displayed with the `info` command,
-/// and printing rewards to user in `farm` command
 #[derive(Deserialize, Serialize, Default, Debug, Clone, Copy)]
 pub(crate) struct Summary {
     pub(crate) initial_plotting_finished: bool,
@@ -43,30 +35,19 @@ pub(crate) struct Summary {
     pub(crate) last_processed_block_num: BlockNumber,
 }
 
-/// utilizing persistent storage for the information to be displayed for the
-/// `info` command
 #[derive(Debug, Clone)]
 pub(crate) struct SummaryFile {
     inner: Arc<Mutex<File>>,
 }
 
 impl SummaryFile {
-    /// creates a new summary file Mutex
-    ///
-    /// if user_space_pledged is provided, it creates a new summary file
-    /// else, it tries to open the existing summary file
     #[instrument]
     pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
         let summary_path = summary_path();
         let summary_dir = summary_dir();
 
         let mut summary_file;
-        // providing `Some` value for `user_space_pledged` means, we are creating a new
-        // file, so, first check if the file exists to not erase its content
         if let Some(user_space_pledged) = user_space_pledged {
-            // File::create will truncate the existing file, so first
-            // check if the file exists, if not, `open` will return an error
-            // in this case, create the file and necessary directories
             if File::open(&summary_path).await.is_err() {
                 let _ = create_dir_all(&summary_dir).await;
                 let _ = File::create(&summary_path).await;
@@ -78,8 +59,8 @@ impl SummaryFile {
                     user_space_pledged,
                     last_processed_block_num: 0,
                 };
-                let summary_text =
-                    toml::to_string(&initialization).context("Failed to serialize Summary")?;
+                let summary_text = toml::to_string(&initialization)
+                    .context("Failed to serialize Summary")?;
                 summary_file = OpenOptions::new()
                     .read(true)
                     .write(true)
@@ -93,14 +74,13 @@ impl SummaryFile {
                     .context("write to summary failed")?;
                 summary_file.flush().await.context("flush at creation failed")?;
                 summary_file
-                    .seek(std::io::SeekFrom::Start(0))
+                    .seek(SeekFrom::Start(0))
                     .await
                     .context("couldn't seek to the beginning of the summary file")?;
 
                 return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
             }
         }
-        // for all the other cases, the SummaryFile should be there
         summary_file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -110,7 +90,6 @@ impl SummaryFile {
         Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
     }
 
-    /// parses the summary file and returns [`Summary`]
     #[instrument]
     pub(crate) async fn parse(&self) -> Result<Summary> {
         let mut guard = self.inner.lock().await;
@@ -124,18 +103,13 @@ impl SummaryFile {
             toml::from_str(&contents).context("couldn't serialize the summary content")?;
 
         guard
-            .seek(std::io::SeekFrom::Start(0))
+            .seek(SeekFrom::Start(0))
             .await
             .context("couldn't seek to the beginning of the summary file")?;
 
         Ok(summary)
     }
 
-    /// updates the summary file, and returns the content of the new summary
-    ///
-    /// this function will be called by the farmer when
-    /// the status of the `plotting_finished`
-    /// or value of `farmed_block_count` changes
     #[instrument]
     pub(crate) async fn update(
         &self,
@@ -154,11 +128,8 @@ impl SummaryFile {
         }
 
         summary.authored_count += new_authored_count;
-
         summary.vote_count += new_vote_count;
-
         summary.total_rewards += new_reward;
-
         summary.last_processed_block_num += new_parsed_blocks;
 
         let serialized_summary =
@@ -170,7 +141,7 @@ impl SummaryFile {
             .await
             .context("couldn't write to summary file")?;
         guard
-            .seek(std::io::SeekFrom::Start(0))
+            .seek(SeekFrom::Start(0))
             .await
             .context("couldn't seek to the beginning of the summary file")?;
         guard.flush().await.context("flushing failed for summary file")?;
@@ -179,13 +150,11 @@ impl SummaryFile {
     }
 }
 
-/// deletes the summary file
 #[instrument]
 pub(crate) fn delete_summary() -> Result<()> {
     remove_file(summary_path()).context("couldn't delete summary file")
 }
 
-/// returns the path for the summary file
 #[instrument]
 pub(crate) fn summary_path() -> PathBuf {
     summary_dir().join("summary.toml")
@@ -193,5 +162,7 @@ pub(crate) fn summary_path() -> PathBuf {
 
 #[instrument]
 fn summary_dir() -> PathBuf {
-    dirs::cache_dir().expect("couldn't get the  directory!").join("subspace-cli")
+    dirs::cache_dir()
+        .expect("couldn't get the directory!")
+        .join("subspace-cli")
 }
