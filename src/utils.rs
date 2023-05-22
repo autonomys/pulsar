@@ -226,6 +226,7 @@ pub(crate) fn install_tracing(is_verbose: bool) {
         .max_log_files(KEEP_LAST_N_FILE)
         .rotation(Rotation::HOURLY)
         .filename_prefix("subspace-cli.log")
+        .writer_builder(snap::write::FrameEncoder::new)
         .build(log_dir)
         .expect("building should always succeed");
 

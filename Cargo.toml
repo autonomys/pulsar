@@ -24,6 +24,7 @@ rand = "0.8.5"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
+snap = "1.1"
 sp-core = { version = "20.0.0", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
@@ -53,11 +54,11 @@ console-subscriber = "0.1"
 
 [patch.crates-io]
 # TODO: remove once tracing-appender has a new release
-tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-appender = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-core = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-error = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-subscriber = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
+tracing = { git = "https://github.com/ozgunozerk/tracing", branch = "v0.1.x" }
+tracing-appender = { git = "https://github.com/ozgunozerk/tracing", branch = "v0.1.x" }
+tracing-core = { git = "https://github.com/ozgunozerk/tracing", branch = "v0.1.x" }
+tracing-error = { git = "https://github.com/ozgunozerk/tracing", branch = "v0.1.x" }
+tracing-subscriber = { git = "https://github.com/ozgunozerk/tracing", branch = "v0.1.x" }
 
 [profile.production]
 inherits = "release"
