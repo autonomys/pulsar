@@ -15,7 +15,7 @@ use crate::utils::{
 async fn update_summary_file_randomly(summary_file: SummaryFile) {
     let mut rng = SmallRng::from_entropy();
 
-    for _ in 0..5 {
+    for _ in 0..10 {
         let update_fields = SummaryUpdateFields {
             is_plotting_finished: false,
             new_authored_count: rng.gen_range(1..10),
