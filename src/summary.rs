@@ -169,11 +169,11 @@ impl SummaryFile {
             .write_all(serialized_summary.as_bytes())
             .await
             .context("couldn't write to summary file")?;
+        guard.flush().await.context("flushing failed for summary file")?;
         guard
             .seek(std::io::SeekFrom::Start(0))
             .await
             .context("couldn't seek to the beginning of the summary file")?;
-        guard.flush().await.context("flushing failed for summary file")?;
 
         Ok(summary)
     }
