@@ -270,14 +270,14 @@ async fn subscribe_to_solutions(
     // necessary for spacing
     println!();
 
-    let Summary { last_processed_block_num: last_block_num, .. } =
+    let Summary { last_processed_block_num, .. } =
         summary_file.parse().await.context("parsing the summary failed")?;
 
     // first, process the stream in a parallelized fashion,
     // after that, there will be new blocks arrived
     // process these new blocks sequentially
     process_block_stream(
-        last_block_num,
+        last_processed_block_num,
         node.clone(),
         blocks_pruning,
         summary_file.clone(),
@@ -298,14 +298,14 @@ async fn subscribe_to_solutions(
             print!(
                 "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
                  voted on {vote_count} block(s)! This data is derived from the first \
-                 {last_processed_block_num} blocks.\n",
+                 {last_processed_block_num} blocks.",
             );
             // flush the stdout to make sure values are printed
             std::io::stdout().flush().expect("Failed to flush stdout");
 
             // now, process the blocks without paralellization
             process_block_stream(
-                last_block_num,
+                last_processed_block_num,
                 node.clone(),
                 blocks_pruning,
                 summary_file.clone(),
