@@ -14,7 +14,7 @@ use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
 use tokio::fs::{create_dir_all, File, OpenOptions};
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 use tracing::instrument;
 
 // TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
@@ -110,24 +110,10 @@ impl SummaryFile {
         Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
     }
 
-    /// parses the summary file and returns [`Summary`]
+    /// Parses the summary file and returns [`Summary`]
     #[instrument]
     pub(crate) async fn parse(&self) -> Result<Summary> {
-        let mut guard = self.inner.lock().await;
-        let mut contents = String::new();
-
-        guard
-            .read_to_string(&mut contents)
-            .await
-            .context("couldn't read the contents of the summary file")?;
-        let summary: Summary =
-            toml::from_str(&contents).context("couldn't serialize the summary content")?;
-
-        guard
-            .seek(std::io::SeekFrom::Start(0))
-            .await
-            .context("couldn't seek to the beginning of the summary file")?;
-
+        let (summary, _) = self.read_and_deserialize().await?;
         Ok(summary)
     }
 
@@ -147,7 +133,7 @@ impl SummaryFile {
             new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
-        let mut summary = self.parse().await.context("couldn't parse summary in update method")?;
+        let (mut summary, mut guard) = self.read_and_deserialize().await?;
 
         if is_plotting_finished {
             summary.initial_plotting_finished = true;
@@ -163,19 +149,41 @@ impl SummaryFile {
 
         let serialized_summary =
             toml::to_string(&summary).context("Failed to serialize Summary")?;
-        let mut guard = self.inner.lock().await;
+
         guard.set_len(0).await.context("couldn't truncate the summary file")?;
         guard
             .write_all(serialized_summary.as_bytes())
             .await
             .context("couldn't write to summary file")?;
+        guard.flush().await.context("flushing failed for summary file")?;
         guard
             .seek(std::io::SeekFrom::Start(0))
             .await
             .context("couldn't seek to the beginning of the summary file")?;
-        guard.flush().await.context("flushing failed for summary file")?;
 
         Ok(summary)
+    }
+
+    /// Reads the file, serializes it into `Summary` and seeks to the beginning
+    /// of the file
+    #[instrument]
+    async fn read_and_deserialize(&self) -> Result<(Summary, MutexGuard<'_, File>)> {
+        let mut guard = self.inner.lock().await;
+        let mut contents = String::new();
+
+        guard
+            .read_to_string(&mut contents)
+            .await
+            .context("couldn't read the contents of the summary file")?;
+        let summary: Summary =
+            toml::from_str(&contents).context("couldn't serialize the summary content")?;
+
+        guard
+            .seek(std::io::SeekFrom::Start(0))
+            .await
+            .context("couldn't seek to the beginning of the summary file")?;
+
+        Ok((summary, guard))
     }
 }
 
