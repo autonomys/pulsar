@@ -778,14 +778,14 @@
     <span class="comment">// necessary for spacing
     </span><span class="macro">println!</span>();
 
-    <span class="kw">let </span>Summary { last_processed_block_num: last_block_num, .. } =
+    <span class="kw">let </span>Summary { last_processed_block_num, .. } =
         summary_file.parse().<span class="kw">await</span>.context(<span class="string">&quot;parsing the summary failed&quot;</span>)<span class="question-mark">?</span>;
 
     <span class="comment">// first, process the stream in a parallelized fashion,
     // after that, there will be new blocks arrived
     // process these new blocks sequentially
     </span>process_block_stream(
-        last_block_num,
+        last_processed_block_num,
         node.clone(),
         blocks_pruning,
         summary_file.clone(),
@@ -806,14 +806,14 @@
             </span><span class="macro">print!</span>(
                 <span class="string">&quot;\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
                  voted on {vote_count} block(s)! This data is derived from the first \
-                 {last_processed_block_num} blocks.\n&quot;</span>,
+                 {last_processed_block_num} blocks.&quot;</span>,
             );
             <span class="comment">// flush the stdout to make sure values are printed
             </span>std::io::stdout().flush().expect(<span class="string">&quot;Failed to flush stdout&quot;</span>);
 
             <span class="comment">// now, process the blocks without paralellization
             </span>process_block_stream(
-                last_block_num,
+                last_processed_block_num,
                 node.clone(),
                 blocks_pruning,
                 summary_file.clone(),

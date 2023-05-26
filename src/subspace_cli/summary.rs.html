@@ -195,6 +195,14 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -211,7 +219,7 @@
 <span class="kw">use </span>subspace_sdk::ByteSize;
 <span class="kw">use </span>tokio::fs::{create_dir_all, File, OpenOptions};
 <span class="kw">use </span>tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
-<span class="kw">use </span>tokio::sync::Mutex;
+<span class="kw">use </span>tokio::sync::{Mutex, MutexGuard};
 <span class="kw">use </span>tracing::instrument;
 
 <span class="comment">// TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
@@ -307,24 +315,10 @@
         <span class="prelude-val">Ok</span>(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
     }
 
-    <span class="doccomment">/// parses the summary file and returns [`Summary`]
+    <span class="doccomment">/// Parses the summary file and returns [`Summary`]
     </span><span class="attr">#[instrument]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>contents = String::new();
-
-        guard
-            .read_to_string(<span class="kw-2">&amp;mut </span>contents)
-            .<span class="kw">await
-            </span>.context(<span class="string">&quot;couldn&#39;t read the contents of the summary file&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>summary: Summary =
-            toml::from_str(<span class="kw-2">&amp;</span>contents).context(<span class="string">&quot;couldn&#39;t serialize the summary content&quot;</span>)<span class="question-mark">?</span>;
-
-        guard
-            .seek(std::io::SeekFrom::Start(<span class="number">0</span>))
-            .<span class="kw">await
-            </span>.context(<span class="string">&quot;couldn&#39;t seek to the beginning of the summary file&quot;</span>)<span class="question-mark">?</span>;
-
+        <span class="kw">let </span>(summary, <span class="kw">_</span>) = <span class="self">self</span>.read_and_deserialize().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(summary)
     }
 
@@ -344,7 +338,7 @@
             new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>summary = <span class="self">self</span>.parse().<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t parse summary in update method&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(<span class="kw-2">mut </span>summary, <span class="kw-2">mut </span>guard) = <span class="self">self</span>.read_and_deserialize().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>is_plotting_finished {
             summary.initial_plotting_finished = <span class="bool-val">true</span>;
@@ -360,19 +354,41 @@
 
         <span class="kw">let </span>serialized_summary =
             toml::to_string(<span class="kw-2">&amp;</span>summary).context(<span class="string">&quot;Failed to serialize Summary&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
+
         guard.set_len(<span class="number">0</span>).<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t truncate the summary file&quot;</span>)<span class="question-mark">?</span>;
         guard
             .write_all(serialized_summary.as_bytes())
             .<span class="kw">await
             </span>.context(<span class="string">&quot;couldn&#39;t write to summary file&quot;</span>)<span class="question-mark">?</span>;
+        guard.flush().<span class="kw">await</span>.context(<span class="string">&quot;flushing failed for summary file&quot;</span>)<span class="question-mark">?</span>;
         guard
             .seek(std::io::SeekFrom::Start(<span class="number">0</span>))
             .<span class="kw">await
             </span>.context(<span class="string">&quot;couldn&#39;t seek to the beginning of the summary file&quot;</span>)<span class="question-mark">?</span>;
-        guard.flush().<span class="kw">await</span>.context(<span class="string">&quot;flushing failed for summary file&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(summary)
+    }
+
+    <span class="doccomment">/// Reads the file, serializes it into `Summary` and seeks to the beginning
+    /// of the file
+    </span><span class="attr">#[instrument]
+    </span><span class="kw">async fn </span>read_and_deserialize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(Summary, MutexGuard&lt;<span class="lifetime">&#39;_</span>, File&gt;)&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>guard = <span class="self">self</span>.inner.lock().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>contents = String::new();
+
+        guard
+            .read_to_string(<span class="kw-2">&amp;mut </span>contents)
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;couldn&#39;t read the contents of the summary file&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>summary: Summary =
+            toml::from_str(<span class="kw-2">&amp;</span>contents).context(<span class="string">&quot;couldn&#39;t serialize the summary content&quot;</span>)<span class="question-mark">?</span>;
+
+        guard
+            .seek(std::io::SeekFrom::Start(<span class="number">0</span>))
+            .<span class="kw">await
+            </span>.context(<span class="string">&quot;couldn&#39;t seek to the beginning of the summary file&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((summary, guard))
     }
 }
 
