@@ -68,6 +68,8 @@ jobs:
       - name: Create Issue in subspace-docs repository
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch ==  steps.release_info.outputs.tag_name}}
         uses: dacbd/create-issue-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           owner: 'subspace'
