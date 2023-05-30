@@ -112,16 +112,21 @@ pub(crate) struct AdvancedFarmerSettings {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct FarmerConfig {
     pub(crate) reward_address: PublicKey,
-    pub(crate) plot_directory: PathBuf,
-    pub(crate) plot_size: ByteSize,
+    pub(crate) plot_descriptions: Vec<(PathBuf, ByteSize)>,
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedFarmerSettings,
 }
 
 impl FarmerConfig {
     pub async fn build(self, node: &Node) -> Result<Farmer> {
-        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
-            .wrap_err("Plot size is too low")?];
+        let plot_descriptions: Vec<PlotDescription> = self
+            .plot_descriptions
+            .into_iter()
+            .map(|(plot_directory, plot_size)| {
+                PlotDescription::new(plot_directory, plot_size).wrap_err("Plot size is too low")
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
         let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
 
         // currently we do not have different configuration for the farmer w.r.t
@@ -129,7 +134,7 @@ impl FarmerConfig {
         let farmer = Farmer::builder();
         crate::utils::apply_extra_options(&farmer.configuration(), self.advanced.extra)
             .context("Failed to deserialize node config")?
-            .build(self.reward_address, node, plot_description, cache)
+            .build(self.reward_address, node, plot_descriptions.as_slice(), cache)
             .await
             .context("Failed to build a farmer")
     }
@@ -192,8 +197,10 @@ pub(crate) fn validate_config() -> Result<Config> {
     let config = parse_config()?;
 
     // validity checks
-    if config.farmer.plot_size < MIN_PLOT_SIZE {
-        return Err(eyre!("plot size should be bigger than {MIN_PLOT_SIZE}!"));
+    for (_, plot_size) in &config.farmer.plot_descriptions {
+        if *plot_size < MIN_PLOT_SIZE {
+            return Err(eyre!("plot size should be bigger than {MIN_PLOT_SIZE}!"));
+        }
     }
 
     Ok(config)

@@ -6,8 +6,7 @@ use subspace_sdk::{Node, PlotDescription};
 use crate::config::{delete_config, parse_config};
 use crate::summary::delete_summary;
 use crate::utils::{
-    cache_directory_getter, get_user_input, node_directory_getter, plot_directory_getter,
-    yes_or_no_parser,
+    cache_directory_getter, get_user_input, node_directory_getter, yes_or_no_parser,
 };
 
 /// wipe configurator
@@ -71,24 +70,22 @@ async fn wipe(
             }
         };
 
-        // TODO: modify here when supporting multi-plot
-        // if config can be read, delete the farmer using the path in the config, else,
-        // delete the default location
         if let Some(config) = config {
-            match PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size) {
-                Ok(plot) => {
-                    let _ = plot.wipe().await;
+            for (plot_directory, plot_size) in config.farmer.plot_descriptions {
+                match PlotDescription::new(plot_directory, plot_size) {
+                    Ok(plot) => {
+                        let _ = plot.wipe().await;
+                    }
+                    Err(err) => println!(
+                        "Skipping wiping plot. Got error while constructing the plot reference: \
+                         {err}"
+                    ),
                 }
-                Err(err) => println!(
-                    "Skipping wiping plot. Got error while constructing the plot reference: {err}"
-                ),
             }
             let _ =
                 CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)?
                     .wipe()
                     .await;
-        } else {
-            let _ = tokio::fs::remove_dir_all(plot_directory_getter()).await;
         }
     }
 

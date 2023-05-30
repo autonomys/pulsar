@@ -8,7 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
 use subspace_sdk::node::{Event, Hash, RewardsEvent, SubspaceEvent, SyncingProgress};
-use subspace_sdk::{Farmer, Node, PublicKey};
+use subspace_sdk::{ByteSize, Farmer, Node, PublicKey};
 use tokio::signal;
 use tokio::task::JoinHandle;
 use tracing::instrument;
@@ -78,7 +78,12 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         }
     }
 
-    let summary_file = SummaryFile::new(Some(farmer_config.plot_size))
+    let user_space_pledged: ByteSize = farmer_config
+        .plot_descriptions
+        .iter()
+        .fold(ByteSize::b(0), |acc, (_, plot_size)| acc + *plot_size);
+
+    let summary_file = SummaryFile::new(Some(user_space_pledged))
         .await
         .context("constructing new SummaryFile failed")?;
 

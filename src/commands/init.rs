@@ -1,4 +1,5 @@
 use std::io::{BufRead, Write};
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use color_eyre::eyre::{eyre, Context, Error, Result};
@@ -7,7 +8,7 @@ use crossterm::{cursor, execute};
 use rand::prelude::IteratorRandom;
 use sp_core::Pair;
 use strum::IntoEnumIterator;
-use subspace_sdk::PublicKey;
+use subspace_sdk::{ByteSize, PublicKey};
 use zeroize::Zeroizing;
 
 use crate::config::{
@@ -67,16 +68,37 @@ fn get_config_from_user_inputs() -> Result<Config> {
         node_name_parser,
     )?;
 
-    // get plot directory
-    let default_plot_loc = plot_directory_getter();
-    let plot_directory = get_user_input(
-        &format!(
-            "Specify a path for storing plot files (press enter to use the default: \
-             `{default_plot_loc:?}`): ",
-        ),
-        Some(default_plot_loc),
-        directory_parser,
-    )?;
+    let mut plot_descriptions: Vec<(PathBuf, ByteSize)> = vec![];
+
+    loop {
+        // get plot directory with custom message for first plot
+        let default_plot_loc =
+            if plot_descriptions.is_empty() { Some(plot_directory_getter()) } else { None };
+        let plot_directory_msg = if default_plot_loc.is_some() {
+            format!(
+                "Specify a path for storing plot files (press enter to use the default: `{:?}`): ",
+                default_plot_loc.clone().expect("is_some check is done above")
+            )
+        } else {
+            String::from("Specify a new path for storing plot files: ")
+        };
+        let plot_directory =
+            get_user_input(&plot_directory_msg, default_plot_loc, directory_parser)?;
+
+        // get plot size
+        let plot_size_msg = format!(
+            "Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the \
+             default): "
+        );
+        let plot_size = get_user_input(&plot_size_msg, Some(DEFAULT_PLOT_SIZE), size_parser)?;
+
+        plot_descriptions.push((plot_directory, plot_size));
+
+        // break loop if user doesn't want to add another plot
+        if !get_user_input("Do you want to add another plot?", Some(false), yes_or_no_parser)? {
+            break;
+        }
+    }
 
     let default_node_loc = node_directory_getter();
     let node_directory = get_user_input(
@@ -86,16 +108,6 @@ fn get_config_from_user_inputs() -> Result<Config> {
         ),
         Some(default_node_loc),
         directory_parser,
-    )?;
-
-    // get plot size
-    let plot_size = get_user_input(
-        &format!(
-            "Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the \
-             default): "
-        ),
-        Some(DEFAULT_PLOT_SIZE),
-        size_parser,
     )?;
 
     // get chain
@@ -111,8 +123,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     let farmer_config = FarmerConfig {
-        plot_size,
-        plot_directory,
+        plot_descriptions,
         reward_address,
         advanced: AdvancedFarmerSettings::default(),
     };
