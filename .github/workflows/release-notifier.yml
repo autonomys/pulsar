@@ -65,3 +65,26 @@ jobs:
 
             You can also update by visiting our docs at:
             https://docs.subspace.network/docs/protocol/cli
+      - name: Create Issue in subspace-docs repository
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch ==  steps.release_info.outputs.tag_name}}
+        uses: dacbd/create-issue-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: 'subspace'
+          repo: 'subspace-docs'
+          title: 'Update docs for release ${{ steps.release_info.outputs.tag_name || steps.manual_release_info.outputs.tag_name }}'
+          # TODO: Setup Github Organization Team for Product Team and add @Product tag to the body, to notify non-subscribed team members of the open issue.
+          body: |
+            A new release of ${{ github.repository }} is was released and marked latest.
+
+            Documentation requires update, please update prior version to ${{ steps.release_info.outputs.name || steps.manual_release_info.outputs.name }}
+
+            *Release Description:**
+            ${{ steps.release_info.outputs.body || steps.manual_release_info.outputs.body }}
+
+
+            Read more at: ${{ steps.release_info.outputs.html_url || steps.manual_release_info.outputs.html_url }}
+
+
