@@ -543,8 +543,8 @@
 /// lastly, depending on the verbosity, it subscribes to plotting progress and
 /// new solutions
 </span><span class="attr">#[instrument]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>farm(is_verbose: bool, executor: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    install_tracing(is_verbose);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>farm(is_verbose: bool, executor: bool, no_rotation: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    install_tracing(is_verbose, no_rotation);
     color_eyre::install()
         .context(<span class="string">&quot;color eyre installment failed, it should have been the first one&quot;</span>)<span class="question-mark">?</span>;
 

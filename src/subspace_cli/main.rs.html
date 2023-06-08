@@ -227,6 +227,12 @@
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CLI application for farming
 //! brings `farmer` and `node` together
 
@@ -291,6 +297,8 @@
         </span>verbose: bool,
         <span class="attr">#[arg(short, long, action)]
         </span>executor: bool,
+        <span class="attr">#[arg(long, action)]
+        </span>no_rotation: bool,
     },
     <span class="attr">#[command(about = <span class="string">&quot;wipes the node and farm instance (along with your plots)&quot;</span>)]
     </span>Wipe {
@@ -316,8 +324,8 @@
         <span class="prelude-val">Some</span>(Commands::Init) =&gt; {
             init().suggestion(support_message())<span class="question-mark">?</span>;
         }
-        <span class="prelude-val">Some</span>(Commands::Farm { verbose, executor }) =&gt; {
-            farm(verbose, executor).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
+        <span class="prelude-val">Some</span>(Commands::Farm { verbose, executor, no_rotation }) =&gt; {
+            farm(verbose, executor, no_rotation).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Some</span>(Commands::Wipe { farmer, node }) =&gt; {
             wipe_config(farmer, node).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
@@ -398,7 +406,11 @@
             <span class="kw">let </span>executor =
                 get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
 
-            farm(verbose, executor).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
+            <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to disable rotation for logs? [y/n]: &quot;</span>;
+            <span class="kw">let </span>no_rotation =
+                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+
+            farm(verbose, executor, no_rotation).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
         <span class="number">2 </span>=&gt; {
             wipe_config(<span class="bool-val">false</span>, <span class="bool-val">false</span>).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
@@ -448,7 +460,7 @@
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Commands {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Commands::Farm { verbose: <span class="kw">_</span>, executor: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;farm&quot;</span>),
+            Commands::Farm { verbose: <span class="kw">_</span>, executor: <span class="kw">_</span>, no_rotation: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;farm&quot;</span>),
             Commands::Wipe { farmer: <span class="kw">_</span>, node: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;wipe&quot;</span>),
             Commands::Info =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;info&quot;</span>),
             Commands::Init =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;init&quot;</span>),
