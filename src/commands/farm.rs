@@ -1,5 +1,4 @@
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use color_eyre::eyre::{eyre, Context, Error, Result};
@@ -97,18 +96,12 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool, no_rotation: bool) ->
             });
 
         // this will be shared between the two subscriptions
-        let is_initial_progress_finished = Arc::new(AtomicBool::new(false));
         let sector_size_bytes =
             farmer.get_info().await.into_eyre().context("Failed to get farmer into")?.sector_size;
 
         let plotting_sub_handle = spawn_task(
             "plotting_subscriber",
-            subscribe_to_plotting_progress(
-                summary_file.clone(),
-                farmer.clone(),
-                is_initial_progress_finished.clone(),
-                sector_size_bytes,
-            ),
+            subscribe_to_plotting_progress(summary_file.clone(), farmer.clone(), sector_size_bytes),
         );
 
         let solution_sub_handle = spawn_task(
@@ -116,7 +109,6 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool, no_rotation: bool) ->
             subscribe_to_solutions(
                 summary_file.clone(),
                 node.clone(),
-                is_initial_progress_finished.clone(),
                 reward_address,
                 blocks_pruning,
             ),
@@ -218,7 +210,6 @@ async fn subscribe_to_node_syncing(node: &Node) -> Result<()> {
 async fn subscribe_to_plotting_progress(
     summary_file: SummaryFile,
     farmer: Arc<Farmer>,
-    is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) -> Result<()> {
     for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
@@ -251,11 +242,12 @@ async fn subscribe_to_plotting_progress(
         );
         progress_bar.finish_with_message("Initial plotting finished!\n");
     }
-    is_initial_progress_finished.store(true, Ordering::Relaxed);
     summary_file
         .update(SummaryUpdateFields { is_plotting_finished: true, ..Default::default() })
         .await
         .context("couldn't update the summary")?;
+
+    println!("TEST: updated summary and gonna exit plotting subscription");
 
     Ok(())
 }
@@ -263,15 +255,15 @@ async fn subscribe_to_plotting_progress(
 async fn subscribe_to_solutions(
     summary_file: SummaryFile,
     node: Arc<Node>,
-    is_initial_progress_finished: Arc<AtomicBool>,
     reward_address: PublicKey,
     blocks_pruning: bool,
 ) -> Result<()> {
-    // necessary for spacing
-    println!();
+    println!("TEST: inside solution subscriber");
 
     let Summary { last_processed_block_num, .. } =
         summary_file.parse().await.context("parsing the summary failed")?;
+
+    println!("TEST: starting parallel stream processing");
 
     // first, process the stream in a parallelized fashion,
     // after that, there will be new blocks arrived
@@ -288,14 +280,25 @@ async fn subscribe_to_solutions(
     .await
     .context("parallel block stream couldn't be processed")?;
 
-    loop {
-        let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
-            summary_file.parse().await.context("couldn't parse summary")?;
+    println!("TEST: parallel block stream processed!");
 
-        if is_initial_progress_finished.load(Ordering::Relaxed) {
+    // necessary for spacing
+    println!();
+
+    loop {
+        let Summary {
+            total_rewards,
+            authored_count,
+            vote_count,
+            last_processed_block_num,
+            initial_plotting_finished,
+            ..
+        } = summary_file.parse().await.context("couldn't parse summary")?;
+
+        if initial_plotting_finished {
             // use carriage return to overwrite the current value
             // instead of inserting a new line
-            print!(
+            println!(
                 "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
                  voted on {vote_count} block(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.",

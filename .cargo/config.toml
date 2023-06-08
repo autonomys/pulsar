@@ -1,2 +1,2 @@
 [build]
-rustflags = ["--cfg", "tokio_unstable"]
+# rustflags = ["--cfg", "tokio_unstable"] # uncomment this when debugging tokio
