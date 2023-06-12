@@ -119,6 +119,22 @@ pub(crate) fn directory_parser(location: &str) -> Result<PathBuf> {
     }
 }
 
+/// checks is directory is unique, returns Fn(&str) to be compatible with
+/// `get_user_input`
+pub(crate) fn unique_directory_parser(
+    existing_dirs: Vec<PathBuf>,
+) -> impl Fn(&str) -> Result<PathBuf> {
+    move |path: &str| {
+        let parsed_dir = directory_parser(path)?;
+
+        if existing_dirs.contains(&parsed_dir) {
+            Err(eyre!("supplied directory is already in use! Please enter a different path."))
+        } else {
+            Ok(parsed_dir)
+        }
+    }
+}
+
 /// utilize `ByteSize` crate for the validation
 pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {

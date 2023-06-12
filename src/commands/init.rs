@@ -18,7 +18,7 @@ use crate::config::{
 use crate::utils::{
     directory_parser, get_user_input, node_directory_getter, node_name_parser,
     plot_directory_getter, print_ascii_art, print_run_executable_command, print_version,
-    reward_address_parser, size_parser, yes_or_no_parser,
+    reward_address_parser, size_parser, unique_directory_parser, yes_or_no_parser,
 };
 
 /// implementation of the `init` command
@@ -76,14 +76,19 @@ fn get_config_from_user_inputs() -> Result<Config> {
             if plot_descriptions.is_empty() { Some(plot_directory_getter()) } else { None };
         let plot_directory_msg = if default_plot_loc.is_some() {
             format!(
-                "Specify a path for storing plot files (press enter to use the default: `{:?}`): ",
+                "Specify a path for storing plot files (press enter to use the default: `{:?}`), \
+                 when entering a custom path, provide the full path and do not wrap with quotes: ",
                 default_plot_loc.clone().expect("is_some check is done above")
             )
         } else {
             String::from("Specify a new path for storing plot files: ")
         };
+
+        let existing_dirs: Vec<PathBuf> =
+            plot_descriptions.iter().map(|(dir, _)| dir.clone()).collect();
+        let unique_directory_parser = unique_directory_parser(existing_dirs);
         let plot_directory =
-            get_user_input(&plot_directory_msg, default_plot_loc, directory_parser)?;
+            get_user_input(&plot_directory_msg, default_plot_loc, unique_directory_parser)?;
 
         // get plot size
         let plot_size_msg = format!(
@@ -95,7 +100,11 @@ fn get_config_from_user_inputs() -> Result<Config> {
         plot_descriptions.push((plot_directory, plot_size));
 
         // break loop if user doesn't want to add another plot
-        if !get_user_input("Do you want to add another plot?", Some(false), yes_or_no_parser)? {
+        if !get_user_input(
+            "Do you want to add another plot? [y/N]: ",
+            Some(false),
+            yes_or_no_parser,
+        )? {
             break;
         }
     }

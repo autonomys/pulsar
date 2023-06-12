@@ -21,7 +21,7 @@ use crate::utils::{
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
-const BATCH_BLOCKS: usize = 1000;
+const BATCH_BLOCKS: usize = 100;
 const N_TASKS: usize = 10;
 
 type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
@@ -60,6 +60,17 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
         node_config.advanced.executor = true;
     }
 
+    let user_space_pledged: ByteSize = farmer_config
+        .plot_descriptions
+        .iter()
+        .fold(ByteSize::b(0), |acc, (_, plot_size)| subspace_sdk::ByteSize(acc.0 + plot_size.0));
+    // TODO: subspace-sdk PR can eliminate the need for wrapping and unwrapping for
+    // bytesizes -> `acc + *plot_size` should be enough after that
+
+    let summary_file = SummaryFile::new(Some(user_space_pledged))
+        .await
+        .context("constructing new SummaryFile failed")?;
+
     println!("Starting node ...");
     let node = Arc::new(
         node_config
@@ -77,15 +88,6 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool) -> Result<()> {
             node.sync().await.into_eyre().context("Node syncing failed")?;
         }
     }
-
-    let user_space_pledged: ByteSize = farmer_config
-        .plot_descriptions
-        .iter()
-        .fold(ByteSize::b(0), |acc, (_, plot_size)| acc + *plot_size);
-
-    let summary_file = SummaryFile::new(Some(user_space_pledged))
-        .await
-        .context("constructing new SummaryFile failed")?;
 
     println!("Starting farmer ...");
     let farmer = Arc::new(farmer_config.build(&node).await.context("farmer couldn't be build")?);
@@ -370,26 +372,28 @@ fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
 
 fn not_yet_processed_block_nums_stream(
     node: std::sync::Arc<Node>,
-    mut last_block_num: subspace_sdk::node::BlockNumber,
+    mut last_processed_block_num: subspace_sdk::node::BlockNumber,
 ) -> impl Stream<Item = Result<subspace_sdk::node::BlockNumber>> {
     async_stream::try_stream! {
         loop {
-            let last_retrieved_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
+            let last_retrieved_block_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
 
-            if last_block_num == last_retrieved_num {
+            if last_processed_block_num == last_retrieved_block_num {
+                println!("last_processed and last_retrieved are same!");
                 break;
             }
 
-            while last_block_num < last_retrieved_num {
-                yield last_block_num;
-                last_block_num += 1;
+            while last_processed_block_num < last_retrieved_block_num {
+                last_processed_block_num += 1;
+                yield last_processed_block_num;
+
             }
         }
     }
 }
 
 async fn process_block_stream(
-    last_block_num: subspace_sdk::node::BlockNumber,
+    last_processed_block_num: subspace_sdk::node::BlockNumber,
     node: Arc<Node>,
     blocks_pruning: bool,
     summary_file: SummaryFile,
@@ -397,7 +401,7 @@ async fn process_block_stream(
     batch_blocks: usize,
     n_tasks: usize,
 ) -> Result<()> {
-    let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+    let stream = not_yet_processed_block_nums_stream(node.clone(), last_processed_block_num);
 
     futures::pin_mut!(stream);
 
