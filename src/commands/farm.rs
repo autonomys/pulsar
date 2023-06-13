@@ -297,7 +297,7 @@ async fn subscribe_to_solutions(
             // instead of inserting a new line
             print!(
                 "\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
-                 voted on {vote_count} block(s)! This data is derived from the first \
+                 have {vote_count} vote(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.",
             );
             // flush the stdout to make sure values are printed
@@ -316,75 +316,38 @@ async fn subscribe_to_solutions(
             .await
             .context("sequential block stream couldn't be processed")?;
         }
+        // sleep 2 secs to avoid spamming the print
+        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     }
-}
-
-/// nice looking progress bar for the initial plotting :)
-fn plotting_progress_bar(current_size: u64, total_size: u64) -> ProgressBar {
-    let pb = ProgressBar::new(total_size);
-    // pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
-    // uncomment this when plotting is considerably faster
-    pb.set_style(
-        ProgressStyle::with_template(
-            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
-             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
-        )
-        .expect("hardcoded template is correct")
-        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
-        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        .progress_chars("█▉▊▋▌▍▎▏  "),
-    );
-    pb.set_message("plotting");
-    pb.set_position(current_size);
-    pb
-}
-
-/// nice looking progress bar for the syncing :)
-fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
-    let pb = ProgressBar::new(total_blocks);
-    pb.enable_steady_tick(std::time::Duration::from_millis(100));
-    pb.set_style(
-        ProgressStyle::with_template(
-            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
-             {bps}, {msg}, ETA: {eta_precise} ",
-        )
-        .expect("hardcoded template is correct")
-        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
-            write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
-        })
-        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
-        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        .progress_chars("█▉▊▋▌▍▎▏  "),
-    );
-    pb.set_message("syncing");
-    pb.set_position(current_block);
-    pb
 }
 
 fn not_yet_processed_block_nums_stream(
     node: std::sync::Arc<Node>,
-    mut last_block_num: subspace_sdk::node::BlockNumber,
+    mut last_processed_block_num: subspace_sdk::node::BlockNumber,
 ) -> impl Stream<Item = Result<subspace_sdk::node::BlockNumber>> {
     async_stream::try_stream! {
         loop {
-            let last_retrieved_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
+            let last_retrieved_block_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
 
-            if last_block_num == last_retrieved_num {
+            if last_processed_block_num > last_retrieved_block_num {
+                Err(eyre!("last_processed_block_num is greater than last_retrieved_block_num")).context("Try wiping the summary file and restart")?;
+            }
+
+            if last_processed_block_num == last_retrieved_block_num {
                 break;
             }
 
-            while last_block_num < last_retrieved_num {
-                yield last_block_num;
-                last_block_num += 1;
+            while last_processed_block_num < last_retrieved_block_num {
+                last_processed_block_num += 1;
+                yield last_processed_block_num;
+
             }
         }
     }
 }
 
 async fn process_block_stream(
-    last_block_num: subspace_sdk::node::BlockNumber,
+    last_processed_block_num: subspace_sdk::node::BlockNumber,
     node: Arc<Node>,
     blocks_pruning: bool,
     summary_file: SummaryFile,
@@ -392,11 +355,9 @@ async fn process_block_stream(
     batch_blocks: usize,
     n_tasks: usize,
 ) -> Result<()> {
-    let stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+    let stream = not_yet_processed_block_nums_stream(node.clone(), last_processed_block_num);
 
     futures::pin_mut!(stream);
-
-    let mut current_iter = 0;
 
     stream
         .try_filter_map(|block| match node.block_hash(block).into_eyre() {
@@ -414,7 +375,7 @@ async fn process_block_stream(
             let node_clone = node.clone();
             let summary_clone = summary_file.clone();
             async move {
-                current_iter += 1;
+                let block_count = blocks.len() as u32;
                 // We iterate over hashes
                 let (rewards, votes, author) = get_rewards_votes_author_info_from_blocks(
                     node_clone,
@@ -431,7 +392,7 @@ async fn process_block_stream(
                         new_authored_count: author,
                         new_vote_count: votes,
                         new_reward: Rewards(rewards),
-                        new_parsed_blocks: current_iter * batch_blocks as u32,
+                        new_parsed_blocks: block_count,
                         ..Default::default()
                     })
                     .await
@@ -505,4 +466,48 @@ async fn get_rewards_votes_author_info_from_blocks(
         .context("error in stream encountered in try_fold step")?;
 
     Ok((rewards, votes, author))
+}
+
+/// nice looking progress bar for the initial plotting :)
+fn plotting_progress_bar(current_size: u64, total_size: u64) -> ProgressBar {
+    let pb = ProgressBar::new(total_size);
+    // pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
+    // uncomment this when plotting is considerably faster
+    pb.set_style(
+        ProgressStyle::with_template(
+            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
+             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} ",
+        )
+        .expect("hardcoded template is correct")
+        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
+        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        .progress_chars("█▉▊▋▌▍▎▏  "),
+    );
+    pb.set_message("plotting");
+    pb.set_position(current_size);
+    pb
+}
+
+/// nice looking progress bar for the syncing :)
+fn syncing_progress_bar(current_block: u64, total_blocks: u64) -> ProgressBar {
+    let pb = ProgressBar::new(total_blocks);
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
+    pb.set_style(
+        ProgressStyle::with_template(
+            " {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
+             {bps}, {msg}, ETA: {eta_precise} ",
+        )
+        .expect("hardcoded template is correct")
+        .with_key("bps", |state: &indicatif::ProgressState, w: &mut dyn std::fmt::Write| {
+            write!(w, "{:.2}bps", state.per_sec()).expect("terminal write should succeed")
+        })
+        // More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        .tick_strings(&["◜", "◠", "◝", "◞", "◡", "◟"])
+        // From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        .progress_chars("█▉▊▋▌▍▎▏  "),
+    );
+    pb.set_message("syncing");
+    pb.set_position(current_block);
+    pb
 }
