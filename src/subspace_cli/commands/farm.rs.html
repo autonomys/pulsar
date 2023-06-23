@@ -506,6 +506,11 @@
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -805,7 +810,7 @@
             // instead of inserting a new line
             </span><span class="macro">print!</span>(
                 <span class="string">&quot;\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
-                 voted on {vote_count} block(s)! This data is derived from the first \
+                 have {vote_count} vote(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.&quot;</span>,
             );
             <span class="comment">// flush the stdout to make sure values are printed
@@ -824,75 +829,38 @@
             .<span class="kw">await
             </span>.context(<span class="string">&quot;sequential block stream couldn&#39;t be processed&quot;</span>)<span class="question-mark">?</span>;
         }
+        <span class="comment">// sleep 2 secs to avoid spamming the print
+        </span>tokio::time::sleep(tokio::time::Duration::from_secs(<span class="number">2</span>)).<span class="kw">await</span>;
     }
-}
-
-<span class="doccomment">/// nice looking progress bar for the initial plotting :)
-</span><span class="kw">fn </span>plotting_progress_bar(current_size: u64, total_size: u64) -&gt; ProgressBar {
-    <span class="kw">let </span>pb = ProgressBar::new(total_size);
-    <span class="comment">// pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
-    // uncomment this when plotting is considerably faster
-    </span>pb.set_style(
-        ProgressStyle::with_template(
-            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
-             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
-        )
-        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
-        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
-        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
-    );
-    pb.set_message(<span class="string">&quot;plotting&quot;</span>);
-    pb.set_position(current_size);
-    pb
-}
-
-<span class="doccomment">/// nice looking progress bar for the syncing :)
-</span><span class="kw">fn </span>syncing_progress_bar(current_block: u64, total_blocks: u64) -&gt; ProgressBar {
-    <span class="kw">let </span>pb = ProgressBar::new(total_blocks);
-    pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
-    pb.set_style(
-        ProgressStyle::with_template(
-            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
-             {bps}, {msg}, ETA: {eta_precise} &quot;</span>,
-        )
-        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
-        .with_key(<span class="string">&quot;bps&quot;</span>, |state: <span class="kw-2">&amp;</span>indicatif::ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>std::fmt::Write| {
-            <span class="macro">write!</span>(w, <span class="string">&quot;{:.2}bps&quot;</span>, state.per_sec()).expect(<span class="string">&quot;terminal write should succeed&quot;</span>)
-        })
-        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
-        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
-    );
-    pb.set_message(<span class="string">&quot;syncing&quot;</span>);
-    pb.set_position(current_block);
-    pb
 }
 
 <span class="kw">fn </span>not_yet_processed_block_nums_stream(
     node: std::sync::Arc&lt;Node&gt;,
-    <span class="kw-2">mut </span>last_block_num: subspace_sdk::node::BlockNumber,
+    <span class="kw-2">mut </span>last_processed_block_num: subspace_sdk::node::BlockNumber,
 ) -&gt; <span class="kw">impl </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;subspace_sdk::node::BlockNumber&gt;&gt; {
     <span class="macro">async_stream::try_stream! </span>{
         <span class="kw">loop </span>{
-            <span class="kw">let </span>last_retrieved_num = node.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;failed to receive Info from node&quot;</span>)<span class="question-mark">?</span>.finalized_block.<span class="number">1</span>;
+            <span class="kw">let </span>last_retrieved_block_num = node.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;failed to receive Info from node&quot;</span>)<span class="question-mark">?</span>.finalized_block.<span class="number">1</span>;
 
-            <span class="kw">if </span>last_block_num == last_retrieved_num {
+            <span class="kw">if </span>last_processed_block_num &gt; last_retrieved_block_num {
+                <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;last_processed_block_num is greater than last_retrieved_block_num&quot;</span>)).context(<span class="string">&quot;Try wiping the summary file and restart&quot;</span>)<span class="question-mark">?</span>;
+            }
+
+            <span class="kw">if </span>last_processed_block_num == last_retrieved_block_num {
                 <span class="kw">break</span>;
             }
 
-            <span class="kw">while </span>last_block_num &lt; last_retrieved_num {
-                <span class="kw">yield </span>last_block_num;
-                last_block_num += <span class="number">1</span>;
+            <span class="kw">while </span>last_processed_block_num &lt; last_retrieved_block_num {
+                last_processed_block_num += <span class="number">1</span>;
+                <span class="kw">yield </span>last_processed_block_num;
+
             }
         }
     }
 }
 
 <span class="kw">async fn </span>process_block_stream(
-    last_block_num: subspace_sdk::node::BlockNumber,
+    last_processed_block_num: subspace_sdk::node::BlockNumber,
     node: Arc&lt;Node&gt;,
     blocks_pruning: bool,
     summary_file: SummaryFile,
@@ -900,11 +868,9 @@
     batch_blocks: usize,
     n_tasks: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>stream = not_yet_processed_block_nums_stream(node.clone(), last_block_num);
+    <span class="kw">let </span>stream = not_yet_processed_block_nums_stream(node.clone(), last_processed_block_num);
 
     <span class="macro">futures::pin_mut!</span>(stream);
-
-    <span class="kw">let </span><span class="kw-2">mut </span>current_iter = <span class="number">0</span>;
 
     stream
         .try_filter_map(|block| <span class="kw">match </span>node.block_hash(block).into_eyre() {
@@ -922,7 +888,7 @@
             <span class="kw">let </span>node_clone = node.clone();
             <span class="kw">let </span>summary_clone = summary_file.clone();
             <span class="kw">async move </span>{
-                current_iter += <span class="number">1</span>;
+                <span class="kw">let </span>block_count = blocks.len() <span class="kw">as </span>u32;
                 <span class="comment">// We iterate over hashes
                 </span><span class="kw">let </span>(rewards, votes, author) = get_rewards_votes_author_info_from_blocks(
                     node_clone,
@@ -939,7 +905,7 @@
                         new_authored_count: author,
                         new_vote_count: votes,
                         new_reward: Rewards(rewards),
-                        new_parsed_blocks: current_iter * batch_blocks <span class="kw">as </span>u32,
+                        new_parsed_blocks: block_count,
                         ..Default::default()
                     })
                     .<span class="kw">await
@@ -1013,5 +979,49 @@
         </span>.context(<span class="string">&quot;error in stream encountered in try_fold step&quot;</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((rewards, votes, author))
+}
+
+<span class="doccomment">/// nice looking progress bar for the initial plotting :)
+</span><span class="kw">fn </span>plotting_progress_bar(current_size: u64, total_size: u64) -&gt; ProgressBar {
+    <span class="kw">let </span>pb = ProgressBar::new(total_size);
+    <span class="comment">// pb.enable_steady_tick(std::time::Duration::from_millis(100)); // TODO:
+    // uncomment this when plotting is considerably faster
+    </span>pb.set_style(
+        ProgressStyle::with_template(
+            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
+             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
+        )
+        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
+        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
+    );
+    pb.set_message(<span class="string">&quot;plotting&quot;</span>);
+    pb.set_position(current_size);
+    pb
+}
+
+<span class="doccomment">/// nice looking progress bar for the syncing :)
+</span><span class="kw">fn </span>syncing_progress_bar(current_block: u64, total_blocks: u64) -&gt; ProgressBar {
+    <span class="kw">let </span>pb = ProgressBar::new(total_blocks);
+    pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
+    pb.set_style(
+        ProgressStyle::with_template(
+            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
+             {bps}, {msg}, ETA: {eta_precise} &quot;</span>,
+        )
+        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
+        .with_key(<span class="string">&quot;bps&quot;</span>, |state: <span class="kw-2">&amp;</span>indicatif::ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>std::fmt::Write| {
+            <span class="macro">write!</span>(w, <span class="string">&quot;{:.2}bps&quot;</span>, state.per_sec()).expect(<span class="string">&quot;terminal write should succeed&quot;</span>)
+        })
+        <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
+        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
+    );
+    pb.set_message(<span class="string">&quot;syncing&quot;</span>);
+    pb.set_position(current_block);
+    pb
 }
 </code></pre></div></section></main></body></html>
