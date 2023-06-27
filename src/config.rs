@@ -6,8 +6,7 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::{CacheDescription, Farmer};
-use subspace_sdk::node::domains::core_payments::ConfigBuilder;
-use subspace_sdk::node::{domains, DsnBuilder, NetworkBuilder, Node, Role};
+use subspace_sdk::node::{DsnBuilder, NetworkBuilder, Node, Role};
 use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 use tracing::instrument;
 
@@ -45,7 +44,7 @@ pub(crate) struct NodeConfig {
 
 impl NodeConfig {
     pub async fn build(self, chain: ChainConfig, is_verbose: bool) -> Result<Node> {
-        let Self { directory, name, advanced: AdvancedNodeSettings { executor, extra } } = self;
+        let Self { directory, name, advanced: AdvancedNodeSettings { executor: _, extra } } = self;
 
         let (mut node, chain_spec) = match chain {
             ChainConfig::Gemini3d => {
@@ -68,16 +67,6 @@ impl NodeConfig {
                 (node, chain_spec)
             }
         };
-
-        if executor {
-            node = node
-                .system_domain(
-                    domains::ConfigBuilder::new()
-                        .core_payments(ConfigBuilder::new().role(Role::Authority).build())
-                        .role(Role::Authority),
-                )
-                .role(Role::Authority)
-        }
 
         if is_verbose {
             node = node.informant_enable_color(true);
@@ -120,8 +109,7 @@ pub(crate) struct FarmerConfig {
 
 impl FarmerConfig {
     pub async fn build(self, node: &Node) -> Result<Farmer> {
-        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)
-            .wrap_err("Plot size is too low")?];
+        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)];
         let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
 
         // currently we do not have different configuration for the farmer w.r.t
