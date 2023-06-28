@@ -327,7 +327,7 @@ fn not_yet_processed_block_nums_stream(
 ) -> impl Stream<Item = Result<subspace_sdk::node::BlockNumber>> {
     async_stream::try_stream! {
         loop {
-            let last_retrieved_block_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.finalized_block.1;
+            let last_retrieved_block_num = node.get_info().await.into_eyre().context("failed to receive Info from node")?.best_block.1;
 
             if last_processed_block_num > last_retrieved_block_num {
                 Err(eyre!("last_processed_block_num is greater than last_retrieved_block_num")).context("Try wiping the summary file and restart")?;
