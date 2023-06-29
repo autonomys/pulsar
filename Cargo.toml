@@ -38,7 +38,7 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 zeroize = "1.6.0"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "cd1da1a25226eb5785929b678287666c80e1b92c" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "4678de5fc1172b65c62da9174ca2cdcf797cac10" }
 
 
 [dev-dependencies]

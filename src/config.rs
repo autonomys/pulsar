@@ -47,11 +47,11 @@ impl NodeConfig {
         let Self { directory, name, advanced: AdvancedNodeSettings { executor: _, extra } } = self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3d => {
-                let node = Node::gemini_3d().network(NetworkBuilder::gemini_3d().name(name)).dsn(
-                    DsnBuilder::gemini_3d().provider_storage_path(provider_storage_dir_getter()),
+            ChainConfig::Gemini3e => {
+                let node = Node::gemini_3e().network(NetworkBuilder::gemini_3e().name(name)).dsn(
+                    DsnBuilder::gemini_3e().provider_storage_path(provider_storage_dir_getter()),
                 );
-                let chain_spec = chain_spec::gemini_3d();
+                let chain_spec = chain_spec::gemini_3e();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
@@ -127,7 +127,7 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3d,
+    Gemini3e,
     Dev,
     DevNet,
 }
@@ -137,7 +137,7 @@ impl std::str::FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3d" => Ok(ChainConfig::Gemini3d),
+            "gemini3d" => Ok(ChainConfig::Gemini3e),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
