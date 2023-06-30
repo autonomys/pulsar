@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["info"],"opaque":[""]};
+window.SIDEBAR_ITEMS = {"fn":["info"]};
