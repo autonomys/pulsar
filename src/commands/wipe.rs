@@ -75,7 +75,9 @@ async fn wipe(
         // if config can be read, delete the farmer using the path in the config, else,
         // delete the default location
         if let Some(config) = config {
-            let _ = PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size).wipe().await;
+            let _ = PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size)
+                .wipe()
+                .await;
             let _ =
                 CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)?
                     .wipe()
