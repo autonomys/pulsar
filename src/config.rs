@@ -13,8 +13,8 @@ use tracing::instrument;
 use crate::utils::{cache_directory_getter, provider_storage_dir_getter, IntoEyre};
 
 /// defaults for the user config file
-pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(1);
-pub(crate) const MIN_PLOT_SIZE: ByteSize = ByteSize::mib(32);
+pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(2);
+pub(crate) const MIN_PLOT_SIZE: ByteSize = ByteSize::gb(2);
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize, Debug)]
