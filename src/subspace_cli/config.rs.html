@@ -208,8 +208,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::utils::{cache_directory_getter, provider_storage_dir_getter, IntoEyre};
 
 <span class="doccomment">/// defaults for the user config file
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">1</span>);
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: ByteSize = ByteSize::mib(<span class="number">32</span>);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
 
 <span class="doccomment">/// structure of the config toml file
 </span><span class="attr">#[derive(Deserialize, Serialize, Debug)]

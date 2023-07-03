@@ -520,7 +520,7 @@
          <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not parse the value!&quot;</span>));
     };
     <span class="kw">if </span>size &lt; MIN_PLOT_SIZE {
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;size could not be smaller than 1GB&quot;</span>))
+        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="macro">format!</span>(<span class="string">&quot;plot size cannot be smaller than {}&quot;</span>, MIN_PLOT_SIZE)))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
     }
