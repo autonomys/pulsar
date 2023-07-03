@@ -127,9 +127,10 @@ fn reward_address_checker() {
 
 #[test]
 fn size_checker() {
-    assert!(size_parser("800MB").is_ok());
-    assert!(size_parser("103gjie").is_err());
+    assert!(size_parser("2GB").is_ok());
     assert!(size_parser("12GB").is_ok());
+    assert!(size_parser("103gjie").is_err());
+    assert!(size_parser("1.2GB").is_err());
 }
 
 #[test]

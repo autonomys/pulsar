@@ -125,7 +125,7 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
          return Err(eyre!("could not parse the value!"));
     };
     if size < MIN_PLOT_SIZE {
-        Err(eyre!("size could not be smaller than 1GB"))
+        Err(eyre!(format!("plot size cannot be smaller than {}", MIN_PLOT_SIZE)))
     } else {
         Ok(size)
     }
