@@ -63,11 +63,6 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         if: runner.os == 'Linux' || runner.os == 'macOS'
 
-      # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
-      - name: Remove msys64
-        run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
-        if: runner.os == 'Windows'
-
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
