@@ -67,29 +67,21 @@ jobs:
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
 
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-            components: rustfmt, clippy
+      # - name: Install latest nightly
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #       toolchain: nightly
+      #       override: true
+      #       components: rustfmt, clippy
 
       - name: cargo fmt
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: cargo test --locked
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        with:
-          command: test
+        run: cargo test
 
       - name: cargo clippy --locked
-        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
 
       - name: Check Documentation
         run: cargo doc --locked --all --no-deps
