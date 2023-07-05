@@ -93,19 +93,19 @@ jobs:
           RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"
 
       - name: Run cleanup script Linux
-        if: runner.os == 'ubuntu-22.04-x86-64'
+        if: runner.os == 'Linux'
         run: echo "Cleaning up Linux self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
 
       - name: Run cleanup script macOS
-        if: runner.os == 'macos-12-arm64'
+        if: runner.os == 'macOS'
         run: echo "Cleaning up macOS self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
         
       - name: Run cleanup script Windows
-        if: runner.os == 'windows-server-2022-x86-64'
+        if: runner.os == 'Windows'
         run: echo "Cleaning up Windows self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "C:\\cleanup_script.ps1"
