@@ -54,9 +54,8 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1.3.0
+        uses: arduino/setup-protoc@v2
         with:
-          version: "3.20.3"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
