@@ -3,7 +3,7 @@ name: "ci tests"
 on:
   push:
     branches:
-      - main
+      - ci-pipeline-gh-runner
     paths-ignore:
       - "**.md"
   pull_request:
@@ -32,10 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - macos-12
-          - windows-2022
+        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-22.04-x86-64", "Linux"], ["self-hosted", "macos-12-arm64", "macOS"], ["self-hosted", "windows-server-2022-x86-64", "Windows"]]' || '["ubuntu-22.04", "macos-12", "windows-2022"]') }}
         run-all:
           - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
         exclude: # exclude macos-12 and windows-2022 when the condition is false
@@ -87,3 +84,21 @@ jobs:
         run: cargo doc --locked --all --no-deps
         env:
           RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"
+
+      - name: Run cleanup script Linux
+        if: runner.os == 'ubuntu-22.04-x86-64'
+        run: echo "Cleaning up Linux self hosted environment"
+        env:
+          ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
+
+      - name: Run cleanup script macOS
+        if: runner.os == 'macos-12-arm64'
+        run: echo "Cleaning up macOS self hosted environment"
+        env:
+          ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
+        
+      - name: Run cleanup script Windows
+        if: runner.os == 'windows-server-2022-x86-64'
+        run: echo "Cleaning up Windows self hosted environment"
+        env:
+          ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "C:\\cleanup_script.ps1"
