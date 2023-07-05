@@ -67,12 +67,12 @@ jobs:
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
 
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly
-            override: false
-            components: rustfmt, clippy
+      # - name: Install latest nightly
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #       toolchain: nightly
+      #       override: false
+      #       components: rustfmt, clippy
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
