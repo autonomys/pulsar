@@ -122,7 +122,7 @@ pub(crate) fn directory_parser(location: &str) -> Result<PathBuf> {
 /// utilize `ByteSize` crate for the validation
 pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
-         return Err(eyre!("could not parse the value!"));
+        return Err(eyre!("could not parse the value!"));
     };
     if size < MIN_PLOT_SIZE {
         Err(eyre!(format!("plot size cannot be smaller than {}", MIN_PLOT_SIZE)))
