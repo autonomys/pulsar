@@ -54,8 +54,9 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v1.3.0
         with:
+          version: "3.20.3"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
@@ -93,19 +94,19 @@ jobs:
           RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"
 
       - name: Run cleanup script Linux
-        if: runner.os == 'Linux'
+        if: contains(matrix.os, 'ubuntu-22.04-x86-64')
         run: echo "Cleaning up Linux self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
 
       - name: Run cleanup script macOS
-        if: runner.os == 'macOS'
+        if: contains(matrix.os, 'macos-12-arm64')
         run: echo "Cleaning up macOS self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "~/cleanup_script.sh"
         
       - name: Run cleanup script Windows
-        if: runner.os == 'Windows'
+        if: contains(matrix.os, 'windows-server-2022-x86-64')
         run: echo "Cleaning up Windows self hosted environment"
         env:
           ACTIONS_RUNNER_HOOK_JOB_COMPLETED: "C:\\cleanup_script.ps1"
