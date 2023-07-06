@@ -63,6 +63,19 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         if: runner.os == 'Linux' || runner.os == 'macOS'
 
+      - name: Install Protoc Windows
+        run: |
+          Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-win64.zip -Outfile protoc-23.3-win64.zip
+          Expand-Archive .\protoc-23.3-win64.zip -DestinationPath .\protoc
+          echo ".\protoc\bin" >> $GITHUB_PATH
+        if: runner.os == 'Windows'
+
+      - name: set bash path windows
+        if: "startsWith(runner.os, 'windows')"
+        run: |
+          echo "C:\cygwin64\bin\" >> $GITHUB_PATH
+          echo "C:\cygwin64\bin\bash" >> $GITHUB_OUTPUT
+
       - name: Install latest nightly
         uses: dtolnay/rust-toolchain@nightly
         with:
