@@ -98,6 +98,9 @@ jobs:
           args: --locked --all-targets -- -D warnings
         if: runner.os == 'Linux' || runner.os == 'macOS'
 
+      - name: Add cargo to PATH
+        run: echo "C:\Users\Administrator\.cargo\bin" >> $GITHUB_PATH
+
       - name: Print PATH
         run: echo $PATH
         if: runner.os == 'Windows'
