@@ -98,6 +98,10 @@ jobs:
           args: --locked --all-targets -- -D warnings
         if: runner.os == 'Linux' || runner.os == 'macOS'
 
+      - name: Print PATH
+        run: echo $PATH
+        if: runner.os == 'Windows'
+        
       - name: cargo fmt windows
         run: C:\Users\Administrator\.cargo\bin\cargo.exe fmt --all -- --check
         if: runner.os == 'Windows'
