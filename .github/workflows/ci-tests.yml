@@ -99,7 +99,9 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'macOS'
 
       - name: Print username
-        run: echo %username%
+        shell: powershell
+        run: echo $env:USERNAME
+        if: runner.os == 'Windows'
 
       
       - name: cargo fmt windows
