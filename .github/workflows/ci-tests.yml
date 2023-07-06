@@ -70,35 +70,47 @@ jobs:
           echo ".\protoc\bin" >> $GITHUB_PATH
         if: runner.os == 'Windows'
 
-      - name: set bash path windows
-        if: "startsWith(runner.os, 'windows')"
-        run: |
-          echo "C:\cygwin64\bin\" >> $GITHUB_PATH
-          echo "C:\cygwin64\bin\bash" >> $GITHUB_OUTPUT
-
-      - name: Install latest nightly
+      - name: Install nightly
         uses: dtolnay/rust-toolchain@nightly
         with:
             toolchain: nightly-2023-05-16
             components: rustfmt, clippy, rust-src
             target: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-apple-darwin, aarch64-apple-darwin
+        if: runner.os == 'Linux' || runner.os == 'macOS'
 
       - name: cargo fmt
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
         with:
           command: fmt
           args: --all -- --check
+        if: runner.os == 'Linux' || runner.os == 'macOS'
 
       - name: cargo test --locked
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
         with:
           command: test
+        if: runner.os == 'Linux' || runner.os == 'macOS'
 
       - name: cargo clippy --locked
         uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --locked --all-targets -- -D warnings
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+
+      - name: cargo fmt windows
+        run: C:\Users\Administrator\.cargo\bin\cargo.exe fmt --all -- --check
+        if: runner.os == 'Windows'
+
+      - name: cargo test --locked windows
+        run: C:\Users\Administrator\.cargo\bin\cargo.exe test
+        if: runner.os == 'Windows'
+
+      - name: cargo clippy --locked windows
+        run: C:\Users\Administrator\.cargo\bin\cargo.exe --locked --all-targets -- -D warnings
+        env:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: runner.os == 'Windows'
 
       - name: Check Documentation
         run: cargo doc --locked --all --no-deps
