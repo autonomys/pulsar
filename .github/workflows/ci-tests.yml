@@ -75,8 +75,15 @@ jobs:
         with:
             toolchain: nightly-2023-05-16
             components: rustfmt, clippy, rust-src
-        #    target: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-apple-darwin, aarch64-apple-darwin
-        # if: runner.os == 'Linux' || runner.os == 'macOS'
+            target: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-apple-darwin, aarch64-apple-darwin
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+        if: runner.os == 'Windows'
 
       - name: cargo fmt
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
