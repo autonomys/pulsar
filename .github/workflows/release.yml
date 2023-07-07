@@ -17,37 +17,37 @@ jobs:
     strategy:
       matrix:
         build:
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "ubuntu-22.04-x86-64", "Linux"]' || '["ubuntu-22.04"]') }}
             target: x86_64-unknown-linux-gnu
             production_target: target/x86_64-unknown-linux-gnu/production
             suffix: ubuntu-x86_64-v2-${{ github.ref_name }}
             rustflags: "-C target-cpu=x86-64-v2"
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "ubuntu-22.04-x86-64", "Linux"]' || '["ubuntu-22.04"]') }}
             target: x86_64-unknown-linux-gnu
             production_target: target/x86_64-unknown-linux-gnu/production
             suffix: ubuntu-x86_64-skylake-${{ github.ref_name }}
             rustflags: "-C target-cpu=skylake"
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "ubuntu-22.04-x86-64", "Linux"]' || '["ubuntu-22.04"]') }}
             target: aarch64-unknown-linux-gnu
             production_target: target/aarch64-unknown-linux-gnu/aarch64linux
             suffix: ubuntu-aarch64-${{ github.ref_name }}
             rustflags: "-C linker=aarch64-linux-gnu-gcc"
-          - os: macos-12
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "macos-12-arm64", "macOS"]' || '["macos-12"]') }}
             target: x86_64-apple-darwin
             production_target: target/x86_64-apple-darwin/production
             suffix: macos-x86_64-${{ github.ref_name }}
             rustflags: ""
-          - os: macos-12
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "macos-12-arm64", "macOS"]' || '["macos-12"]') }}
             target: aarch64-apple-darwin
             production_target: target/aarch64-apple-darwin/production
             suffix: macos-aarch64-${{ github.ref_name }}
             rustflags: ""
-          - os: windows-2022
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "windows-server-2022-x86-64", "Windows"]' || '["windows-2022"]') }}
             target: x86_64-pc-windows-msvc
             production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-v2-${{ github.ref_name }}
             rustflags: "-C target-cpu=x86-64-v2"
-          - os: windows-2022
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '["self-hosted", "windows-server-2022-x86-64", "Windows"]' || '["windows-2022"]') }}
             target: x86_64-pc-windows-msvc
             production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-skylake-${{ github.ref_name }}
@@ -64,21 +64,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # @v3.1.0
 
-      # On macOS, we need a proper Clang version, not Apple's custom version without wasm32 support
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@8852e4d5c58653ed05135c0a5d949d9c2febcb00 # v1.6.1
-        with:
-          version: "15.0"
-        if: runner.os == 'macOS'
-
       - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # @v1.1.2
+        uses: arduino/setup-protoc@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+        if: runner.os == 'Linux' || runner.os == 'macOS'
 
-      # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
-      - name: Remove msys64
-        run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
+      - name: Install Protoc Windows
+        run: |
+          Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-win64.zip -Outfile protoc-23.3-win64.zip
+          Expand-Archive -Force .\protoc-23.3-win64.zip -DestinationPath C:\protoc-23.3 
+        if: runner.os == 'Windows'
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+
+      - name: Install Protoc Windows
+        run: |
+          Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-win64.zip -Outfile protoc-23.3-win64.zip
+          Expand-Archive -Force .\protoc-23.3-win64.zip -DestinationPath C:\protoc-23.3 
         if: runner.os == 'Windows'
 
       - name: Linux AArch64 cross-compile packages
