@@ -1,6 +1,6 @@
 <div align="center">
 
-# Subspace CLI
+# Subspace CLI - Test
 
 Subspace CLI simplifies the farming process on Subspace Network.
 
