@@ -91,7 +91,8 @@ impl NodeConfig {
 #[derivative(Default)]
 pub(crate) struct AdvancedFarmerSettings {
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
-    #[derivative(Default(value = "subspace_sdk::ByteSize::gb(1)"))]
+    //TODO: change this back to 1GB when DSN is working properly
+    #[derivative(Default(value = "subspace_sdk::ByteSize::gb(3)"))]
     pub(crate) cache_size: ByteSize,
     #[serde(default, flatten)]
     pub(crate) extra: toml::Table,
