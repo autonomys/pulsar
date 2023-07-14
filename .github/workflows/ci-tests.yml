@@ -32,7 +32,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJson(github.repository_owner == 'subspace' && github.repository == 'subspace/subspace-cli' && '[["self-hosted", "ubuntu-22.04-x86-64", "Linux"], ["self-hosted", "macos-12-arm64", "macOS"], ["self-hosted", "windows-server-2022-x86-64", "Windows"]]' || '["ubuntu-22.04", "macos-12", "windows-2022"]') }}
+        os:
+          - ubuntu-22.04
+          - macos-12
+          - windows-2022
         run-all:
           - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
         exclude: # exclude macos-12 and windows-2022 when the condition is false
@@ -40,40 +43,28 @@ jobs:
             os: macos-12
           - run-all: false
             os: windows-2022
-          - run-all: false
-            os: macOS
-          - run-all: false
-            os: Windows
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: git checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # @v3.1.0
 
-      # On macOS, we need a proper Clang version, not Apple's custom version without wasm32 support, we also install clang on Windows
+      # On macOS, we need a proper Clang version, not Apple's custom version without wasm32 support
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@8852e4d5c58653ed05135c0a5d949d9c2febcb00 # v1.6.1
         with:
           version: "15.0"
-        if: runner.os == 'macOS' || runner.os == 'Windows'
+        if: runner.os == 'macOS'
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-        if: runner.os == 'Linux' || runner.os == 'macOS'
 
-      - name: Install Protoc Windows
-        run: |
-          Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-win64.zip -Outfile protoc-23.3-win64.zip
-          Expand-Archive -Force .\protoc-23.3-win64.zip -DestinationPath C:\protoc-23.3 
+      # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
+      - name: Remove msys64
+        run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
-
-      - name: Install nightly
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly-2023-05-16
-            components: rustfmt, clippy, rust-src,rust-std
 
       - name: cargo fmt
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
