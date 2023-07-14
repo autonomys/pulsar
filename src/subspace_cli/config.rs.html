@@ -193,6 +193,7 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::path::PathBuf;
 
@@ -286,7 +287,8 @@
 #[derivative(Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AdvancedFarmerSettings {
     <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
-    #[derivative(Default(value = <span class="string">&quot;subspace_sdk::ByteSize::gb(1)&quot;</span>))]
+    </span><span class="comment">//TODO: change this back to 1GB when DSN is working properly
+    </span><span class="attr">#[derivative(Default(value = <span class="string">&quot;subspace_sdk::ByteSize::gb(3)&quot;</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) cache_size: ByteSize,
     <span class="attr">#[serde(default, flatten)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) extra: toml::Table,
