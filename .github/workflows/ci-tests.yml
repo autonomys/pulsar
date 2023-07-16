@@ -54,7 +54,7 @@ jobs:
         if: contains(fromJSON('["macOS", "macos-12", "Windows", "windows-latest", "windows-2022"]'), runner.os)
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        uses: arduino/setup-protoc@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         if: contains(fromJSON('["Linux", "ubuntu-20.04", "macOS", "macos-12", "windows-latest", "windows-2022"]'), runner.os)
