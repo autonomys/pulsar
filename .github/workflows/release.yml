@@ -171,4 +171,4 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           asset_paths: '["executables/*"]'
-        if: github.event_name == 'push' && github.ref_type == 'tag'
+        if: ${{ github.github.repository_owner == 'subspace' && github.event_name == 'push' && github.ref_type == 'tag' }}
