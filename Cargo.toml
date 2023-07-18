@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 
 [dependencies]
@@ -38,7 +38,7 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 zeroize = "1.6.0"
 
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "2ab653ca34a1799335fd2ba85aadb606a2094250" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "66d82c1724f280a889821a57d020d8fcd3be5a8c" }
 
 
 [dev-dependencies]
