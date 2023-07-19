@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use color_eyre::eyre::{Context, Result};
 use derive_more::{AddAssign, Display, From, FromStr};
-use num_rational::Ratio; 
+use num_rational::Ratio;
 use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;

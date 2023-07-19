@@ -298,8 +298,8 @@ async fn subscribe_to_solutions(
             // use carriage return to overwrite the current value
             // instead of inserting a new line
             print!(
-                "\rYou have earned: {total_rewards_ssc} SSC(s), farmed {authored_count} block(s), and \
-                 have {vote_count} vote(s)! This data is derived from the first \
+                "\rYou have earned: {total_rewards_ssc} SSC(s), farmed {authored_count} block(s), \
+                 and have {vote_count} vote(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.",
             );
             // flush the stdout to make sure values are printed
