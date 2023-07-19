@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64", "Linux"], ["self-hosted", "macos-12-arm64", "macOS"], ["self-hosted", "windows-server-2022-x86-64", "Windows"]]' || '["ubuntu-20.04", "macos-12", "windows-2022"]') }}
+        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-12-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-12", "windows-2022"]') }}
         run-all:
           - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
         exclude: # exclude macos-12 and windows-2022 when the condition is false
@@ -51,18 +51,20 @@ jobs:
         uses: KyleMayes/install-llvm-action@8852e4d5c58653ed05135c0a5d949d9c2febcb00 # v1.6.1
         with:
           version: "15.0"
-        if: contains(fromJSON('["macOS", "macos-12", "Windows", "windows-latest", "windows-2022"]'), runner.os)
+        if: contains(fromJSON('["macOS", "Windows"]'), runner.os)
 
       - name: Install Protoc
         uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-        if: contains(fromJSON('["Linux", "ubuntu-20.04", "macOS", "macos-12", "windows-latest", "windows-2022"]'), runner.os)
+        if: contains(fromJSON('["Linux", "macOS", "Windows"]'), runner.os)
+        continue-on-error: true
 
       # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
       - name: Remove msys64
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
-        if: contains(fromJSON('["windows-latest", "windows-2022"]'), runner.os)
+        if: runner.os == 'Windows'
+        continue-on-error: true
 
       - name: cargo fmt
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
