@@ -9,6 +9,8 @@ use std::sync::Arc;
 
 use color_eyre::eyre::{Context, Result};
 use derive_more::{AddAssign, Display, From, FromStr};
+use num_rational::Ratio;
+use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
@@ -20,6 +22,13 @@ use tracing::instrument;
 // TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
 #[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 pub(crate) struct Rewards(pub(crate) u128);
+
+impl Rewards {
+    /// Converts the reward amount to SSC by dividing by 10^18.
+    pub(crate) fn as_ssc(&self) -> f64 {
+        Ratio::new(self.0, 10u128.pow(18)).to_f64().expect("10u128.pow(18) is never 0; qed")
+    }
+}
 
 /// struct for updating the fields of the summary
 #[derive(Default, Debug)]

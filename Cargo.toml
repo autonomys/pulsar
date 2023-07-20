@@ -1,6 +1,6 @@
 [package]
 name = "subspace-cli"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2021"
 
 [dependencies]
@@ -18,6 +18,8 @@ fdlimit = "0.2"
 futures = "0.3"
 indicatif = { version = "0.17.1", features = ["improved_unicode"] }
 libp2p-core = "0.38"
+num-rational = "0.4.1"
+num-traits = "0.2.14"
 open = "4.0.2"
 owo-colors = "3.5.0"
 rand = "0.8.5"

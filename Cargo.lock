@@ -5302,6 +5302,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
+ "num-bigint",
  "num-integer",
  "num-traits",
 ]
@@ -9374,7 +9375,7 @@ dependencies = [
 
 [[package]]
 name = "subspace-cli"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -9392,6 +9393,8 @@ dependencies = [
  "indicatif",
  "jemallocator",
  "libp2p-core 0.38.0",
+ "num-rational",
+ "num-traits",
  "open",
  "owo-colors",
  "rand 0.8.5",
