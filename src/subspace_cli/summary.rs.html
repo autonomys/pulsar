@@ -203,6 +203,15 @@
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -214,6 +223,8 @@
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>derive_more::{AddAssign, Display, From, FromStr};
+<span class="kw">use </span>num_rational::Ratio;
+<span class="kw">use </span>num_traits::cast::ToPrimitive;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>subspace_sdk::node::BlockNumber;
 <span class="kw">use </span>subspace_sdk::ByteSize;
@@ -225,6 +236,13 @@
 <span class="comment">// TODO: delete this when https://github.com/toml-rs/toml/issues/540 is solved
 </span><span class="attr">#[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Rewards(<span class="kw">pub</span>(<span class="kw">crate</span>) u128);
+
+<span class="kw">impl </span>Rewards {
+    <span class="doccomment">/// Converts the reward amount to SSC by dividing by 10^18.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_ssc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+        Ratio::new(<span class="self">self</span>.<span class="number">0</span>, <span class="number">10u128</span>.pow(<span class="number">18</span>)).to_f64().expect(<span class="string">&quot;10u128.pow(18) is never 0; qed&quot;</span>)
+    }
+}
 
 <span class="doccomment">/// struct for updating the fields of the summary
 </span><span class="attr">#[derive(Default, Debug)]

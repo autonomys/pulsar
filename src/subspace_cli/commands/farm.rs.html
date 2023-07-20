@@ -511,6 +511,8 @@
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
 <a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::sync::atomic::{AtomicBool, Ordering};
 <span class="kw">use </span>std::sync::Arc;
@@ -805,12 +807,14 @@
         <span class="kw">let </span>Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
             summary_file.parse().<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t parse summary&quot;</span>)<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>total_rewards_ssc = total_rewards.as_ssc();
+
         <span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
             <span class="comment">// use carriage return to overwrite the current value
             // instead of inserting a new line
             </span><span class="macro">print!</span>(
-                <span class="string">&quot;\rYou have earned: {total_rewards} SSC(s), farmed {authored_count} block(s), and \
-                 have {vote_count} vote(s)! This data is derived from the first \
+                <span class="string">&quot;\rYou have earned: {total_rewards_ssc} SSC(s), farmed {authored_count} block(s), \
+                 and have {vote_count} vote(s)! This data is derived from the first \
                  {last_processed_block_num} blocks.&quot;</span>,
             );
             <span class="comment">// flush the stdout to make sure values are printed
