@@ -78,6 +78,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         if: contains(fromJSON('["Linux", "macOS"]'), runner.os)
 
+      # Workaround to resolve https://github.com/arduino/setup-protoc/issues/86
       - name: Install Protoc Windows
         run: |
           Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-win64.zip -Outfile protoc-23.4-win64.zip
