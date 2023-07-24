@@ -70,6 +70,7 @@ jobs:
       - name: Remove msys64
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
+        # May not exist on self-hosted runners
         continue-on-error: true
 
       - name: cargo fmt
