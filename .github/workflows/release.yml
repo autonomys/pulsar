@@ -17,37 +17,37 @@ jobs:
     strategy:
       matrix:
         build:
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || 'ubuntu-20.04') }}
             target: x86_64-unknown-linux-gnu
             production_target: target/x86_64-unknown-linux-gnu/production
             suffix: ubuntu-x86_64-v2-${{ github.ref_name }}
             rustflags: "-C target-cpu=x86-64-v2"
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || 'ubuntu-20.04') }}
             target: x86_64-unknown-linux-gnu
             production_target: target/x86_64-unknown-linux-gnu/production
             suffix: ubuntu-x86_64-skylake-${{ github.ref_name }}
             rustflags: "-C target-cpu=skylake"
-          - os: ubuntu-20.04
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || 'ubuntu-20.04') }}
             target: aarch64-unknown-linux-gnu
             production_target: target/aarch64-unknown-linux-gnu/aarch64linux
             suffix: ubuntu-aarch64-${{ github.ref_name }}
             rustflags: "-C linker=aarch64-linux-gnu-gcc"
-          - os: macos-12
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "macos-12-arm64"]' || 'macos-12') }}
             target: x86_64-apple-darwin
             production_target: target/x86_64-apple-darwin/production
             suffix: macos-x86_64-${{ github.ref_name }}
             rustflags: ""
-          - os: macos-12
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "macos-12-arm64"]' || 'macos-12') }}
             target: aarch64-apple-darwin
             production_target: target/aarch64-apple-darwin/production
             suffix: macos-aarch64-${{ github.ref_name }}
             rustflags: ""
-          - os: windows-2022
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "windows-server-2022-x86-64"]' || 'windows-2022') }}
             target: x86_64-pc-windows-msvc
             production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-v2-${{ github.ref_name }}
             rustflags: "-C target-cpu=x86-64-v2"
-          - os: windows-2022
+          - os: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "windows-server-2022-x86-64"]' || 'windows-2022') }}
             target: x86_64-pc-windows-msvc
             production_target: target/x86_64-pc-windows-msvc/production
             suffix: windows-x86_64-skylake-${{ github.ref_name }}
@@ -72,14 +72,23 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@64c0c85d18e984422218383b81c52f8b077404d3 # @v1.1.2
+        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+        if: contains(fromJSON('["Linux", "macOS"]'), runner.os)
+
+      # Workaround to resolve https://github.com/arduino/setup-protoc/issues/86
+      - name: Install Protoc
+        uses: arduino/setup-protoc@149f6c87b92550901b26acd1632e11c3662e381f # v1.3.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        if: runner.os == 'Windows'
 
       # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
       - name: Remove msys64
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
+        continue-on-error: true
 
       - name: Linux AArch64 cross-compile packages
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu gcc-aarch64-linux-gnu libc6-dev-arm64-cross
