@@ -134,7 +134,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Sign Application (Windows)
-        uses: skymatic/code-sign-action@cfcc1c15b32938bab6dea25192045b6d2989e4d0 # @v1.1.0
+        uses: skymatic/code-sign-action@500ce4f8261ca9bd8f85978c1652b34fb511bdf4 # @v2.0.1
         with:
           certificate: "${{ secrets.WINDOWS_CERTIFICATE }}"
           password: "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}"
