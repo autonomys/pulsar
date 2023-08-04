@@ -109,7 +109,7 @@ jobs:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin subspace-cli
 
-      - name: Sign Application (macOS)
+      - name: Sign and Notarize Application (macOS)
         run: |
           echo "Importing certificate"
           echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
@@ -125,9 +125,17 @@ jobs:
           cp ${{ matrix.build.production_target }}/subspace-cli ${{ matrix.build.production_target }}/macos-binaries
           ditto -c -k --rsrc ${{ matrix.build.production_target }}/macos-binaries subspace-binaries.zip
           echo "Notarizing"
-          xcrun altool --notarize-app --primary-bundle-id binaries-${{ github.ref_name }} --username "${{ secrets.MACOS_APPLE_ID}}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --file subspace-binaries.zip
-          # echo "Stapling farmer"
-          # xcrun stapler staple ${{ matrix.build.production_target }}/subspace-cli
+          curl -sL https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip -o gon.zip
+          unzip gon.zip -d /usr/local/bin
+          cat << EOF > gon.hcl
+          source = ["subspace-binaries.zip"]
+          bundle_id = "com.your_name.app_name"
+          apple_id {
+            username = "${{ secrets.MACOS_APPLE_ID }}"
+            password = "${{ secrets.MACOS_APP_PASSWORD }}"
+          }
+          EOF
+          gon gon.hcl
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
