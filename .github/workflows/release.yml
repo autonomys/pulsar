@@ -121,13 +121,26 @@ jobs:
           unzip gon.zip -d .
           cat << EOF > gon.hcl
           source = ["subspace-binaries.zip"]
-          bundle_id = "com.your_name.app_name"
+          bundle_id = "${{ secrets.MACOS_BUNDLE_ID }}"
+          sign {
+            application_identity = "${{ secrets.MACOS_IDENTITY }}"
+          }
           apple_id {
-            username = "${{ secrets.MACOS_APPLE_ID }}"
-            password = "${{ secrets.MACOS_APP_PASSWORD }}"
+              username = "${{ secrets.MACOS_APPLE_ID }}"
+              password = "${{ secrets.MACOS_APP_PASSWORD }}"
           }
           EOF
-          ./gon gon.hcl
+          ./gon -log-level=info -log-json gon.hcl
+
+          # Notarize the ZIP using notarytool
+          xcrun notarytool submit subspace-binaries.zip --apple-id "${{ secrets.MACOS_APPLE_ID }}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --team-id "${{ secrets.MACOS_TEAM_ID }}" --wait
+
+          # Wait for a few seconds to ensure notarization process has been completed
+          sleep 60
+
+          # Staple the zip package
+          xcrun stapler staple subspace-binaries.zip
+
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
