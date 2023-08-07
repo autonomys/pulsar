@@ -135,11 +135,9 @@ jobs:
           # Notarize the ZIP using notarytool
           xcrun notarytool submit subspace-binaries.zip --apple-id "${{ secrets.MACOS_APPLE_ID }}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --team-id "${{ secrets.MACOS_TEAM_ID }}" --wait
 
-          # Wait for a few seconds to ensure notarization process has been completed
-          sleep 60
-
+          # // todo stapling for macOS artifacts
           # Staple the zip package
-          xcrun stapler staple subspace-binaries.zip
+          # xcrun stapler staple subspace-binaries.zip
 
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
