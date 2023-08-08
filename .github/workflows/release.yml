@@ -141,7 +141,7 @@ jobs:
 
           echo "Done!"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
-        continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
+        continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
         if: runner.os == 'macOS'
 
       - name: Sign Application (Windows)
@@ -152,7 +152,7 @@ jobs:
           certificatesha1: "${{ secrets.WINDOWS_CERTIFICATE_SHA }}"
           folder: "${{ matrix.build.production_target }}"
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
-        continue-on-error: ${{ github.github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
+        continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
         if: runner.os == 'Windows'
 
       - name: Prepare executables for uploading (Ubuntu)
