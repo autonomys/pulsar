@@ -117,8 +117,8 @@ jobs:
           cp ${{ matrix.build.production_target }}/subspace-cli ${{ matrix.build.production_target }}/macos-binaries
           ditto -c -k --rsrc ${{ matrix.build.production_target }}/macos-binaries subspace-binaries.zip
           echo "Notarizing"
-          curl -sL https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip -o gon.zip
-          unzip gon.zip -d .
+          brew update
+          brew install mitchellh/gon/gon
           cat << EOF > gon.hcl
           source = ["subspace-binaries.zip"]
           bundle_id = "${{ secrets.MACOS_BUNDLE_ID }}"
@@ -130,7 +130,7 @@ jobs:
               password = "${{ secrets.MACOS_APP_PASSWORD }}"
           }
           EOF
-          ./gon -log-level=info -log-json gon.hcl
+          gon -log-level=info -log-json gon.hcl
 
           # Notarize the ZIP using notarytool
           xcrun notarytool submit subspace-binaries.zip --apple-id "${{ secrets.MACOS_APPLE_ID }}" --password "${{ secrets.MACOS_APP_PASSWORD }}" --team-id "${{ secrets.MACOS_TEAM_ID }}" --wait
