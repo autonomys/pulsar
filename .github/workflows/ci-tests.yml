@@ -16,6 +16,8 @@ on:
         required: true
         default: false
         type: boolean
+  merge_group:
+    types: [checks_requested]
 
 env:
   # Not needed in CI, should make things a bit faster
