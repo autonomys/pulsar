@@ -1,14 +1,14 @@
 <div align="center">
 
-# Subspace CLI
+# Pulsar
 
-Subspace CLI simplifies the farming process on Subspace Network.
+Pulsar simplifies the farming process on Subspace Network.
 
-[![ci-tests](https://img.shields.io/github/actions/workflow/status/subspace/subspace-cli/ci-tests.yml?branch=main&label=CI&logo=github&style=for-the-badge)](https://github.com/subspace/subspace-cli/actions/workflows/ci-tests.yml)
-[![Rust Docs](https://img.shields.io/github/actions/workflow/status/subspace/subspace-cli/rustdoc.yml?branch=main&label=RUST-DOCS&logo=github&style=for-the-badge)](https://github.com/subspace/subspace-cli/actions/workflows/rustdoc.yml)
-[![Latest Release](https://img.shields.io/github/v/release/subspace/subspace-cli?include_prereleases&logo=github&style=for-the-badge)](https://github.com/subspace/subspace-cli/releases)
+[![ci-tests](https://img.shields.io/github/actions/workflow/status/subspace/pulsar/ci-tests.yml?branch=main&label=CI&logo=github&style=for-the-badge)](https://github.com/subspace/pulsar/actions/workflows/ci-tests.yml)
+[![Rust Docs](https://img.shields.io/github/actions/workflow/status/subspace/pulsar/rustdoc.yml?branch=main&label=RUST-DOCS&logo=github&style=for-the-badge)](https://github.com/subspace/pulsar/actions/workflows/rustdoc.yml)
+[![Latest Release](https://img.shields.io/github/v/release/subspace/pulsar?include_prereleases&logo=github&style=for-the-badge)](https://github.com/subspace/pulsar/releases)
 
-![prompt](images/subspace-cli-prompt.png)
+![prompt](images/pulsar-prompt.png)
 
 </div>
 
@@ -18,11 +18,11 @@ Instead of running a terminal instance for the farmer, and running another termi
 
 ## How to Use (commands)
 
-1. download the executable from [releases](https://github.com/subspace/subspace-cli/releases)
+1. download the executable from [releases](https://github.com/subspace/pulsar/releases)
 2. in your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`)
-3. we will address your executable name as `subspace-cli`, change the below commands accordingly to your full executable name.
-3. run `./subspace-cli init` -> this will initialize your config file, which will store the necessary information for you to farm.
-4. run `./subspace-cli farm` -> this will start farming. Yes, it is that simple! Enjoy!
+3. we will address your executable name as `pulsar`, change the below commands accordingly to your full executable name.
+3. run `./pulsar init` -> this will initialize your config file, which will store the necessary information for you to farm.
+4. run `./pulsar farm` -> this will start farming. Yes, it is that simple! Enjoy!
 
 ## Other commands
 
@@ -46,7 +46,7 @@ This will create a new `tmux` session using a socket file named `farming`.
 Once the tmux session is created, you can go ahead and run the farming process.
 
 ```sh
-$ ./subspace-cli farm
+$ ./pulsar farm
 ```
 
 Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
@@ -75,7 +75,7 @@ screen -S farming
 This will create a new `screen` session.
 
 ```sh
-./subspace-cli farm
+./pulsar farm
 ```
 
 Once it's running, you can detach the process by pressing `CTRL+d a`.
