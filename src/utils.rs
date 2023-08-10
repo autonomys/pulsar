@@ -159,12 +159,12 @@ pub(crate) fn provider_storage_dir_getter() -> PathBuf {
 }
 
 fn data_dir_getter() -> PathBuf {
-    dirs::data_dir().expect("data folder must be present in every major OS").join("subspace-cli")
+    dirs::data_dir().expect("data folder must be present in every major OS").join("pulsar")
 }
 
 /// returns OS specific log directory
 pub(crate) fn custom_log_dir() -> PathBuf {
-    let id = "subspace-cli";
+    let id = "pulsar";
 
     #[cfg(target_os = "macos")]
     let path = dirs::home_dir().map(|dir| dir.join("Library/Logs").join(id));
@@ -227,7 +227,7 @@ pub(crate) fn install_tracing(is_verbose: bool, no_rotation: bool) {
     } else {
         RollingFileAppender::builder().max_log_files(KEEP_LAST_N_FILE).rotation(Rotation::HOURLY)
     }
-    .filename_prefix("subspace-cli.log")
+    .filename_prefix("pulsar.log")
     .build(log_dir)
     .expect("building should always succeed");
 
@@ -248,7 +248,7 @@ pub(crate) fn install_tracing(is_verbose: bool, no_rotation: bool) {
 
     let tracing_layer = tracing_layer
         .with(
-            BunyanFormattingLayer::new("subspace-cli".to_owned(), file_appender)
+            BunyanFormattingLayer::new("pulsar".to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
                 .with_filter(filter()),
         )
