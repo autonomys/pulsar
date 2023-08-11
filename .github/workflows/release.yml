@@ -6,8 +6,6 @@ on:
   push:
     tags:
       - "*"
-  merge_group:
-    types: [checks_requested]
 
 # Incremental compilation here isn't helpful
 env:
