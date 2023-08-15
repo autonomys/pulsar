@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["subspace_cli"];
+window.ALL_CRATES = ["pulsar"];
