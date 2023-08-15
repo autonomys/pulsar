@@ -151,9 +151,8 @@ impl std::str::FromStr for ChainConfig {
 /// - **macOS:** `$HOME/Library/Application Support/pulsar/settings.toml`.
 /// - **Windows:** `{FOLDERID_RoamingAppData}/pulsar/settings.toml`.
 pub(crate) fn create_config() -> Result<(File, PathBuf)> {
-    let config_path = dirs::config_dir()
-        .expect("couldn't get the default config directory!")
-        .join("pulsar");
+    let config_path =
+        dirs::config_dir().expect("couldn't get the default config directory!").join("pulsar");
 
     if let Err(err) = create_dir_all(&config_path) {
         let config_path = config_path.to_str().expect("couldn't get pulsar config path!");
