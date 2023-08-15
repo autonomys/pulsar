@@ -6286,6 +6286,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar"
+version = "0.5.4"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "bytesize",
+ "bytesize-serde",
+ "clap",
+ "color-eyre",
+ "console-subscriber",
+ "crossterm",
+ "derivative",
+ "derive_more",
+ "dirs 4.0.0",
+ "fdlimit",
+ "futures",
+ "indicatif",
+ "jemallocator",
+ "libp2p-core 0.38.0",
+ "num-rational",
+ "num-traits",
+ "open",
+ "owo-colors",
+ "rand 0.8.5",
+ "serde",
+ "serde_derive",
+ "single-instance",
+ "sp-core",
+ "strum",
+ "strum_macros",
+ "subspace-sdk",
+ "thiserror",
+ "tokio",
+ "toml 0.7.5",
+ "tracing",
+ "tracing-appender",
+ "tracing-bunyan-formatter",
+ "tracing-error",
+ "tracing-subscriber 0.3.17",
+ "whoami",
+ "zeroize",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9371,50 +9415,6 @@ dependencies = [
  "subspace-core-primitives",
  "subspace-erasure-coding",
  "thiserror",
-]
-
-[[package]]
-name = "subspace-cli"
-version = "0.5.4"
-dependencies = [
- "anyhow",
- "async-stream",
- "bytesize",
- "bytesize-serde",
- "clap",
- "color-eyre",
- "console-subscriber",
- "crossterm",
- "derivative",
- "derive_more",
- "dirs 4.0.0",
- "fdlimit",
- "futures",
- "indicatif",
- "jemallocator",
- "libp2p-core 0.38.0",
- "num-rational",
- "num-traits",
- "open",
- "owo-colors",
- "rand 0.8.5",
- "serde",
- "serde_derive",
- "single-instance",
- "sp-core",
- "strum",
- "strum_macros",
- "subspace-sdk",
- "thiserror",
- "tokio",
- "toml 0.7.5",
- "tracing",
- "tracing-appender",
- "tracing-bunyan-formatter",
- "tracing-error",
- "tracing-subscriber 0.3.17",
- "whoami",
- "zeroize",
 ]
 
 [[package]]

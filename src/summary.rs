@@ -210,5 +210,5 @@ pub(crate) fn summary_path() -> PathBuf {
 
 #[instrument]
 fn summary_dir() -> PathBuf {
-    dirs::cache_dir().expect("couldn't get the  directory!").join("subspace-cli")
+    dirs::cache_dir().expect("couldn't get the  directory!").join("pulsar")
 }

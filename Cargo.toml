@@ -1,5 +1,5 @@
 [package]
-name = "subspace-cli"
+name = "pulsar"
 version = "0.5.4"
 edition = "2021"
 

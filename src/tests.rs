@@ -144,13 +144,13 @@ fn plot_directory_tester() {
     let plot_path = plot_directory_getter();
 
     #[cfg(target_os = "macos")]
-    assert!(plot_path.ends_with("Library/Application Support/subspace-cli/plots"));
+    assert!(plot_path.ends_with("Library/Application Support/pulsar/plots"));
 
     #[cfg(target_os = "linux")]
-    assert!(plot_path.ends_with(".local/share/subspace-cli/plots"));
+    assert!(plot_path.ends_with(".local/share/pulsar/plots"));
 
     #[cfg(target_os = "windows")]
-    assert!(plot_path.ends_with("AppData/Roaming/subspace-cli/plots"));
+    assert!(plot_path.ends_with("AppData/Roaming/pulsar/plots"));
 }
 
 #[test]
@@ -158,13 +158,13 @@ fn cache_directory_tester() {
     let cache_path = cache_directory_getter();
 
     #[cfg(target_os = "macos")]
-    assert!(cache_path.ends_with("Library/Application Support/subspace-cli/cache"));
+    assert!(cache_path.ends_with("Library/Application Support/pulsar/cache"));
 
     #[cfg(target_os = "linux")]
-    assert!(cache_path.ends_with(".local/share/subspace-cli/cache"));
+    assert!(cache_path.ends_with(".local/share/pulsar/cache"));
 
     #[cfg(target_os = "windows")]
-    assert!(cache_path.ends_with("AppData/Roaming/subspace-cli/cache"));
+    assert!(cache_path.ends_with("AppData/Roaming/pulsar/cache"));
 }
 
 #[test]
@@ -172,13 +172,13 @@ fn node_directory_tester() {
     let node_path = node_directory_getter();
 
     #[cfg(target_os = "macos")]
-    assert!(node_path.ends_with("Library/Application Support/subspace-cli/node"));
+    assert!(node_path.ends_with("Library/Application Support/pulsar/node"));
 
     #[cfg(target_os = "linux")]
-    assert!(node_path.ends_with(".local/share/subspace-cli/node"));
+    assert!(node_path.ends_with(".local/share/pulsar/node"));
 
     #[cfg(target_os = "windows")]
-    assert!(node_path.ends_with("AppData/Roaming/subspace-cli/node"));
+    assert!(node_path.ends_with("AppData/Roaming/pulsar/node"));
 }
 
 #[test]
@@ -186,11 +186,11 @@ fn custom_log_dir_test() {
     let log_path = custom_log_dir();
 
     #[cfg(target_os = "macos")]
-    assert!(log_path.ends_with("Library/Logs/subspace-cli"));
+    assert!(log_path.ends_with("Library/Logs/pulsar"));
 
     #[cfg(target_os = "linux")]
-    assert!(log_path.ends_with(".local/share/subspace-cli/logs"));
+    assert!(log_path.ends_with(".local/share/pulsar/logs"));
 
     #[cfg(target_os = "windows")]
-    assert!(log_path.ends_with("AppData/Local/subspace-cli/logs"));
+    assert!(log_path.ends_with("AppData/Local/pulsar/logs"));
 }

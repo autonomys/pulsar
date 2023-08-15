@@ -147,16 +147,15 @@ impl std::str::FromStr for ChainConfig {
 }
 
 /// Creates a config file at the location
-/// - **Linux:** `$HOME/.config/subspace-cli/settings.toml`.
-/// - **macOS:** `$HOME/Library/Application Support/subspace-cli/settings.toml`.
-/// - **Windows:** `{FOLDERID_RoamingAppData}/subspace-cli/settings.toml`.
+/// - **Linux:** `$HOME/.config/pulsar/settings.toml`.
+/// - **macOS:** `$HOME/Library/Application Support/pulsar/settings.toml`.
+/// - **Windows:** `{FOLDERID_RoamingAppData}/pulsar/settings.toml`.
 pub(crate) fn create_config() -> Result<(File, PathBuf)> {
-    let config_path = dirs::config_dir()
-        .expect("couldn't get the default config directory!")
-        .join("subspace-cli");
+    let config_path =
+        dirs::config_dir().expect("couldn't get the default config directory!").join("pulsar");
 
     if let Err(err) = create_dir_all(&config_path) {
-        let config_path = config_path.to_str().expect("couldn't get subspace-cli config path!");
+        let config_path = config_path.to_str().expect("couldn't get pulsar config path!");
         return Err(err).wrap_err(format!("could not create the directory: `{config_path}`"));
     }
 
@@ -169,7 +168,7 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
 #[instrument]
 pub(crate) fn parse_config() -> Result<Config> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
-    let config_path = config_path.join("subspace-cli").join("settings.toml");
+    let config_path = config_path.join("pulsar").join("settings.toml");
 
     let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
     Ok(config)

@@ -91,7 +91,7 @@ jobs:
         if: matrix.build.target != 'aarch64-unknown-linux-gnu'
         with:
           command: build
-          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin subspace-cli
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin pulsar
 
       # TODO: get rid of this when we have bigger RAM for aarch64 linux
       - name: Build the executable for aarch64 linux separately
@@ -99,7 +99,7 @@ jobs:
         if: matrix.build.target == 'aarch64-unknown-linux-gnu'
         with:
           command: build
-          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin subspace-cli
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin pulsar
 
       - name: Sign and Notarize Application (macOS)
         run: |
@@ -111,10 +111,10 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" build.keychain
           echo "Signing farmer"
-          codesign --force --options=runtime --entitlements .github/workflows/Entitlements.plist -s "${{ secrets.MACOS_IDENTITY }}" --timestamp ${{ matrix.build.production_target }}/subspace-cli
+          codesign --force --options=runtime --entitlements .github/workflows/Entitlements.plist -s "${{ secrets.MACOS_IDENTITY }}" --timestamp ${{ matrix.build.production_target }}/pulsar
           echo "Creating an archive"
           mkdir ${{ matrix.build.production_target }}/macos-binaries
-          cp ${{ matrix.build.production_target }}/subspace-cli ${{ matrix.build.production_target }}/macos-binaries
+          cp ${{ matrix.build.production_target }}/pulsar ${{ matrix.build.production_target }}/macos-binaries
           ditto -c -k --rsrc ${{ matrix.build.production_target }}/macos-binaries subspace-binaries.zip
           echo "Notarizing"
           brew update
@@ -158,22 +158,22 @@ jobs:
       - name: Prepare executables for uploading (Ubuntu)
         run: |
           mkdir executables
-          mv ${{ matrix.build.production_target }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+          mv ${{ matrix.build.production_target }}/pulsar executables/pulsar-${{ matrix.build.suffix }}
         if: runner.os == 'Linux'
 
       - name: Prepare executables for uploading (macOS)
         run: |
           mkdir executables
-          mv ${{ matrix.build.production_target }}/subspace-cli executables/subspace-cli-${{ matrix.build.suffix }}
+          mv ${{ matrix.build.production_target }}/pulsar executables/pulsar-${{ matrix.build.suffix }}
           # Zip it so that signature is not lost
-          ditto -c -k --rsrc executables/subspace-cli-${{ matrix.build.suffix }} executables/subspace-cli-${{ matrix.build.suffix }}.zip
-          rm executables/subspace-cli-${{ matrix.build.suffix }}
+          ditto -c -k --rsrc executables/pulsar-${{ matrix.build.suffix }} executables/pulsar-${{ matrix.build.suffix }}.zip
+          rm executables/pulsar-${{ matrix.build.suffix }}
         if: runner.os == 'macOS'
 
       - name: Prepare executables for uploading (Windows)
         run: |
           mkdir executables
-          move ${{ matrix.build.production_target }}/subspace-cli.exe executables/subspace-cli-${{ matrix.build.suffix }}.exe
+          move ${{ matrix.build.production_target }}/pulsar.exe executables/pulsar-${{ matrix.build.suffix }}.exe
         if: runner.os == 'Windows'
 
       - name: Upload executable to artifacts
