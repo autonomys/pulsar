@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["delete_summary","summary_dir","summary_path"],"static":["CALLSITE"],"struct":["Rewards","Summary","SummaryFile","SummaryUpdateFields"]};
+window.SIDEBAR_ITEMS = {"fn":["delete_summary","summary_dir","summary_path"],"struct":["Rewards","Summary","SummaryFile","SummaryUpdateFields"]};
