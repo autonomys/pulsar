@@ -99,7 +99,7 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     // get chain
-    let default_chain = ChainConfig::Gemini3e;
+    let default_chain = ChainConfig::Gemini3f;
     let chain = get_user_input(
         &format!(
             "Specify the chain to farm. Available options are: {:?}. \n Defaults to \

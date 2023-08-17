@@ -122,7 +122,7 @@ pub(crate) fn directory_parser(location: &str) -> Result<PathBuf> {
 /// utilize `ByteSize` crate for the validation
 pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
-         return Err(eyre!("could not parse the value!"));
+        return Err(eyre!("could not parse the value!"));
     };
     if size < MIN_PLOT_SIZE {
         Err(eyre!(format!("plot size cannot be smaller than {}", MIN_PLOT_SIZE)))
@@ -142,11 +142,6 @@ pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
 /// generates a plot path from the given path
 pub(crate) fn plot_directory_getter() -> PathBuf {
     data_dir_getter().join("plots")
-}
-
-/// generates a cache path from the given path
-pub(crate) fn cache_directory_getter() -> PathBuf {
-    data_dir_getter().join("cache")
 }
 
 /// generates a node path from the given path

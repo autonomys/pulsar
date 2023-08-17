@@ -1,13 +1,11 @@
 use color_eyre::eyre::{Context, Result};
 use owo_colors::OwoColorize;
-use subspace_sdk::farmer::CacheDescription;
 use subspace_sdk::{Node, PlotDescription};
 
 use crate::config::{delete_config, parse_config};
 use crate::summary::delete_summary;
 use crate::utils::{
-    cache_directory_getter, get_user_input, node_directory_getter, plot_directory_getter,
-    yes_or_no_parser,
+    get_user_input, node_directory_getter, plot_directory_getter, yes_or_no_parser,
 };
 
 /// wipe configurator
@@ -78,10 +76,6 @@ async fn wipe(
             let _ = PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size)
                 .wipe()
                 .await;
-            let _ =
-                CacheDescription::new(cache_directory_getter(), config.farmer.advanced.cache_size)?
-                    .wipe()
-                    .await;
         } else {
             let _ = tokio::fs::remove_dir_all(plot_directory_getter()).await;
         }

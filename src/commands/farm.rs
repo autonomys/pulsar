@@ -35,7 +35,7 @@ type MaybeHandles = Option<(JoinHandle<Result<()>>, JoinHandle<Result<()>>)>;
 /// lastly, depending on the verbosity, it subscribes to plotting progress and
 /// new solutions
 #[instrument]
-pub(crate) async fn farm(is_verbose: bool, executor: bool, no_rotation: bool) -> Result<()> {
+pub(crate) async fn farm(is_verbose: bool, enable_domains: bool, no_rotation: bool) -> Result<()> {
     install_tracing(is_verbose, no_rotation);
     color_eyre::install()
         .context("color eyre installment failed, it should have been the first one")?;
@@ -55,16 +55,16 @@ pub(crate) async fn farm(is_verbose: bool, executor: bool, no_rotation: bool) ->
     let reward_address = farmer_config.reward_address;
 
     // apply advanced options (flags)
-    if executor {
-        println!("Setting the {} flag for the node...", "executor".underline());
-        node_config.advanced.executor = true;
+    if enable_domains {
+        println!("Setting the {} flag for the node...", "enable_domains".underline());
+        node_config.advanced.enable_domains = true;
     }
 
     println!("Starting node ...");
     let node = Arc::new(
         node_config
             .clone()
-            .build(chain.clone(), is_verbose)
+            .build(chain.clone(), is_verbose, farmer_config.plot_size)
             .await
             .context("error building the node")?,
     );

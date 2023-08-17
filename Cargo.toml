@@ -1,6 +1,6 @@
 [package]
 name = "pulsar"
-version = "0.5.4"
+version = "0.6.0"
 edition = "2021"
 
 [dependencies]
@@ -26,12 +26,13 @@ rand = "0.8.5"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
-sp-core = { version = "21.0.0", git = "https://github.com/subspace/substrate", rev = "55c157cff49b638a59d81a9f971f0f9a66829c71", features=["full_crypto"] }
+sp-core = { version = "21.0.0", git = "https://github.com/subspace/substrate", rev = "55c157cff49b638a59d81a9f971f0f9a66829c71", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "cfe095af6bd314e346a26acf08c32ecd21b40964" }
 thiserror = "1"
-toml = "0.7"
 tokio = { version = "1.27", features = ["macros", "rt-multi-thread", "tracing"] }
+toml = "0.7"
 tracing = "0.1.37"
 tracing-appender = "0.2"
 tracing-bunyan-formatter = "0.3.4"
@@ -39,9 +40,6 @@ tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 whoami = "1"
 zeroize = "1.6.0"
-
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "66d82c1724f280a889821a57d020d8fcd3be5a8c" }
-
 
 [dev-dependencies]
 rand = "0.8.5"
@@ -103,7 +101,7 @@ hash-db = { opt-level = 3 }
 hmac = { opt-level = 3 }
 httparse = { opt-level = 3 }
 integer-sqrt = { opt-level = 3 }
-k256 = { opt-level = 3}
+k256 = { opt-level = 3 }
 keccak = { opt-level = 3 }
 libm = { opt-level = 3 }
 libsecp256k1 = { opt-level = 3 }
@@ -130,7 +128,6 @@ wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
-
 
 # Reason: We need to patch substrate dependency of snowfork and frontier libraries to our fork
 # TODO: Remove when we are using upstream substrate instead of fork

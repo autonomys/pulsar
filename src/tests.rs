@@ -7,9 +7,8 @@ use subspace_sdk::ByteSize;
 use crate::config::ChainConfig;
 use crate::summary::*;
 use crate::utils::{
-    apply_extra_options, cache_directory_getter, custom_log_dir, directory_parser,
-    node_directory_getter, node_name_parser, plot_directory_getter, reward_address_parser,
-    size_parser, yes_or_no_parser,
+    apply_extra_options, custom_log_dir, directory_parser, node_directory_getter, node_name_parser,
+    plot_directory_getter, reward_address_parser, size_parser, yes_or_no_parser,
 };
 
 async fn update_summary_file_randomly(summary_file: SummaryFile) {
@@ -135,7 +134,7 @@ fn size_checker() {
 
 #[test]
 fn chain_checker() {
-    assert!(ChainConfig::from_str("gemini3e").is_ok());
+    assert!(ChainConfig::from_str("gemini3f").is_ok());
     assert!(ChainConfig::from_str("devv").is_err());
 }
 
@@ -151,20 +150,6 @@ fn plot_directory_tester() {
 
     #[cfg(target_os = "windows")]
     assert!(plot_path.ends_with("AppData/Roaming/pulsar/plots"));
-}
-
-#[test]
-fn cache_directory_tester() {
-    let cache_path = cache_directory_getter();
-
-    #[cfg(target_os = "macos")]
-    assert!(cache_path.ends_with("Library/Application Support/pulsar/cache"));
-
-    #[cfg(target_os = "linux")]
-    assert!(cache_path.ends_with(".local/share/pulsar/cache"));
-
-    #[cfg(target_os = "windows")]
-    assert!(cache_path.ends_with("AppData/Roaming/pulsar/cache"));
 }
 
 #[test]

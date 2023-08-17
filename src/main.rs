@@ -60,7 +60,7 @@ enum Commands {
         #[arg(short, long, action)]
         verbose: bool,
         #[arg(short, long, action)]
-        executor: bool,
+        enable_domains: bool,
         #[arg(long, action)]
         no_rotation: bool,
     },
@@ -88,8 +88,8 @@ async fn main() -> Result<(), Report> {
         Some(Commands::Init) => {
             init().suggestion(support_message())?;
         }
-        Some(Commands::Farm { verbose, executor, no_rotation }) => {
-            farm(verbose, executor, no_rotation).await.suggestion(support_message())?;
+        Some(Commands::Farm { verbose, enable_domains, no_rotation }) => {
+            farm(verbose, enable_domains, no_rotation).await.suggestion(support_message())?;
         }
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
@@ -166,15 +166,15 @@ async fn arrow_key_mode() -> Result<(), Report> {
             let verbose =
                 get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
-            let prompt = "Do you want to be an executor? [y/n]: ";
-            let executor =
+            let prompt = "Do you want to run a domain node? [y/n]: ";
+            let enable_domains =
                 get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
             let prompt = "Do you want to disable rotation for logs? [y/n]: ";
             let no_rotation =
                 get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
-            farm(verbose, executor, no_rotation).await.suggestion(support_message())?;
+            farm(verbose, enable_domains, no_rotation).await.suggestion(support_message())?;
         }
         2 => {
             wipe_config(false, false).await.suggestion(support_message())?;
@@ -224,7 +224,7 @@ fn print_options(
 impl std::fmt::Display for Commands {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            Commands::Farm { verbose: _, executor: _, no_rotation: _ } => write!(f, "farm"),
+            Commands::Farm { verbose: _, enable_domains: _, no_rotation: _ } => write!(f, "farm"),
             Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
