@@ -1,16 +1,19 @@
 use std::fs::{create_dir_all, remove_file, File};
+use std::num::NonZeroU8;
 use std::path::PathBuf;
 
 use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
-use subspace_sdk::farmer::{CacheDescription, Farmer};
-use subspace_sdk::node::{DsnBuilder, NetworkBuilder, Node, Role};
+use subspace_sdk::farmer::Farmer;
+use subspace_sdk::node::{
+    DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, PotConfiguration, Role,
+};
 use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
 use tracing::instrument;
 
-use crate::utils::{cache_directory_getter, provider_storage_dir_getter, IntoEyre};
+use crate::utils::{provider_storage_dir_getter, IntoEyre};
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(2);
@@ -28,7 +31,7 @@ pub(crate) struct Config {
 #[derive(Deserialize, Serialize, Clone, Debug, Default, PartialEq)]
 pub(crate) struct AdvancedNodeSettings {
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
-    pub(crate) executor: bool,
+    pub(crate) enable_domains: bool,
     #[serde(default, flatten)]
     pub(crate) extra: toml::Table,
 }
@@ -43,26 +46,45 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub async fn build(self, chain: ChainConfig, is_verbose: bool) -> Result<Node> {
-        let Self { directory, name, advanced: AdvancedNodeSettings { executor: _, extra } } = self;
+    pub async fn build(
+        self,
+        chain: ChainConfig,
+        is_verbose: bool,
+        farmer_space_pledged: ByteSize,
+    ) -> Result<Node> {
+        let Self { directory, name, advanced: AdvancedNodeSettings { enable_domains, extra } } =
+            self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3e => {
-                let node = Node::gemini_3e().network(NetworkBuilder::gemini_3e().name(name)).dsn(
-                    DsnBuilder::gemini_3e().provider_storage_path(provider_storage_dir_getter()),
-                );
-                let chain_spec = chain_spec::gemini_3e();
+            ChainConfig::Gemini3f => {
+                let mut node =
+                    Node::gemini_3f().network(NetworkBuilder::gemini_3f().name(name)).dsn(
+                        DsnBuilder::gemini_3f()
+                            .provider_storage_path(provider_storage_dir_getter()),
+                    );
+                if enable_domains {
+                    node = node.domain(Some(DomainConfigBuilder::gemini_3f().configuration()));
+                }
+                let chain_spec = chain_spec::gemini_3f();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
-                let node = Node::dev();
+                let mut node = Node::dev();
+                if enable_domains {
+                    node = node.domain(Some(
+                        DomainConfigBuilder::dev().role(Role::Authority).configuration(),
+                    ));
+                }
                 let chain_spec = chain_spec::dev_config();
                 (node, chain_spec)
             }
             ChainConfig::DevNet => {
-                let node = Node::devnet()
+                let mut node = Node::devnet()
                     .network(NetworkBuilder::devnet().name(name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                if enable_domains {
+                    node = node.domain(Some(DomainConfigBuilder::devnet().configuration()));
+                }
                 let chain_spec = chain_spec::devnet_config();
                 (node, chain_spec)
             }
@@ -79,7 +101,12 @@ impl NodeConfig {
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
-            .build(directory, chain_spec)
+            .build(
+                directory,
+                chain_spec,
+                PotConfiguration { is_pot_enabled: false, is_node_time_keeper: false },
+                farmer_space_pledged.to_u64() as usize,
+            )
             .await
             .into_eyre()
             .wrap_err("Failed to build subspace node")
@@ -111,14 +138,19 @@ pub(crate) struct FarmerConfig {
 impl FarmerConfig {
     pub async fn build(self, node: &Node) -> Result<Farmer> {
         let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)];
-        let cache = CacheDescription::new(cache_directory_getter(), self.advanced.cache_size)?;
 
         // currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
         let farmer = Farmer::builder();
         crate::utils::apply_extra_options(&farmer.configuration(), self.advanced.extra)
             .context("Failed to deserialize node config")?
-            .build(self.reward_address, node, plot_description, cache)
+            .build(
+                self.reward_address,
+                node,
+                plot_description,
+                // TODO: Make this configurable via user input
+                NonZeroU8::new(1).expect("static value should not fail; qed"),
+            )
             .await
             .context("Failed to build a farmer")
     }
@@ -128,7 +160,7 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3e,
+    Gemini3f,
     Dev,
     DevNet,
 }
@@ -138,7 +170,7 @@ impl std::str::FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3e" => Ok(ChainConfig::Gemini3e),
+            "gemini3f" => Ok(ChainConfig::Gemini3f),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),

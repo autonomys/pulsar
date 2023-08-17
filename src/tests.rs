@@ -135,7 +135,7 @@ fn size_checker() {
 
 #[test]
 fn chain_checker() {
-    assert!(ChainConfig::from_str("gemini3e").is_ok());
+    assert!(ChainConfig::from_str("gemini3f").is_ok());
     assert!(ChainConfig::from_str("devv").is_err());
 }
 
