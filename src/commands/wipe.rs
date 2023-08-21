@@ -15,7 +15,7 @@ use crate::utils::{
 pub(crate) async fn wipe_config(farmer: bool, node: bool) -> Result<()> {
     if !farmer && !node {
         // if user did not supply any argument, ask for everything
-        let prompt = "Do you want to wipe farmer (delete plot)? [y/n]: ";
+        let prompt = "Do you want to wipe farmer (delete farm)? [y/n]: ";
         let wipe_farmer =
             get_user_input(prompt, None, yes_or_no_parser).context("prompt failed")?;
 
@@ -41,7 +41,7 @@ pub(crate) async fn wipe_config(farmer: bool, node: bool) -> Result<()> {
 
 /// implementation of the `wipe` command
 ///
-/// can wipe farmer, node, summary and plot
+/// can wipe farmer, node, summary and farm
 async fn wipe(
     wipe_farmer: bool,
     wipe_node: bool,
@@ -69,7 +69,7 @@ async fn wipe(
             }
         };
 
-        // TODO: modify here when supporting multi-plot
+        // TODO: modify here when supporting multi-farm
         // if config can be read, delete the farmer using the path in the config, else,
         // delete the default location
         if let Some(config) = config {
