@@ -7,8 +7,8 @@ use subspace_sdk::ByteSize;
 use crate::config::ChainConfig;
 use crate::summary::*;
 use crate::utils::{
-    apply_extra_options, custom_log_dir, directory_parser, node_directory_getter, node_name_parser,
-    plot_directory_getter, reward_address_parser, size_parser, yes_or_no_parser,
+    apply_extra_options, custom_log_dir, directory_parser, farm_directory_getter,
+    node_directory_getter, node_name_parser, reward_address_parser, size_parser, yes_or_no_parser,
 };
 
 async fn update_summary_file_randomly(summary_file: SummaryFile) {
@@ -37,9 +37,9 @@ async fn summary_file_integration() {
     }
 
     // create summary file
-    let plot_size = ByteSize::gb(1);
+    let farm_size = ByteSize::gb(1);
     let summary_file =
-        SummaryFile::new(Some(plot_size)).await.expect("Failed to create summary file");
+        SummaryFile::new(Some(farm_size)).await.expect("Failed to create summary file");
 
     // sequential update trial
     let update_fields = SummaryUpdateFields {
@@ -139,17 +139,17 @@ fn chain_checker() {
 }
 
 #[test]
-fn plot_directory_tester() {
-    let plot_path = plot_directory_getter();
+fn farm_directory_tester() {
+    let farm_path = farm_directory_getter();
 
     #[cfg(target_os = "macos")]
-    assert!(plot_path.ends_with("Library/Application Support/pulsar/plots"));
+    assert!(farm_path.ends_with("Library/Application Support/pulsar/farms"));
 
     #[cfg(target_os = "linux")]
-    assert!(plot_path.ends_with(".local/share/pulsar/plots"));
+    assert!(farm_path.ends_with(".local/share/pulsar/farms"));
 
     #[cfg(target_os = "windows")]
-    assert!(plot_path.ends_with("AppData/Roaming/pulsar/plots"));
+    assert!(farm_path.ends_with("AppData/Roaming/pulsar/farms"));
 }
 
 #[test]

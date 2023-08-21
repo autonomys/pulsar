@@ -16,7 +16,7 @@ use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter, Layer};
 
-use crate::config::MIN_PLOT_SIZE;
+use crate::config::MIN_FARM_SIZE;
 use crate::summary::Rewards;
 
 /// for how long a log file should be valid
@@ -124,8 +124,8 @@ pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
     let Ok(size) = size.parse::<ByteSize>() else {
         return Err(eyre!("could not parse the value!"));
     };
-    if size < MIN_PLOT_SIZE {
-        Err(eyre!(format!("plot size cannot be smaller than {}", MIN_PLOT_SIZE)))
+    if size < MIN_FARM_SIZE {
+        Err(eyre!(format!("farm size cannot be smaller than {}", MIN_FARM_SIZE)))
     } else {
         Ok(size)
     }
@@ -139,9 +139,9 @@ pub(crate) fn yes_or_no_parser(answer: &str) -> Result<bool> {
     }
 }
 
-/// generates a plot path from the given path
-pub(crate) fn plot_directory_getter() -> PathBuf {
-    data_dir_getter().join("plots")
+/// generates a farm path from the given path
+pub(crate) fn farm_directory_getter() -> PathBuf {
+    data_dir_getter().join("farms")
 }
 
 /// generates a node path from the given path

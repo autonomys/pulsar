@@ -12,11 +12,11 @@ use zeroize::Zeroizing;
 
 use crate::config::{
     create_config, AdvancedFarmerSettings, AdvancedNodeSettings, ChainConfig, Config, FarmerConfig,
-    NodeConfig, DEFAULT_PLOT_SIZE,
+    NodeConfig, DEFAULT_FARM_SIZE,
 };
 use crate::utils::{
-    directory_parser, get_user_input, node_directory_getter, node_name_parser,
-    plot_directory_getter, print_ascii_art, print_run_executable_command, print_version,
+    directory_parser, farm_directory_getter, get_user_input, node_directory_getter,
+    node_name_parser, print_ascii_art, print_run_executable_command, print_version,
     reward_address_parser, size_parser, yes_or_no_parser,
 };
 
@@ -67,14 +67,14 @@ fn get_config_from_user_inputs() -> Result<Config> {
         node_name_parser,
     )?;
 
-    // get plot directory
-    let default_plot_loc = plot_directory_getter();
-    let plot_directory = get_user_input(
+    // get farm directory
+    let default_farm_loc = farm_directory_getter();
+    let farm_directory = get_user_input(
         &format!(
-            "Specify a path for storing plot files (press enter to use the default: \
-             `{default_plot_loc:?}`): ",
+            "Specify a path for storing farm files (press enter to use the default: \
+             `{default_farm_loc:?}`): ",
         ),
-        Some(default_plot_loc),
+        Some(default_farm_loc),
         directory_parser,
     )?;
 
@@ -88,13 +88,13 @@ fn get_config_from_user_inputs() -> Result<Config> {
         directory_parser,
     )?;
 
-    // get plot size
-    let plot_size = get_user_input(
+    // get farm size
+    let farm_size = get_user_input(
         &format!(
-            "Specify a plot size (defaults to `{DEFAULT_PLOT_SIZE}`, press enter to use the \
+            "Specify a farm size (defaults to `{DEFAULT_FARM_SIZE}`, press enter to use the \
              default): "
         ),
-        Some(DEFAULT_PLOT_SIZE),
+        Some(DEFAULT_FARM_SIZE),
         size_parser,
     )?;
 
@@ -111,8 +111,8 @@ fn get_config_from_user_inputs() -> Result<Config> {
     )?;
 
     let farmer_config = FarmerConfig {
-        plot_size,
-        plot_directory,
+        farm_size,
+        farm_directory,
         reward_address,
         advanced: AdvancedFarmerSettings::default(),
     };

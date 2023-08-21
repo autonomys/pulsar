@@ -64,7 +64,7 @@ pub(crate) async fn farm(is_verbose: bool, enable_domains: bool, no_rotation: bo
     let node = Arc::new(
         node_config
             .clone()
-            .build(chain.clone(), is_verbose, farmer_config.plot_size)
+            .build(chain.clone(), is_verbose, farmer_config.farm_size)
             .await
             .context("error building the node")?,
     );
@@ -78,7 +78,7 @@ pub(crate) async fn farm(is_verbose: bool, enable_domains: bool, no_rotation: bo
         }
     }
 
-    let summary_file = SummaryFile::new(Some(farmer_config.plot_size))
+    let summary_file = SummaryFile::new(Some(farmer_config.farm_size))
         .await
         .context("constructing new SummaryFile failed")?;
 
@@ -221,15 +221,15 @@ async fn subscribe_to_plotting_progress(
     is_initial_progress_finished: Arc<AtomicBool>,
     sector_size_bytes: u64,
 ) -> Result<()> {
-    for (plot_id, plot) in farmer.iter_plots().await.enumerate() {
-        println!("Initial plotting for plot: #{plot_id} ({})", plot.directory().display());
+    for (farm_id, farm) in farmer.iter_farms().await.enumerate() {
+        println!("Initial plotting for farm: #{farm_id} ({})", farm.directory().display());
 
-        let mut plotting_progress = plot.subscribe_initial_plotting_progress().await;
+        let mut plotting_progress = farm.subscribe_initial_plotting_progress().await;
         let progress_bar;
 
         if let Some(plotting_result) = plotting_progress.next().await {
             let current_size = plotting_result.current_sector * sector_size_bytes;
-            progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+            progress_bar = plotting_progress_bar(current_size, farm.allocated_space().as_u64());
 
             while let Some(stream_result) = plotting_progress.next().await {
                 let current_size = stream_result.current_sector * sector_size_bytes;
@@ -238,8 +238,8 @@ async fn subscribe_to_plotting_progress(
         } else {
             // means initial plotting was already finished
             progress_bar = plotting_progress_bar(
-                plot.allocated_space().as_u64(),
-                plot.allocated_space().as_u64(),
+                farm.allocated_space().as_u64(),
+                farm.allocated_space().as_u64(),
             );
         }
         progress_bar.set_style(

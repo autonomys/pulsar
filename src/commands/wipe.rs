@@ -1,11 +1,11 @@
 use color_eyre::eyre::{Context, Result};
 use owo_colors::OwoColorize;
-use subspace_sdk::{Node, PlotDescription};
+use subspace_sdk::{FarmDescription, Node};
 
 use crate::config::{delete_config, parse_config};
 use crate::summary::delete_summary;
 use crate::utils::{
-    get_user_input, node_directory_getter, plot_directory_getter, yes_or_no_parser,
+    farm_directory_getter, get_user_input, node_directory_getter, yes_or_no_parser,
 };
 
 /// wipe configurator
@@ -73,11 +73,11 @@ async fn wipe(
         // if config can be read, delete the farmer using the path in the config, else,
         // delete the default location
         if let Some(config) = config {
-            let _ = PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size)
+            let _ = FarmDescription::new(config.farmer.farm_directory, config.farmer.farm_size)
                 .wipe()
                 .await;
         } else {
-            let _ = tokio::fs::remove_dir_all(plot_directory_getter()).await;
+            let _ = tokio::fs::remove_dir_all(farm_directory_getter()).await;
         }
     }
 

@@ -11,14 +11,14 @@ use subspace_sdk::farmer::Farmer;
 use subspace_sdk::node::{
     DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, PotConfiguration, Role,
 };
-use subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
+use subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
 use tracing::instrument;
 
 use crate::utils::{provider_storage_dir_getter, IntoEyre};
 
 /// defaults for the user config file
-pub(crate) const DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(2);
-pub(crate) const MIN_PLOT_SIZE: ByteSize = ByteSize::gb(2);
+pub(crate) const DEFAULT_FARM_SIZE: ByteSize = ByteSize::gb(2);
+pub(crate) const MIN_FARM_SIZE: ByteSize = ByteSize::gb(2);
 
 /// structure of the config toml file
 #[derive(Deserialize, Serialize, Debug)]
@@ -156,15 +156,15 @@ pub(crate) struct AdvancedFarmerSettings {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub(crate) struct FarmerConfig {
     pub(crate) reward_address: PublicKey,
-    pub(crate) plot_directory: PathBuf,
-    pub(crate) plot_size: ByteSize,
+    pub(crate) farm_directory: PathBuf,
+    pub(crate) farm_size: ByteSize,
     #[serde(default, skip_serializing_if = "crate::utils::is_default")]
     pub(crate) advanced: AdvancedFarmerSettings,
 }
 
 impl FarmerConfig {
     pub async fn build(self, node: &Node) -> Result<Farmer> {
-        let plot_description = &[PlotDescription::new(self.plot_directory, self.plot_size)];
+        let farm_description = &[FarmDescription::new(self.farm_directory, self.farm_size)];
 
         // currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
@@ -174,7 +174,7 @@ impl FarmerConfig {
             .build(
                 self.reward_address,
                 node,
-                plot_description,
+                farm_description,
                 // TODO: Make this configurable via user input
                 NonZeroU8::new(1).expect("static value should not fail; qed"),
             )
@@ -239,8 +239,8 @@ pub(crate) fn validate_config() -> Result<Config> {
     let config = parse_config()?;
 
     // validity checks
-    if config.farmer.plot_size < MIN_PLOT_SIZE {
-        return Err(eyre!("plot size should be bigger than {MIN_PLOT_SIZE}!"));
+    if config.farmer.farm_size < MIN_FARM_SIZE {
+        return Err(eyre!("farm size should be bigger than {MIN_FARM_SIZE}!"));
     }
 
     Ok(config)
