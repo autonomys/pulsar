@@ -64,7 +64,7 @@ jobs:
             Read more at: ${{ steps.release_info.outputs.html_url || steps.manual_release_info.outputs.html_url }}
 
             You can also update by visiting our docs at:
-            https://docs.subspace.network/docs/protocol/cli
+            https://docs.subspace.network/docs/protocol/pulsar
       - name: Create Issue in subspace-docs repository
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch ==  steps.release_info.outputs.tag_name}}
         uses: dacbd/create-issue-action@main
