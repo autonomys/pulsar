@@ -64,7 +64,7 @@ enum Commands {
         #[arg(long, action)]
         no_rotation: bool,
     },
-    #[command(about = "wipes the node and farm instance (along with your plots)")]
+    #[command(about = "wipes the node and farm instance (along with your farms)")]
     Wipe {
         #[arg(long, action)]
         farmer: bool,
