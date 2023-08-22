@@ -406,7 +406,7 @@
 <span class="kw">use </span>tracing_subscriber::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>tracing_subscriber::{fmt, EnvFilter, Layer};
 
-<span class="kw">use </span><span class="kw">crate</span>::config::MIN_PLOT_SIZE;
+<span class="kw">use </span><span class="kw">crate</span>::config::MIN_FARM_SIZE;
 <span class="kw">use </span><span class="kw">crate</span>::summary::Rewards;
 
 <span class="doccomment">/// for how long a log file should be valid
@@ -514,8 +514,8 @@
     <span class="kw">let </span><span class="prelude-val">Ok</span>(size) = size.parse::&lt;ByteSize&gt;() <span class="kw">else </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not parse the value!&quot;</span>));
     };
-    <span class="kw">if </span>size &lt; MIN_PLOT_SIZE {
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="macro">format!</span>(<span class="string">&quot;plot size cannot be smaller than {}&quot;</span>, MIN_PLOT_SIZE)))
+    <span class="kw">if </span>size &lt; MIN_FARM_SIZE {
+        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="macro">format!</span>(<span class="string">&quot;farm size cannot be smaller than {}&quot;</span>, MIN_FARM_SIZE)))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
     }
@@ -529,9 +529,9 @@
     }
 }
 
-<span class="doccomment">/// generates a plot path from the given path
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>plot_directory_getter() -&gt; PathBuf {
-    data_dir_getter().join(<span class="string">&quot;plots&quot;</span>)
+<span class="doccomment">/// generates a farm path from the given path
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>farm_directory_getter() -&gt; PathBuf {
+    data_dir_getter().join(<span class="string">&quot;farms&quot;</span>)
 }
 
 <span class="doccomment">/// generates a node path from the given path

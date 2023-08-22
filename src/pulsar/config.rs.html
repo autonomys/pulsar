@@ -265,14 +265,14 @@
 <span class="kw">use </span>subspace_sdk::node::{
     DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, PotConfiguration, Role,
 };
-<span class="kw">use </span>subspace_sdk::{chain_spec, ByteSize, PlotDescription, PublicKey};
+<span class="kw">use </span>subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
 <span class="kw">use </span>tracing::instrument;
 
 <span class="kw">use </span><span class="kw">crate</span>::utils::{provider_storage_dir_getter, IntoEyre};
 
 <span class="doccomment">/// defaults for the user config file
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_PLOT_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_FARM_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MIN_FARM_SIZE: ByteSize = ByteSize::gb(<span class="number">2</span>);
 
 <span class="doccomment">/// structure of the config toml file
 </span><span class="attr">#[derive(Deserialize, Serialize, Debug)]
@@ -410,15 +410,15 @@
 </span><span class="attr">#[derive(Deserialize, Serialize, Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FarmerConfig {
     <span class="kw">pub</span>(<span class="kw">crate</span>) reward_address: PublicKey,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) plot_directory: PathBuf,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) plot_size: ByteSize,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) farm_directory: PathBuf,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) farm_size: ByteSize,
     <span class="attr">#[serde(default, skip_serializing_if = <span class="string">&quot;crate::utils::is_default&quot;</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) advanced: AdvancedFarmerSettings,
 }
 
 <span class="kw">impl </span>FarmerConfig {
     <span class="kw">pub async fn </span>build(<span class="self">self</span>, node: <span class="kw-2">&amp;</span>Node) -&gt; <span class="prelude-ty">Result</span>&lt;Farmer&gt; {
-        <span class="kw">let </span>plot_description = <span class="kw-2">&amp;</span>[PlotDescription::new(<span class="self">self</span>.plot_directory, <span class="self">self</span>.plot_size)];
+        <span class="kw">let </span>farm_description = <span class="kw-2">&amp;</span>[FarmDescription::new(<span class="self">self</span>.farm_directory, <span class="self">self</span>.farm_size)];
 
         <span class="comment">// currently we do not have different configuration for the farmer w.r.t
         // different chains, but we may in the future
@@ -428,7 +428,7 @@
             </span>.build(
                 <span class="self">self</span>.reward_address,
                 node,
-                plot_description,
+                farm_description,
                 <span class="comment">// TODO: Make this configurable via user input
                 </span>NonZeroU8::new(<span class="number">1</span>).expect(<span class="string">&quot;static value should not fail; qed&quot;</span>),
             )
@@ -493,8 +493,8 @@
     <span class="kw">let </span>config = parse_config()<span class="question-mark">?</span>;
 
     <span class="comment">// validity checks
-    </span><span class="kw">if </span>config.farmer.plot_size &lt; MIN_PLOT_SIZE {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;plot size should be bigger than {MIN_PLOT_SIZE}!&quot;</span>));
+    </span><span class="kw">if </span>config.farmer.farm_size &lt; MIN_FARM_SIZE {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;farm size should be bigger than {MIN_FARM_SIZE}!&quot;</span>));
     }
 
     <span class="prelude-val">Ok</span>(config)

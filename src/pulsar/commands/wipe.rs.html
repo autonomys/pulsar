@@ -101,12 +101,12 @@
 <a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>owo_colors::OwoColorize;
-<span class="kw">use </span>subspace_sdk::{Node, PlotDescription};
+<span class="kw">use </span>subspace_sdk::{FarmDescription, Node};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::{delete_config, parse_config};
 <span class="kw">use </span><span class="kw">crate</span>::summary::delete_summary;
 <span class="kw">use </span><span class="kw">crate</span>::utils::{
-    get_user_input, node_directory_getter, plot_directory_getter, yes_or_no_parser,
+    farm_directory_getter, get_user_input, node_directory_getter, yes_or_no_parser,
 };
 
 <span class="doccomment">/// wipe configurator
@@ -116,7 +116,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>wipe_config(farmer: bool, node: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!farmer &amp;&amp; !node {
         <span class="comment">// if user did not supply any argument, ask for everything
-        </span><span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe farmer (delete plot)? [y/n]: &quot;</span>;
+        </span><span class="kw">let </span>prompt = <span class="string">&quot;Do you want to wipe farmer (delete farm)? [y/n]: &quot;</span>;
         <span class="kw">let </span>wipe_farmer =
             get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
 
@@ -142,7 +142,7 @@
 
 <span class="doccomment">/// implementation of the `wipe` command
 ///
-/// can wipe farmer, node, summary and plot
+/// can wipe farmer, node, summary and farm
 </span><span class="kw">async fn </span>wipe(
     wipe_farmer: bool,
     wipe_node: bool,
@@ -170,15 +170,15 @@
             </span>}
         };
 
-        <span class="comment">// TODO: modify here when supporting multi-plot
+        <span class="comment">// TODO: modify here when supporting multi-farm
         // if config can be read, delete the farmer using the path in the config, else,
         // delete the default location
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(config) = config {
-            <span class="kw">let _ </span>= PlotDescription::new(config.farmer.plot_directory, config.farmer.plot_size)
+            <span class="kw">let _ </span>= FarmDescription::new(config.farmer.farm_directory, config.farmer.farm_size)
                 .wipe()
                 .<span class="kw">await</span>;
         } <span class="kw">else </span>{
-            <span class="kw">let _ </span>= tokio::fs::remove_dir_all(plot_directory_getter()).<span class="kw">await</span>;
+            <span class="kw">let _ </span>= tokio::fs::remove_dir_all(farm_directory_getter()).<span class="kw">await</span>;
         }
     }
 

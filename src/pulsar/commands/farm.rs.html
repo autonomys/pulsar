@@ -579,7 +579,7 @@
     <span class="kw">let </span>node = Arc::new(
         node_config
             .clone()
-            .build(chain.clone(), is_verbose, farmer_config.plot_size)
+            .build(chain.clone(), is_verbose, farmer_config.farm_size)
             .<span class="kw">await
             </span>.context(<span class="string">&quot;error building the node&quot;</span>)<span class="question-mark">?</span>,
     );
@@ -593,7 +593,7 @@
         }
     }
 
-    <span class="kw">let </span>summary_file = SummaryFile::new(<span class="prelude-val">Some</span>(farmer_config.plot_size))
+    <span class="kw">let </span>summary_file = SummaryFile::new(<span class="prelude-val">Some</span>(farmer_config.farm_size))
         .<span class="kw">await
         </span>.context(<span class="string">&quot;constructing new SummaryFile failed&quot;</span>)<span class="question-mark">?</span>;
 
@@ -736,15 +736,15 @@
     is_initial_progress_finished: Arc&lt;AtomicBool&gt;,
     sector_size_bytes: u64,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">for </span>(plot_id, plot) <span class="kw">in </span>farmer.iter_plots().<span class="kw">await</span>.enumerate() {
-        <span class="macro">println!</span>(<span class="string">&quot;Initial plotting for plot: #{plot_id} ({})&quot;</span>, plot.directory().display());
+    <span class="kw">for </span>(farm_id, farm) <span class="kw">in </span>farmer.iter_farms().<span class="kw">await</span>.enumerate() {
+        <span class="macro">println!</span>(<span class="string">&quot;Initial plotting for farm: #{farm_id} ({})&quot;</span>, farm.directory().display());
 
-        <span class="kw">let </span><span class="kw-2">mut </span>plotting_progress = plot.subscribe_initial_plotting_progress().<span class="kw">await</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>plotting_progress = farm.subscribe_initial_plotting_progress().<span class="kw">await</span>;
         <span class="kw">let </span>progress_bar;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(plotting_result) = plotting_progress.next().<span class="kw">await </span>{
             <span class="kw">let </span>current_size = plotting_result.current_sector * sector_size_bytes;
-            progress_bar = plotting_progress_bar(current_size, plot.allocated_space().as_u64());
+            progress_bar = plotting_progress_bar(current_size, farm.allocated_space().as_u64());
 
             <span class="kw">while let </span><span class="prelude-val">Some</span>(stream_result) = plotting_progress.next().<span class="kw">await </span>{
                 <span class="kw">let </span>current_size = stream_result.current_sector * sector_size_bytes;
@@ -753,8 +753,8 @@
         } <span class="kw">else </span>{
             <span class="comment">// means initial plotting was already finished
             </span>progress_bar = plotting_progress_bar(
-                plot.allocated_space().as_u64(),
-                plot.allocated_space().as_u64(),
+                farm.allocated_space().as_u64(),
+                farm.allocated_space().as_u64(),
             );
         }
         progress_bar.set_style(
