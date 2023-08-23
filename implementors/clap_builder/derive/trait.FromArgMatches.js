@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"pulsar":[["impl FromArgMatches for <a class=\"enum\" href=\"pulsar/enum.Commands.html\" title=\"enum pulsar::Commands\">Commands</a>"],["impl FromArgMatches for <a class=\"struct\" href=\"pulsar/struct.Cli.html\" title=\"struct pulsar::Cli\">Cli</a>"]]
+"pulsar":[["impl FromArgMatches for <a class=\"struct\" href=\"pulsar/struct.Cli.html\" title=\"struct pulsar::Cli\">Cli</a>"],["impl FromArgMatches for <a class=\"enum\" href=\"pulsar/enum.Commands.html\" title=\"enum pulsar::Commands\">Commands</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
