@@ -144,16 +144,16 @@ jobs:
         continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
         if: runner.os == 'macOS'
 
-      - name: Sign Application (Windows)
-        uses: skymatic/code-sign-action@500ce4f8261ca9bd8f85978c1652b34fb511bdf4 # @v2.0.1
-        with:
-          certificate: "${{ secrets.WINDOWS_CERTIFICATE }}"
-          password: "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}"
-          certificatesha1: "${{ secrets.WINDOWS_CERTIFICATE_SHA }}"
-          folder: "${{ matrix.build.production_target }}"
-        # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
-        continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
-        if: runner.os == 'Windows'
+      # - name: Sign Application (Windows)
+      #   uses: skymatic/code-sign-action@500ce4f8261ca9bd8f85978c1652b34fb511bdf4 # @v2.0.1
+      #   with:
+      #     certificate: "${{ secrets.WINDOWS_CERTIFICATE }}"
+      #     password: "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}"
+      #     certificatesha1: "${{ secrets.WINDOWS_CERTIFICATE_SHA }}"
+      #     folder: "${{ matrix.build.production_target }}"
+      #   # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
+      #   continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
+      #   if: runner.os == 'Windows'
 
       - name: Prepare executables for uploading (Ubuntu)
         run: |
