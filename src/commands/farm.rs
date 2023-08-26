@@ -64,7 +64,7 @@ pub(crate) async fn farm(is_verbose: bool, enable_domains: bool, no_rotation: bo
     let node = Arc::new(
         node_config
             .clone()
-            .build(chain.clone(), is_verbose, farmer_config.farm_size)
+            .build(chain.clone(), is_verbose)
             .await
             .context("error building the node")?,
     );

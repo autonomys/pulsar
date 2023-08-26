@@ -47,12 +47,7 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub async fn build(
-        self,
-        chain: ChainConfig,
-        is_verbose: bool,
-        farmer_space_pledged: ByteSize,
-    ) -> Result<Node> {
+    pub async fn build(self, chain: ChainConfig, is_verbose: bool) -> Result<Node> {
         let Self { directory, name, advanced: AdvancedNodeSettings { enable_domains, extra } } =
             self;
 
@@ -132,7 +127,6 @@ impl NodeConfig {
                 directory,
                 chain_spec,
                 PotConfiguration { is_pot_enabled: false, is_node_time_keeper: false },
-                farmer_space_pledged.to_u64() as usize,
             )
             .await
             .into_eyre()
