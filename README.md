@@ -16,13 +16,25 @@ Pulsar simplifies the farming process on Subspace Network.
 
 Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
+## Build
+
+Ensure the [pre-requisites](https://github.com/subspace/subspace/blob/main/docs/development.md#pre-requisites).
+
+And then run:
+
+```sh
+$ cargo build
+```
+
+> Use `--release` flag for a release build and optimized binary - `./target/release/pulsar`
+
 ## How to Use (commands)
 
 1. download the executable from [releases](https://github.com/subspace/pulsar/releases)
 2. in your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`)
 3. we will address your executable name as `pulsar`, change the below commands accordingly to your full executable name.
-3. run `./pulsar init` -> this will initialize your config file, which will store the necessary information for you to farm.
-4. run `./pulsar farm` -> this will start farming. Yes, it is that simple! Enjoy!
+4. run `./pulsar init` -> this will initialize your config file, which will store the necessary information for you to farm.
+5. run `./pulsar farm` -> this will start farming. Yes, it is that simple! Enjoy!
 
 ## Other commands
 
@@ -51,7 +63,7 @@ $ ./pulsar farm
 
 Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
 
-That's it, you should be back to your terminal, with *subspace farming* running in the background as a session.
+That's it, you should be back to your terminal, with _subspace farming_ running in the background as a session.
 
 To re-attach to your session, use tmux:
 
@@ -66,7 +78,6 @@ tmux kill-session -t farming
 ```
 
 ### Example with `screen`
-
 
 ```sh
 screen -S farming
