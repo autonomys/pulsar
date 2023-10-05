@@ -78,7 +78,9 @@ After ensuring the [pre-requisites](#pre-requisites), just run:
 $ cargo run --release
 ```
 
-And then, you can install the binary to your system:
+This would generate an optimized binary.
+
+And then, you can install the binary (optimized) to your system:
 
 ```sh
 $ cargo install --path .
