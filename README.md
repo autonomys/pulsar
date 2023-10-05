@@ -88,7 +88,7 @@ $ cargo install --path .
 
 The binary gets added to `~/.cargo/bin`, which is included in the PATH environment variable by default during installation of Rust tools. So you can run it immediately from the shell.
 
-Using this, one doesn't need to download the executable (binary) from the [releases](https://github.com/subspace/pulsar/releases) page each time when there is a new release. They just need to pull the latest code (that anyway they would be maintaining) from the repository and build it locally.
+Using this, one doesn't need to download the executable (binary) from the [releases](https://github.com/subspace/pulsar/releases) page each time when there is a new release. They just need to pull the latest code (if already maintained) from the repository and build it locally.
 
 ### Download binary
 
