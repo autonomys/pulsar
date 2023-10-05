@@ -16,13 +16,88 @@ Pulsar simplifies the farming process on Subspace Network.
 
 Instead of running a terminal instance for the farmer, and running another terminal instance for the node, now you can run a SINGLE terminal instance to farm!
 
-## How to Use (commands)
+## Pre-requisites
 
-1. download the executable from [releases](https://github.com/subspace/pulsar/releases)
-2. in your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`)
-3. we will address your executable name as `pulsar`, change the below commands accordingly to your full executable name.
-3. run `./pulsar init` -> this will initialize your config file, which will store the necessary information for you to farm.
-4. run `./pulsar farm` -> this will start farming. Yes, it is that simple! Enjoy!
+You'll have to have [Rust toolchain](https://rustup.rs/) installed as well as LLVM, Clang and CMake in addition to usual developer tooling.
+
+Below are some examples of how to install these dependencies on different operating systems.
+
+### Ubuntu
+
+```bash
+sudo apt-get install llvm clang cmake
+```
+
+### macOS
+
+1. Install via Homebrew:
+
+```bash
+brew install llvm@15 clang cmake
+```
+
+2. Add `llvm` to your `~/.zshrc` or `~/.bashrc`:
+
+```bash
+export PATH="/opt/homebrew/opt/llvm@15/bin:$PATH"
+```
+
+3. Activate the changes:
+
+```bash
+source ~/.zshrc
+# or
+source ~/.bashrc
+```
+
+4. Verify that `llvm` is installed:
+
+```bash
+llvm-config --version
+```
+
+## Build from Source
+
+Ensure the [pre-requisites](#pre-requisites).
+
+And then run:
+
+```sh
+$ cargo build
+```
+
+> Use `--release` flag for a release build and optimized binary - `./target/release/pulsar`
+
+## Install CLI
+
+### Using cargo
+
+After ensuring the [pre-requisites](#pre-requisites), just run:
+
+```sh
+$ cargo run --release
+```
+
+And then, you can install the binary to your system:
+
+```sh
+$ cargo install --path .
+```
+
+The binary gets added to `~/.cargo/bin`, which is included in the PATH environment variable by default during installation of Rust tools. So you can run it immediately from the shell.
+
+Using this, a developer doesn't need to download the binary from the [releases](https://github.com/subspace/pulsar/releases) page for each release version. They just need to pull the latest code (that anyway they would be maintaining) from the repository and build it locally.
+
+### Download binary
+
+1. Download the executable from [releases](https://github.com/subspace/pulsar/releases)
+2. In your terminal, change your directory to where you download the file for example: if you downloaded your file to your `Downloads` folder, `cd Downloads`.
+3. We will address your executable name as `pulsar`, change the below commands accordingly to your full executable name.
+
+## Usage
+
+1. Run `./pulsar init` -> this will initialize your config file, which will store the necessary information for you to farm.
+2. Run `./pulsar farm` -> this will start farming. Yes, it is that simple! Enjoy! 🎉
 
 ## Other commands
 
@@ -51,7 +126,7 @@ $ ./pulsar farm
 
 Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
 
-That's it, you should be back to your terminal, with *subspace farming* running in the background as a session.
+That's it, you should be back to your terminal, with _subspace farming_ running in the background as a session.
 
 To re-attach to your session, use tmux:
 
@@ -66,7 +141,6 @@ tmux kill-session -t farming
 ```
 
 ### Example with `screen`
-
 
 ```sh
 screen -S farming
