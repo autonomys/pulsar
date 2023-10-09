@@ -149,10 +149,10 @@ $ cargo build
 
 #### Using cargo
 
-After ensuring the [pre-requisites](#pre-requisites), just run:
+After ensuring the [pre-requisites](#pre-requisites), just build using cargo:
 
 ```sh
-$ cargo run --release
+$ cargo build --release
 ```
 
 This would generate an optimized binary.
