@@ -21,6 +21,7 @@ async fn update_summary_file_randomly(summary_file: SummaryFile) {
             new_vote_count: rng.gen_range(1..10),
             new_reward: Rewards(rng.gen_range(1..1000)),
             new_parsed_blocks: rng.gen_range(1..100),
+            maybe_updated_user_space_pledged: Some(ByteSize::gb(rng.gen_range(1..100))),
         };
         let result = summary_file.update(update_fields).await;
         assert!(result.is_ok(), "Failed to update summary file");
@@ -48,6 +49,7 @@ async fn summary_file_integration() {
         new_vote_count: 11,
         new_reward: Rewards(1001),
         new_parsed_blocks: 101,
+        maybe_updated_user_space_pledged: Some(ByteSize::gb(1)),
     };
     summary_file.update(update_fields).await.expect("Failed to update summary file");
 

@@ -38,6 +38,7 @@ pub(crate) struct SummaryUpdateFields {
     pub(crate) new_vote_count: u64,
     pub(crate) new_reward: Rewards,
     pub(crate) new_parsed_blocks: BlockNumber,
+    pub(crate) maybe_updated_user_space_pledged: Option<ByteSize>,
 }
 
 /// Struct for holding the info of what to be displayed with the `info` command,
@@ -65,18 +66,24 @@ impl SummaryFile {
     /// if user_space_pledged is provided, it creates a new summary file
     /// else, it tries to open the existing summary file
     #[instrument]
-    pub(crate) async fn new(user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
+    pub(crate) async fn new(maybe_user_space_pledged: Option<ByteSize>) -> Result<SummaryFile> {
         let summary_path = summary_path();
         let summary_dir = summary_dir();
 
-        let mut summary_file;
-        // providing `Some` value for `user_space_pledged` means, we are creating a new
-        // file, so, first check if the file exists to not erase its content
-        if let Some(user_space_pledged) = user_space_pledged {
-            // File::create will truncate the existing file, so first
-            // check if the file exists, if not, `open` will return an error
-            // in this case, create the file and necessary directories
-            if File::open(&summary_path).await.is_err() {
+        let file_handle = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&summary_path)
+            .await
+            .context("couldn't open existing summary file");
+        match file_handle {
+            Err(e) => {
+                let user_space_pledged = match maybe_user_space_pledged {
+                    Some(user_space_pledged) => user_space_pledged,
+                    // As per the API contract, if user_space_pledged is None, we only want to open
+                    // existing summary file
+                    None => return Err(e),
+                };
                 let _ = create_dir_all(&summary_dir).await;
                 let _ = File::create(&summary_path).await;
                 let initialization = Summary {
@@ -89,34 +96,44 @@ impl SummaryFile {
                 };
                 let summary_text =
                     toml::to_string(&initialization).context("Failed to serialize Summary")?;
-                summary_file = OpenOptions::new()
+                let mut summary_file_handle = OpenOptions::new()
                     .read(true)
                     .write(true)
                     .truncate(true)
                     .open(&summary_path)
                     .await
                     .context("couldn't open new summary file")?;
-                summary_file
+                summary_file_handle
                     .write_all(summary_text.as_bytes())
                     .await
                     .context("write to summary failed")?;
-                summary_file.flush().await.context("flush at creation failed")?;
-                summary_file
+                summary_file_handle.flush().await.context("flush at creation failed")?;
+                summary_file_handle
                     .seek(std::io::SeekFrom::Start(0))
                     .await
                     .context("couldn't seek to the beginning of the summary file")?;
 
-                return Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) });
+                Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file_handle)) })
+            }
+            Ok(summary_file_handle) => {
+                let summary_file = SummaryFile { inner: Arc::new(Mutex::new(summary_file_handle)) };
+                if let Some(user_space_pledged) = maybe_user_space_pledged {
+                    let (summary, _) = summary_file.read_and_deserialize().await?;
+                    summary_file
+                        .update(SummaryUpdateFields {
+                            is_plotting_finished: summary.initial_plotting_finished,
+                            maybe_updated_user_space_pledged: Some(user_space_pledged),
+                            // No change in other values
+                            new_authored_count: 0,
+                            new_vote_count: 0,
+                            new_reward: Rewards(0),
+                            new_parsed_blocks: 0,
+                        })
+                        .await?;
+                }
+                Ok(summary_file)
             }
         }
-        // for all the other cases, the SummaryFile should be there
-        summary_file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&summary_path)
-            .await
-            .context("couldn't open existing summary file")?;
-        Ok(SummaryFile { inner: Arc::new(Mutex::new(summary_file)) })
     }
 
     /// Parses the summary file and returns [`Summary`]
@@ -140,6 +157,7 @@ impl SummaryFile {
             new_vote_count,
             new_reward,
             new_parsed_blocks,
+            maybe_updated_user_space_pledged,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
         let (mut summary, mut guard) = self.read_and_deserialize().await?;
@@ -155,6 +173,10 @@ impl SummaryFile {
         summary.total_rewards += new_reward;
 
         summary.last_processed_block_num += new_parsed_blocks;
+
+        if let Some(updated_user_space_pledged) = maybe_updated_user_space_pledged {
+            summary.user_space_pledged = updated_user_space_pledged;
+        }
 
         let serialized_summary =
             toml::to_string(&summary).context("Failed to serialize Summary")?;
