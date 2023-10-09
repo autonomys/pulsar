@@ -1,6 +1,6 @@
 [package]
 name = "pulsar"
-version = "0.6.13"
+version = "0.6.14"
 edition = "2021"
 
 [dependencies]
@@ -29,7 +29,7 @@ single-instance = "0.3.3"
 sp-core = { version = "21.0.0", git = "https://github.com/subspace/substrate", rev = "55c157cff49b638a59d81a9f971f0f9a66829c71", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "5c66edeed1db67693ec98063566600501ed74e30" }
+subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "f4d81c4d49190f01bdb9e6845192eff7f4295bf0" }
 thiserror = "1"
 tokio = { version = "1.27", features = ["macros", "rt-multi-thread", "tracing"] }
 toml = "0.7"
