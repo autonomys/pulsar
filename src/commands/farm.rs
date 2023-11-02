@@ -426,7 +426,7 @@ async fn get_rewards_votes_author_info_from_blocks(
             {
                 Some(block_header) => Ok(block_header
                     .pre_digest
-                    .map(|pre_digest| pre_digest.solution.reward_address == reward_address)
+                    .map(|pre_digest| pre_digest.solution().reward_address == reward_address)
                     .unwrap_or_default()),
                 None if blocks_pruning => Ok(false),
                 None => Err(eyre!("node database is probably corrupted, try wiping the node")),
