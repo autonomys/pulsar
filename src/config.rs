@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::Farmer;
-use subspace_sdk::node::{
-    DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, Role,
-};
+use subspace_sdk::node::{DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, Role};
 use subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
 use tracing::instrument;
 
@@ -53,11 +51,13 @@ impl NodeConfig {
 
         let (mut node, chain_spec) = match chain {
             ChainConfig::Gemini3g => {
-                let mut node =
-                    Node::gemini_3g().network(NetworkBuilder::gemini_3g().name(name)).dsn(
+                let mut node = Node::gemini_3g()
+                    .network(NetworkBuilder::gemini_3g().name(name))
+                    .dsn(
                         DsnBuilder::gemini_3g()
                             .provider_storage_path(provider_storage_dir_getter()),
-                    );
+                    )
+                    .sync_from_dsn(true);
                 if enable_domains {
                     node = node.domain(Some(
                         DomainConfigBuilder::gemini_3g()
@@ -123,10 +123,7 @@ impl NodeConfig {
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
-            .build(
-                directory,
-                chain_spec
-            )
+            .build(directory, chain_spec)
             .await
             .into_eyre()
             .wrap_err("Failed to build subspace node")
