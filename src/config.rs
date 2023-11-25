@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::Farmer;
-use subspace_sdk::node::{
-    DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, PotConfiguration, Role,
-};
+use subspace_sdk::node::{DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, Role};
 use subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
 use tracing::instrument;
 
@@ -52,15 +50,17 @@ impl NodeConfig {
             self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3f => {
-                let mut node =
-                    Node::gemini_3f().network(NetworkBuilder::gemini_3f().name(name)).dsn(
-                        DsnBuilder::gemini_3f()
+            ChainConfig::Gemini3g => {
+                let mut node = Node::gemini_3g()
+                    .network(NetworkBuilder::gemini_3g().name(name))
+                    .dsn(
+                        DsnBuilder::gemini_3g()
                             .provider_storage_path(provider_storage_dir_getter()),
-                    );
+                    )
+                    .sync_from_dsn(true);
                 if enable_domains {
                     node = node.domain(Some(
-                        DomainConfigBuilder::gemini_3f()
+                        DomainConfigBuilder::gemini_3g()
                             .relayer_id(
                                 AccountId32::from_ss58check(
                                     "5CXTmJEusve5ixyJufqHThmy4qUrrm6FyLCR7QfE4bbyMTNC",
@@ -70,7 +70,7 @@ impl NodeConfig {
                             .configuration(),
                     ));
                 }
-                let chain_spec = chain_spec::gemini_3f();
+                let chain_spec = chain_spec::gemini_3g();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
@@ -123,11 +123,7 @@ impl NodeConfig {
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
-            .build(
-                directory,
-                chain_spec,
-                PotConfiguration { is_pot_enabled: false, is_node_time_keeper: false },
-            )
+            .build(directory, chain_spec)
             .await
             .into_eyre()
             .wrap_err("Failed to build subspace node")
@@ -181,7 +177,7 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3f,
+    Gemini3g,
     Dev,
     DevNet,
 }
@@ -191,7 +187,7 @@ impl std::str::FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3f" => Ok(ChainConfig::Gemini3f),
+            "gemini3g" => Ok(ChainConfig::Gemini3g),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
