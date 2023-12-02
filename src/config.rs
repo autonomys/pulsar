@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-use sp_core::crypto::{AccountId32, Ss58Codec};
 use strum_macros::EnumIter;
 use subspace_sdk::farmer::Farmer;
 use subspace_sdk::node::{DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, Role};
@@ -59,16 +58,7 @@ impl NodeConfig {
                     )
                     .sync_from_dsn(true);
                 if enable_domains {
-                    node = node.domain(Some(
-                        DomainConfigBuilder::gemini_3g()
-                            .relayer_id(
-                                AccountId32::from_ss58check(
-                                    "5CXTmJEusve5ixyJufqHThmy4qUrrm6FyLCR7QfE4bbyMTNC",
-                                )
-                                .expect("Static address should not fail"),
-                            )
-                            .configuration(),
-                    ));
+                    node = node.domain(Some(DomainConfigBuilder::gemini_3g().configuration()));
                 }
                 let chain_spec = chain_spec::gemini_3g();
                 (node, chain_spec)
@@ -77,15 +67,7 @@ impl NodeConfig {
                 let mut node = Node::dev();
                 if enable_domains {
                     node = node.domain(Some(
-                        DomainConfigBuilder::dev()
-                            .role(Role::Authority)
-                            .relayer_id(
-                                AccountId32::from_ss58check(
-                                    "5CXTmJEusve5ixyJufqHThmy4qUrrm6FyLCR7QfE4bbyMTNC",
-                                )
-                                .expect("Static address should not fail"),
-                            )
-                            .configuration(),
+                        DomainConfigBuilder::dev().role(Role::Authority).configuration(),
                     ));
                 }
                 let chain_spec = chain_spec::dev_config();
@@ -96,16 +78,7 @@ impl NodeConfig {
                     .network(NetworkBuilder::devnet().name(name))
                     .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
                 if enable_domains {
-                    node = node.domain(Some(
-                        DomainConfigBuilder::devnet()
-                            .relayer_id(
-                                AccountId32::from_ss58check(
-                                    "5CXTmJEusve5ixyJufqHThmy4qUrrm6FyLCR7QfE4bbyMTNC",
-                                )
-                                .expect("Static address should not fail"),
-                            )
-                            .configuration(),
-                    ));
+                    node = node.domain(Some(DomainConfigBuilder::devnet().configuration()));
                 }
                 let chain_spec = chain_spec::devnet_config();
                 (node, chain_spec)
