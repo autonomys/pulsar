@@ -17,7 +17,7 @@ use std::io::{self, Write};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
-use crossterm::event::{Event, KeyCode};
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{cursor, execute};
 use owo_colors::OwoColorize;
@@ -124,25 +124,25 @@ async fn arrow_key_mode() -> Result<(), Report> {
     // Process input events
     loop {
         if let Event::Key(event) = crossterm::event::read()? {
-            match event.code {
-                KeyCode::Up | KeyCode::Char('k') => {
+            match (event.kind, event.code) {
+                (KeyEventKind::Press, KeyCode::Up | KeyCode::Char('k')) => {
                     // Move selection up
                     if selected > 0 {
                         selected -= 1;
                         print_options(&mut stdout, &options, selected, position)?;
                     }
                 }
-                KeyCode::Down | KeyCode::Char('j') => {
+                (KeyEventKind::Press, KeyCode::Down | KeyCode::Char('j')) => {
                     // Move selection down
                     if selected < options.len() - 1 {
                         selected += 1;
                         print_options(&mut stdout, &options, selected, position)?;
                     }
                 }
-                KeyCode::Enter => {
+                (KeyEventKind::Press, KeyCode::Enter) => {
                     break;
                 }
-                KeyCode::Char('c')
+                (KeyEventKind::Press, KeyCode::Char('c'))
                     if event.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
                 {
                     return Ok(());
