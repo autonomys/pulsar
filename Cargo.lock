@@ -10061,7 +10061,7 @@ dependencies = [
 [[package]]
 name = "sdk-dsn"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "anyhow",
  "derivative",
@@ -10085,7 +10085,7 @@ dependencies = [
 [[package]]
 name = "sdk-farmer"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10118,7 +10118,7 @@ dependencies = [
 [[package]]
 name = "sdk-node"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "anyhow",
  "backoff",
@@ -10185,7 +10185,7 @@ dependencies = [
 [[package]]
 name = "sdk-substrate"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "bytesize",
  "derivative",
@@ -10209,7 +10209,7 @@ dependencies = [
 [[package]]
 name = "sdk-traits"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "async-trait",
  "parking_lot 0.12.1",
@@ -10223,7 +10223,7 @@ dependencies = [
 [[package]]
 name = "sdk-utils"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -12051,7 +12051,7 @@ dependencies = [
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=be159f7ccda18d224371c509dfece45d9e165a74#be159f7ccda18d224371c509dfece45d9e165a74"
+source = "git+https://github.com/subspace/subspace-sdk?rev=0506f6c587f76f97150b1ebe826d79230bc4c9f9#0506f6c587f76f97150b1ebe826d79230bc4c9f9"
 dependencies = [
  "sdk-dsn",
  "sdk-farmer",
