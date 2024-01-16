@@ -69,9 +69,10 @@ jobs:
           - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
         exclude: # exclude macos-12 and windows-2022 when the condition is false
           - run-all: false
-            os: macos-12
-          - run-all: false
-            os: windows-2022
+            matrix:
+              build:
+                - os: macos-12
+                - os: windows-2022
 
     runs-on: ${{ matrix.build.os }}
     steps:
