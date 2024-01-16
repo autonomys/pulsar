@@ -9,8 +9,6 @@ use std::sync::Arc;
 
 use color_eyre::eyre::{Context, Result};
 use derive_more::{AddAssign, Display, From, FromStr};
-use num_rational::Ratio;
-use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use subspace_sdk::node::BlockNumber;
 use subspace_sdk::ByteSize;
@@ -23,20 +21,11 @@ use tracing::instrument;
 #[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 pub(crate) struct Rewards(pub(crate) u128);
 
-impl Rewards {
-    /// Converts the reward amount to SSC by dividing by 10^18.
-    pub(crate) fn as_ssc(&self) -> f64 {
-        Ratio::new(self.0, 10u128.pow(18)).to_f64().expect("10u128.pow(18) is never 0; qed")
-    }
-}
-
 /// struct for updating the fields of the summary
 #[derive(Default, Debug)]
 pub(crate) struct SummaryUpdateFields {
     pub(crate) is_plotting_finished: bool,
     pub(crate) new_authored_count: u64,
-    pub(crate) new_vote_count: u64,
-    pub(crate) new_reward: Rewards,
     pub(crate) new_parsed_blocks: BlockNumber,
 }
 
@@ -46,7 +35,11 @@ pub(crate) struct SummaryUpdateFields {
 pub(crate) struct Summary {
     pub(crate) initial_plotting_finished: bool,
     pub(crate) authored_count: u64,
+    // Deprecated: Will be removed in next version
+    #[serde(skip)]
     pub(crate) vote_count: u64,
+    // Deprecated: Will be removed in next version
+    #[serde(skip)]
     pub(crate) total_rewards: Rewards,
     pub(crate) user_space_pledged: ByteSize,
     pub(crate) last_processed_block_num: BlockNumber,
@@ -137,8 +130,6 @@ impl SummaryFile {
         SummaryUpdateFields {
             is_plotting_finished,
             new_authored_count,
-            new_vote_count,
-            new_reward,
             new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -> Result<Summary> {
@@ -149,10 +140,6 @@ impl SummaryFile {
         }
 
         summary.authored_count += new_authored_count;
-
-        summary.vote_count += new_vote_count;
-
-        summary.total_rewards += new_reward;
 
         summary.last_processed_block_num += new_parsed_blocks;
 
