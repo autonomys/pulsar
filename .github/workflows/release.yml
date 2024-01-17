@@ -115,7 +115,7 @@ jobs:
 
       - name: Build the executable (other than aarch64 linux)
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        if: matrix.build.target != 'aarch64-unknown-linux-gnu'
+        if: matrix.build.target != 'aarch64-unknown-linux-gnu' && matrix.build.os != 'macOS'
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin pulsar
@@ -127,6 +127,14 @@ jobs:
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin pulsar
+
+      # We build macOS without `numa` feature, primarily because of https://github.com/HadrienG2/hwlocality/issues/31
+      - name: Build the executable (macOS)
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        with:
+          command: build
+          args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --no-default-features --bin pulsar
+        if: runner.os == 'macOS'
 
       - name: Sign and Notarize Application (macOS)
         run: |
