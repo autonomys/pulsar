@@ -78,23 +78,24 @@ jobs:
           command: fmt
           args: --all -- --check
 
-      - name: cargo test --locked (linux & windows)
+      - name: cargo test
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
         with:
           command: test
-        if: runner.os != 'macOS'
 
-      - name: cargo test --locked (macOS)
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        with:
-          command: test --no-default-features
-        if: runner.os == 'macOS'
-
-      - name: cargo clippy --locked
+      - name: cargo clippy --locked (Linux & Windows)
         uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --locked --all-targets -- -D warnings
+        if: runner.os != 'macOS'
+
+      - name: cargo clippy --locked (macOS)
+        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --locked --all-targets --no-default-features -- -D warnings
+        if: runner.os == 'macOS'
 
       - name: Check Documentation
         run: cargo doc --locked --all --no-deps
