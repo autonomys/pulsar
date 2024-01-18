@@ -18,8 +18,6 @@ async fn update_summary_file_randomly(summary_file: SummaryFile) {
         let update_fields = SummaryUpdateFields {
             is_plotting_finished: false,
             new_authored_count: rng.gen_range(1..10),
-            new_vote_count: rng.gen_range(1..10),
-            new_reward: Rewards(rng.gen_range(1..1000)),
             new_parsed_blocks: rng.gen_range(1..100),
         };
         let result = summary_file.update(update_fields).await;
@@ -45,8 +43,6 @@ async fn summary_file_integration() {
     let update_fields = SummaryUpdateFields {
         is_plotting_finished: true,
         new_authored_count: 11,
-        new_vote_count: 11,
-        new_reward: Rewards(1001),
         new_parsed_blocks: 101,
     };
     summary_file.update(update_fields).await.expect("Failed to update summary file");

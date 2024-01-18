@@ -3,21 +3,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use color_eyre::eyre::{eyre, Context, Error, Result};
+use color_eyre::Report;
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use owo_colors::OwoColorize;
 use single_instance::SingleInstance;
-use subspace_sdk::node::{Event, Hash, RewardsEvent, SubspaceEvent, SyncingProgress};
+use subspace_sdk::node::{Hash, SyncingProgress};
 use subspace_sdk::{Farmer, Node, PublicKey};
 use tokio::signal;
 use tokio::task::JoinHandle;
 use tracing::instrument;
 
 use crate::config::{validate_config, ChainConfig, Config};
-use crate::summary::{Rewards, Summary, SummaryFile, SummaryUpdateFields};
-use crate::utils::{
-    install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreFuture, IntoEyreStream,
-};
+use crate::summary::{Summary, SummaryFile, SummaryUpdateFields};
+use crate::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 /// allows us to detect multiple instances of the farmer and act on it
 pub(crate) const SINGLE_INSTANCE: &str = ".subspaceFarmer";
@@ -289,17 +288,14 @@ async fn subscribe_to_solutions(
     .context("parallel block stream couldn't be processed")?;
 
     loop {
-        let Summary { total_rewards, authored_count, vote_count, last_processed_block_num, .. } =
+        let Summary { authored_count, last_processed_block_num, .. } =
             summary_file.parse().await.context("couldn't parse summary")?;
-
-        let total_rewards_ssc = total_rewards.as_ssc();
 
         if is_initial_progress_finished.load(Ordering::Relaxed) {
             // use carriage return to overwrite the current value
             // instead of inserting a new line
             print!(
-                "\rYou have earned: {total_rewards_ssc} SSC(s), farmed {authored_count} block(s), \
-                 and have {vote_count} vote(s)! This data is derived from the first \
+                "\rYou have farmed {authored_count} block(s), This data is derived from the first \
                  {last_processed_block_num} blocks.",
             );
             // flush the stdout to make sure values are printed
@@ -379,7 +375,7 @@ async fn process_block_stream(
             async move {
                 let block_count = blocks.len() as u32;
                 // We iterate over hashes
-                let (rewards, votes, author) = get_rewards_votes_author_info_from_blocks(
+                let author = get_author_info_from_blocks(
                     node_clone,
                     blocks,
                     reward_address,
@@ -387,13 +383,11 @@ async fn process_block_stream(
                     blocks_pruning,
                 )
                 .await
-                .context("couldn't get rewards, votes and author info")?;
+                .context("couldn't get author info")?;
 
                 summary_clone
                     .update(SummaryUpdateFields {
                         new_authored_count: author,
-                        new_vote_count: votes,
-                        new_reward: Rewards(rewards),
                         new_parsed_blocks: block_count,
                         ..Default::default()
                     })
@@ -406,14 +400,14 @@ async fn process_block_stream(
         .await
 }
 
-async fn get_rewards_votes_author_info_from_blocks(
+async fn get_author_info_from_blocks(
     node: Arc<Node>,
     blocks: Vec<Hash>,
     reward_address: PublicKey,
     n_tasks: usize,
     blocks_pruning: bool,
-) -> Result<(u128, u64, u64)> {
-    let (rewards, votes, author) = futures::stream::iter(blocks)
+) -> Result<u64> {
+    let author = futures::stream::iter(blocks)
         // We scan each hash and find 3 things:
         // - Total amount of rewards
         // - Number of votes
@@ -433,41 +427,16 @@ async fn get_rewards_votes_author_info_from_blocks(
             }
             .context("couldn't get the author info from block header")?;
 
-            let rewards_future = node
-                .get_events(Some(hash))
-                .into_eyre()
-                .map_ok(|events| {
-                    events
-                        .into_iter()
-                        .map(|event| match event {
-                            Event::Rewards(
-                                RewardsEvent::VoteReward { voter: author, reward }
-                                | RewardsEvent::BlockReward { block_author: author, reward },
-                            ) if author == reward_address.into() => (reward, 0),
-                            Event::Subspace(SubspaceEvent::FarmerVote {
-                                reward_address: author,
-                                ..
-                            }) if author == reward_address.into() => (0, 1),
-                            _ => (0, 0),
-                        })
-                        .fold((0, 0), |(rewards, votes), (new_rewards, new_votes)| {
-                            (rewards + new_rewards, votes + new_votes)
-                        })
-                })
-                .map_ok(move |(rewards, votes)| (rewards, votes, if is_author { 1 } else { 0 }));
-
-            Result::Ok(rewards_future)
+            Result::Ok(futures::future::ok::<u64, Report>(if is_author { 1 } else { 0 }))
         })
         // We calculate each block in parallel
         .try_buffer_unordered(n_tasks)
         // After that we sum up result
-        .try_fold((0, 0, 0), |(rewards, votes, author), (new_rewards, new_votes, new_author)| {
-            futures::future::ok((rewards + new_rewards, votes + new_votes, author + new_author))
-        })
+        .try_fold(0, |author, new_author| futures::future::ok(author + new_author))
         .await
         .context("error in stream encountered in try_fold step")?;
 
-    Ok((rewards, votes, author))
+    Ok(author)
 }
 
 /// nice looking progress bar for the initial plotting :)
