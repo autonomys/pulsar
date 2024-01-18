@@ -199,19 +199,6 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// Stores the summary of the farming process into a file.
 /// This allows to retrieve farming information with `info` command,
 /// and also store the amount of potentially farmed blocks during the initial
@@ -223,8 +210,6 @@
 
 <span class="kw">use </span>color_eyre::eyre::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>derive_more::{AddAssign, Display, From, FromStr};
-<span class="kw">use </span>num_rational::Ratio;
-<span class="kw">use </span>num_traits::cast::ToPrimitive;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>subspace_sdk::node::BlockNumber;
 <span class="kw">use </span>subspace_sdk::ByteSize;
@@ -237,20 +222,11 @@
 </span><span class="attr">#[derive(Debug, Clone, Copy, Default, Display, AddAssign, FromStr, From)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Rewards(<span class="kw">pub</span>(<span class="kw">crate</span>) u128);
 
-<span class="kw">impl </span>Rewards {
-    <span class="doccomment">/// Converts the reward amount to SSC by dividing by 10^18.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_ssc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
-        Ratio::new(<span class="self">self</span>.<span class="number">0</span>, <span class="number">10u128</span>.pow(<span class="number">18</span>)).to_f64().expect(<span class="string">&quot;10u128.pow(18) is never 0; qed&quot;</span>)
-    }
-}
-
 <span class="doccomment">/// struct for updating the fields of the summary
 </span><span class="attr">#[derive(Default, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SummaryUpdateFields {
     <span class="kw">pub</span>(<span class="kw">crate</span>) is_plotting_finished: bool,
     <span class="kw">pub</span>(<span class="kw">crate</span>) new_authored_count: u64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) new_vote_count: u64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) new_reward: Rewards,
     <span class="kw">pub</span>(<span class="kw">crate</span>) new_parsed_blocks: BlockNumber,
 }
 
@@ -260,8 +236,12 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Summary {
     <span class="kw">pub</span>(<span class="kw">crate</span>) initial_plotting_finished: bool,
     <span class="kw">pub</span>(<span class="kw">crate</span>) authored_count: u64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) vote_count: u64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) total_rewards: Rewards,
+    <span class="comment">// Deprecated: Will be removed in next version
+    </span><span class="attr">#[serde(skip)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) vote_count: u64,
+    <span class="comment">// Deprecated: Will be removed in next version
+    </span><span class="attr">#[serde(skip)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) total_rewards: Rewards,
     <span class="kw">pub</span>(<span class="kw">crate</span>) user_space_pledged: ByteSize,
     <span class="kw">pub</span>(<span class="kw">crate</span>) last_processed_block_num: BlockNumber,
 }
@@ -351,8 +331,6 @@
         SummaryUpdateFields {
             is_plotting_finished,
             new_authored_count,
-            new_vote_count,
-            new_reward,
             new_parsed_blocks,
         }: SummaryUpdateFields,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&gt; {
@@ -363,10 +341,6 @@
         }
 
         summary.authored_count += new_authored_count;
-
-        summary.vote_count += new_vote_count;
-
-        summary.total_rewards += new_reward;
 
         summary.last_processed_block_num += new_parsed_blocks;
 
