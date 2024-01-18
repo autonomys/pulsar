@@ -115,7 +115,7 @@ jobs:
 
       - name: Build the executable (other than aarch64 linux)
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        if: matrix.build.target != 'aarch64-unknown-linux-gnu' && matrix.build.os != 'macOS'
+        if: matrix.build.target != 'aarch64-unknown-linux-gnu' && runner.os != 'macOS'
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile production --bin pulsar
@@ -123,7 +123,7 @@ jobs:
       # TODO: get rid of this when we have bigger RAM for aarch64 linux
       - name: Build the executable for aarch64 linux separately
         uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        if: matrix.build.target == 'aarch64-unknown-linux-gnu'
+        if: matrix.build.target == 'aarch64-unknown-linux-gnu' && runner.os == 'Linux'
         with:
           command: build
           args: --locked -Z build-std --target ${{ matrix.build.target }} --profile aarch64linux --bin pulsar
@@ -178,10 +178,6 @@ jobs:
         # Allow code signing to fail on non-release builds and in non-subspace repos (forks)
         continue-on-error: ${{ github.repository_owner != 'subspace' || github.event_name != 'push' || github.ref_type != 'tag' }}
         if: runner.os == 'macOS'
-
-      - name: Install AzureSignTool (Windows)
-        run: dotnet tool install --global AzureSignTool
-        if: runner.os == 'Windows'
 
       - name: Sign Application (Windows)
         run: |
