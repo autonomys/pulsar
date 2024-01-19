@@ -56,7 +56,8 @@ impl NodeConfig {
                         DsnBuilder::gemini_3g()
                             .provider_storage_path(provider_storage_dir_getter()),
                     )
-                    .sync_from_dsn(true);
+                    .sync_from_dsn(true)
+                    .enable_subspace_block_relay(true);
                 if enable_domains {
                     node = node.domain(Some(DomainConfigBuilder::gemini_3g().configuration()));
                 }
@@ -76,7 +77,9 @@ impl NodeConfig {
             ChainConfig::DevNet => {
                 let mut node = Node::devnet()
                     .network(NetworkBuilder::devnet().name(name))
-                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()))
+                    .sync_from_dsn(true)
+                    .enable_subspace_block_relay(true);
                 if enable_domains {
                     node = node.domain(Some(DomainConfigBuilder::devnet().configuration()));
                 }
