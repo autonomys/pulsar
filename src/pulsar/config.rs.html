@@ -215,6 +215,9 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fs::{create_dir_all, remove_file, File};
 <span class="kw">use </span>std::num::NonZeroU8;
 <span class="kw">use </span>std::path::PathBuf;
@@ -273,7 +276,8 @@
                         DsnBuilder::gemini_3g()
                             .provider_storage_path(provider_storage_dir_getter()),
                     )
-                    .sync_from_dsn(<span class="bool-val">true</span>);
+                    .sync_from_dsn(<span class="bool-val">true</span>)
+                    .enable_subspace_block_relay(<span class="bool-val">true</span>);
                 <span class="kw">if </span>enable_domains {
                     node = node.domain(<span class="prelude-val">Some</span>(DomainConfigBuilder::gemini_3g().configuration()));
                 }
@@ -293,7 +297,9 @@
             ChainConfig::DevNet =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>node = Node::devnet()
                     .network(NetworkBuilder::devnet().name(name))
-                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()))
+                    .sync_from_dsn(<span class="bool-val">true</span>)
+                    .enable_subspace_block_relay(<span class="bool-val">true</span>);
                 <span class="kw">if </span>enable_domains {
                     node = node.domain(<span class="prelude-val">Some</span>(DomainConfigBuilder::devnet().configuration()));
                 }
