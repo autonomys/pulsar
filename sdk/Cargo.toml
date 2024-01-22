@@ -1,0 +1,120 @@
+[package]
+name = "subspace-sdk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sdk-dsn = { path = "dsn" }
+sdk-farmer = { path = "farmer", default-features = false }
+sdk-node = { path = "node" }
+sdk-substrate = { path = "substrate" }
+sdk-utils = { path = "utils" }
+static_assertions = "1.1.0"
+
+subspace-proof-of-space = { git = "https://github.com/subspace/subspace", rev = "bd435100200b3dcce6d6f50534d52e3cd039ca8e" }
+
+# The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
+[target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dev-dependencies]
+jemallocator = "0.5.0"
+
+[target.'cfg(tokio_unstable)'.dev-dependencies]
+console-subscriber = "0.1"
+
+[dev-dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+derive_builder = "0.12"
+derive_more = "0.99"
+fdlimit = "0.2"
+futures = "0.3"
+serde_json = "1"
+subspace-farmer-components = { git = "https://github.com/subspace/subspace", rev = "bd435100200b3dcce6d6f50534d52e3cd039ca8e" }
+tempfile = "3"
+tokio = { version = "1.34.0", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1"
+tracing-futures = "0.2"
+tracing-subscriber = "0.3"
+
+# The list of dependencies below (which can be both direct and indirect dependencies) are crates
+# that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
+# their debug info might be missing) or to require to be frequently recompiled. We compile these
+# dependencies with `opt-level=3` even in "dev" mode in order to make "dev" mode more usable.
+# The majority of these crates are cryptographic libraries.
+#
+# This list is ordered alphabetically.
+[profile.dev.package]
+bitvec = { opt-level = 3 }
+blake2 = { opt-level = 3 }
+blake3 = { opt-level = 3 }
+blake2b_simd = { opt-level = 3 }
+blst = { opt-level = 3 }
+blst_rust = { opt-level = 3 }
+chacha20 = { opt-level = 3 }
+chacha20poly1305 = { opt-level = 3 }
+cranelift-codegen = { opt-level = 3 }
+cranelift-wasm = { opt-level = 3 }
+crc32fast = { opt-level = 3 }
+crossbeam-deque = { opt-level = 3 }
+crypto-mac = { opt-level = 3 }
+curve25519-dalek = { opt-level = 3 }
+ed25519-zebra = { opt-level = 3 }
+flate2 = { opt-level = 3 }
+futures-channel = { opt-level = 3 }
+hashbrown = { opt-level = 3 }
+hash-db = { opt-level = 3 }
+hmac = { opt-level = 3 }
+httparse = { opt-level = 3 }
+integer-sqrt = { opt-level = 3 }
+k256 = { opt-level = 3 }
+keccak = { opt-level = 3 }
+kzg = { opt-level = 3 }
+libsecp256k1 = { opt-level = 3 }
+libz-sys = { opt-level = 3 }
+mio = { opt-level = 3 }
+nalgebra = { opt-level = 3 }
+num-bigint = { opt-level = 3 }
+parking_lot = { opt-level = 3 }
+parking_lot_core = { opt-level = 3 }
+percent-encoding = { opt-level = 3 }
+primitive-types = { opt-level = 3 }
+ring = { opt-level = 3 }
+rustls = { opt-level = 3 }
+secp256k1 = { opt-level = 3 }
+sha2 = { opt-level = 3 }
+sha3 = { opt-level = 3 }
+smallvec = { opt-level = 3 }
+snow = { opt-level = 3 }
+subspace-archiving = { opt-level = 3 }
+subspace-core-primitives = { opt-level = 3 }
+subspace-erasure-coding = { opt-level = 3 }
+subspace-farmer-components = { opt-level = 3 }
+subspace-proof-of-space = { opt-level = 3 }
+twox-hash = { opt-level = 3 }
+uint = { opt-level = 3 }
+x25519-dalek = { opt-level = 3 }
+yamux = { opt-level = 3 }
+zeroize = { opt-level = 3 }
+
+[workspace]
+resolver = "2"
+members = [
+    "dsn",
+    "farmer",
+    "node",
+    "substrate",
+    "traits",
+    "utils",
+]
+
+[features]
+default = ["numa"]
+numa = [
+    "sdk-farmer/numa",
+]
+integration-test = [
+    "sdk-utils/integration-test",
+    "sdk-dsn/integration-test",
+    "sdk-node/integration-test",
+    "sdk-substrate/integration-test",
+    "sdk-farmer/integration-test"
+]

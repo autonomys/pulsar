@@ -1,1 +1,4 @@
 allow-unwrap-in-tests = true
+# Since, SDK and pulsar both uses async heavily, we need to disallow below type to prevent OS thread block
+# This is imported from SDK
+disallowed-types = ["std::sync::Mutex", "std::sync::RwLock", "std::sync::Once", "std::sync::Condvar"]

@@ -29,7 +29,7 @@ single-instance = "0.3.3"
 sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "c63a8b28a9fd26d42116b0dcef1f2a5cefb9cd1c", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "000c6c774f3dd995e783d6d78d1d59669540b454", default-features = false }
+subspace-sdk = { path = "./sdk", default-features = false }
 thiserror = "1"
 tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread", "tracing", "signal"] }
 toml = "0.7"
@@ -43,6 +43,19 @@ zeroize = "1.6.0"
 
 [dev-dependencies]
 rand = "0.8.5"
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+derive_builder = "0.12"
+derive_more = "0.99"
+fdlimit = "0.2"
+futures = "0.3"
+serde_json = "1"
+subspace-farmer-components = { git = "https://github.com/subspace/subspace", rev = "bd435100200b3dcce6d6f50534d52e3cd039ca8e" }
+tempfile = "3"
+tokio = { version = "1.34.0", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1"
+tracing-futures = "0.2"
+tracing-subscriber = "0.3"
 
 [features]
 default = [
@@ -111,7 +124,6 @@ httparse = { opt-level = 3 }
 integer-sqrt = { opt-level = 3 }
 k256 = { opt-level = 3 }
 keccak = { opt-level = 3 }
-libm = { opt-level = 3 }
 libsecp256k1 = { opt-level = 3 }
 libz-sys = { opt-level = 3 }
 mio = { opt-level = 3 }
@@ -132,7 +144,6 @@ subspace-core-primitives = { opt-level = 3 }
 subspace-archiving = { opt-level = 3 }
 twox-hash = { opt-level = 3 }
 uint = { opt-level = 3 }
-wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
