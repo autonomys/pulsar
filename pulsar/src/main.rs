@@ -31,14 +31,8 @@ use crate::commands::init::init;
 use crate::commands::wipe::wipe_config;
 use crate::utils::{get_user_input, open_log_dir, support_message, yes_or_no_parser};
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_vendor = "unknown",
-    target_os = "linux",
-    target_env = "gnu"
-))]
 #[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[derive(Debug, Parser)]
 #[command(subcommand_required = false)]
