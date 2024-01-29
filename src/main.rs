@@ -13,18 +13,23 @@ mod utils;
 mod tests;
 
 use std::io::{self, Write};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
+use config::ChainConfig;
 use crossterm::event::{Event, KeyCode};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{cursor, execute};
 use owo_colors::OwoColorize;
+use sp_core::sr25519::Public;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use subspace_sdk::{node, ByteSize};
 use tracing::instrument;
 
+use crate::commands::config::config;
 use crate::commands::farm::farm;
 use crate::commands::info::info;
 use crate::commands::init::init;
@@ -75,6 +80,21 @@ enum Commands {
                        and status of initial plotting)")]
     Info,
     OpenLogs,
+    #[command(about = "set the config params: farm-size, reward-address, node-dir, farm-dir")]
+    Config {
+        #[arg(short, long, action)]
+        show: bool,
+        #[arg(short, long, action)]
+        chain: ChainConfig,
+        #[arg(short, long, action)]
+        farm_size: ByteSize,
+        #[arg(short, long, action)]
+        reward_address: Option<Public>,
+        #[arg(short, long, action)]
+        node_dir: PathBuf,
+        #[arg(short = 'd', long, action)]
+        farm_dir: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -96,6 +116,11 @@ async fn main() -> Result<(), Report> {
         }
         Some(Commands::OpenLogs) => {
             open_log_dir().suggestion(support_message())?;
+        }
+        Some(Commands::Config { chain, show, farm_size, reward_address, node_dir, farm_dir }) => {
+            config(chain, show, farm_size, reward_address, node_dir, farm_dir)
+                .await
+                .suggestion(support_message())?;
         }
         None => arrow_key_mode().await.suggestion(support_message())?,
     }
@@ -229,6 +254,14 @@ impl std::fmt::Display for Commands {
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
             Commands::OpenLogs => write!(f, "open logs directory"),
+            Commands::Config {
+                chain: _,
+                show: _,
+                farm_size: _,
+                reward_address: _,
+                node_dir: _,
+                farm_dir: _,
+            } => write!(f, "config"),
         }
     }
 }
