@@ -32,7 +32,7 @@ env:
 
 jobs:
   fmt:
-    runs-on: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || 'ubuntu-22.04') }}
+    runs-on: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || '"ubuntu-22.04"') }}
     steps:
       - name: git checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
@@ -163,9 +163,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/bin
             ~/.cargo/git
-            target
-          key: test-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: test-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
 
       - name: Install utils for caching
         if: runner.os != 'Windows'
