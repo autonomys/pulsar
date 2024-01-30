@@ -30,7 +30,7 @@ single-instance = "0.3.3"
 sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "c63a8b28a9fd26d42116b0dcef1f2a5cefb9cd1c", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "000c6c774f3dd995e783d6d78d1d59669540b454", default-features = false }
+subspace-sdk = { path = "../sdk/subspace-sdk", default-features = false }
 thiserror = "1"
 tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread", "tracing", "signal"] }
 toml = "0.7"
