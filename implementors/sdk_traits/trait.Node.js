@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"sdk_node":[["impl&lt;F: <a class=\"trait\" href=\"sdk_traits/trait.Farmer.html\" title=\"trait sdk_traits::Farmer\">Farmer</a>&gt; <a class=\"trait\" href=\"sdk_traits/trait.Node.html\" title=\"trait sdk_traits::Node\">Node</a> for <a class=\"struct\" href=\"sdk_node/struct.Node.html\" title=\"struct sdk_node::Node\">Node</a>&lt;F&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

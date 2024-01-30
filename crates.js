@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["pulsar"];
+window.ALL_CRATES = ["pulsar","sdk_dsn","sdk_farmer","sdk_node","sdk_substrate","sdk_traits","sdk_utils","subspace_sdk"];

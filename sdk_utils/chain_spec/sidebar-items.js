@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["chain_spec_properties","get_account_id_from_seed","get_public_key_from_seed"]};
