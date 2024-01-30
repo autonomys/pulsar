@@ -23,10 +23,9 @@ use crossterm::event::{Event, KeyCode};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{cursor, execute};
 use owo_colors::OwoColorize;
-use sp_core::sr25519::Public;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use subspace_sdk::{node, ByteSize};
+use subspace_sdk::ByteSize;
 use tracing::instrument;
 
 use crate::commands::config::config;
@@ -89,7 +88,7 @@ enum Commands {
         #[arg(short, long, action)]
         farm_size: ByteSize,
         #[arg(short, long, action)]
-        reward_address: Option<Public>,
+        reward_address: String,
         #[arg(short, long, action)]
         node_dir: PathBuf,
         #[arg(short = 'd', long, action)]

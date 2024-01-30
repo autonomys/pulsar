@@ -5,49 +5,62 @@
 //! - node directory
 //! - farm directory
 
+use std::fs;
 use std::path::PathBuf;
 
-use color_eyre::eyre;
-use sp_core::sr25519::Public;
+use color_eyre::eyre::{self, eyre};
 use subspace_sdk::ByteSize;
 
-use crate::config::{ChainConfig, MIN_FARM_SIZE};
+use crate::config::{parse_config, parse_config_path, ChainConfig, Config, MIN_FARM_SIZE};
+use crate::utils::reward_address_parser;
 
 // TODO: implement this
 pub(crate) async fn config(
     chain: ChainConfig,
     show: bool,
     farm_size: ByteSize,
-    reward_address: Option<Public>,
+    reward_address: String,
     node_dir: PathBuf,
     farm_dir: PathBuf,
 ) -> eyre::Result<()> {
-    // ensure `settings.toml`file from the dir (as per OS) & then fetch
-    // let mut config = toml
+    // Define the path to your settings.toml file
+    let config_path = parse_config_path()?;
 
-    // Handle the `show` subcommand
-    // match show {
-    //     true => {
+    // if config file doesn't exist, then throw error
+    if !config_path.exists() {
+        return Err(eyre!(
+            "Config file: \"settings.toml\" not found.\nPlease use `pulsar init` command first."
+        ));
+    }
 
-    //         // Logic to display the current configuration
-    //     }
-    //     // false => {
-    //         // Handle the `farm_size` subcommand
-    //         if farm_size < MIN_FARM_SIZE {
-    //             eyre
-    //         } else {
-    //             // Additional logic for `farm_size`
-    //             // config.farm_size = farm_size
-    //         }
+    // Load the current configuration
+    let mut config: Config = parse_config()?;
 
-    //         // Handle the `reward_address` subcommand
-    //         if let Some(address) = reward_address {
-    //             // Logic for handling the reward address
-    //         }
+    if show {
+        // Display the current configuration
+        println!("Current Configuration: \n{:?}", config);
+    } else {
+        // Update the configuration based on the provided arguments
+        if farm_size >= MIN_FARM_SIZE {
+            config.farmer.farm_size = farm_size;
+        } else {
+            return Err(eyre!("Farm size must be ≥ 2 GB"));
+        }
 
-    //         // Handle `node_dir` and `farm_dir` similarly...
-    //     }
-    // };
+        let reward_address = reward_address_parser(&reward_address)?;
+        config.farmer.reward_address = reward_address;
+
+        if node_dir.exists() {
+            config.node.directory = node_dir;
+        }
+
+        if farm_dir.exists() {
+            config.farmer.farm_directory = farm_dir;
+        }
+
+        // Save the updated configuration back to the file
+        fs::write(config_path, toml::to_string(&config)?)?;
+    }
 
     Ok(())
 }
