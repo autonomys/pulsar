@@ -84,9 +84,13 @@ pub(crate) async fn config(
                                     config.farmer.farm_directory = farm_dir;
                                 }
                             }
-                            None => bail!(
-                                "At least one option has to be provided.\nTry `pulsar config -h`"
-                            ),
+                            None => {
+                                println!(
+                                    "At least one option has to be provided.\nTry `pulsar config \
+                                     -h`"
+                                );
+                                return Ok(());
+                            }
                         },
                     },
                 },
