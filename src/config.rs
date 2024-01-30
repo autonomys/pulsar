@@ -2,7 +2,7 @@ use std::fs::{create_dir_all, remove_file, File};
 use std::num::NonZeroU8;
 use std::path::PathBuf;
 
-use color_eyre::eyre::{eyre, Report, Result, WrapErr};
+use color_eyre::eyre::{bail, eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
@@ -212,7 +212,7 @@ pub(crate) fn validate_config() -> Result<Config> {
 
     // validity checks
     if config.farmer.farm_size < MIN_FARM_SIZE {
-        return Err(eyre!("farm size should be bigger than {MIN_FARM_SIZE}!"));
+        bail!("farm size should be bigger than {MIN_FARM_SIZE}!");
     }
 
     Ok(config)

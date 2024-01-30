@@ -1,5 +1,5 @@
 use std::env;
-use std::fs::create_dir_all;
+use std::fs::{self, create_dir_all, rename};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -387,4 +387,32 @@ impl<'de> Deserialize<'de> for Rewards {
         let value = s.parse::<u128>().map_err(serde::de::Error::custom)?;
         Ok(Rewards(value))
     }
+}
+
+// move data from old directory to new directory
+pub(crate) fn create_and_move_data(old_dir: PathBuf, new_dir: PathBuf) -> Result<()> {
+    // create the directory if doesn't exist
+    if !new_dir.exists() {
+        fs::create_dir_all(&new_dir)?;
+    }
+
+    // get the folder content
+    let mut entries = fs::read_dir(&old_dir)?;
+
+    // move if there is any content
+    if entries.next().is_some() {
+        for entry in entries {
+            let entry = entry?;
+            let file_name = entry.file_name();
+            rename(entry.path(), new_dir.join(file_name))?;
+        }
+    }
+
+    Ok(())
+}
+
+pub(crate) fn dir_parser(path: &str) -> Result<PathBuf> {
+    let dir = PathBuf::from(path);
+
+    Ok(dir)
 }

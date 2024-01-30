@@ -13,7 +13,6 @@ mod utils;
 mod tests;
 
 use std::io::{self, Write};
-use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
@@ -25,7 +24,6 @@ use crossterm::{cursor, execute};
 use owo_colors::OwoColorize;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use subspace_sdk::ByteSize;
 use tracing::instrument;
 
 use crate::commands::config::config;
@@ -84,15 +82,15 @@ enum Commands {
         #[arg(short, long, action)]
         show: bool,
         #[arg(short, long, action)]
-        chain: ChainConfig,
+        chain: Option<ChainConfig>,
         #[arg(short, long, action)]
-        farm_size: ByteSize,
+        farm_size: Option<String>,
         #[arg(short, long, action)]
-        reward_address: String,
+        reward_address: Option<String>,
         #[arg(short, long, action)]
-        node_dir: PathBuf,
+        node_dir: Option<String>,
         #[arg(short = 'd', long, action)]
-        farm_dir: PathBuf,
+        farm_dir: Option<String>,
     },
 }
 
@@ -117,7 +115,7 @@ async fn main() -> Result<(), Report> {
             open_log_dir().suggestion(support_message())?;
         }
         Some(Commands::Config { chain, show, farm_size, reward_address, node_dir, farm_dir }) => {
-            config(chain, show, farm_size, reward_address, node_dir, farm_dir)
+            config(show, chain, farm_size, reward_address, node_dir, farm_dir)
                 .await
                 .suggestion(support_message())?;
         }
