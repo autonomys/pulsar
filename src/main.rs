@@ -75,7 +75,6 @@ enum Commands {
     #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)")]
     Info,
-    OpenLogs,
     #[command(about = "set the config params: farm-size, reward-address, node-dir, farm-dir")]
     Config {
         #[arg(short, long, action)]
@@ -91,6 +90,7 @@ enum Commands {
         #[arg(short = 'd', long, action)]
         farm_dir: Option<String>,
     },
+    OpenLogs,
 }
 
 #[tokio::main]
@@ -110,13 +110,13 @@ async fn main() -> Result<(), Report> {
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
         }
-        Some(Commands::OpenLogs) => {
-            open_log_dir().suggestion(support_message())?;
-        }
         Some(Commands::Config { chain, show, farm_size, reward_address, node_dir, farm_dir }) => {
             config(show, chain, farm_size, reward_address, node_dir, farm_dir)
                 .await
                 .suggestion(support_message())?;
+        }
+        Some(Commands::OpenLogs) => {
+            open_log_dir().suggestion(support_message())?;
         }
         None => arrow_key_mode().await.suggestion(support_message())?,
     }
@@ -210,7 +210,7 @@ async fn arrow_key_mode() -> Result<(), Report> {
             open_log_dir().suggestion(support_message())?;
         }
         _ => {
-            unreachable!("this number must stay in [0-4]")
+            unreachable!("this number must stay in [0-5]")
         }
     }
 
@@ -252,7 +252,6 @@ impl std::fmt::Display for Commands {
             Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
-            Commands::OpenLogs => write!(f, "open logs directory"),
             Commands::Config {
                 show: _,
                 chain: _,
@@ -261,6 +260,7 @@ impl std::fmt::Display for Commands {
                 node_dir: _,
                 farm_dir: _,
             } => write!(f, "config"),
+            Commands::OpenLogs => write!(f, "open logs directory"),
         }
     }
 }

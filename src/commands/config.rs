@@ -52,14 +52,14 @@
 //! TODO: add usage
 
 use std::fs;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use color_eyre::eyre::{self, bail};
 
 use crate::commands::wipe::wipe;
-use crate::config::{parse_config, parse_config_path, Config};
-use crate::utils::{
-    chain_parser, create_and_move_data, dir_parser, reward_address_parser, size_parser,
-};
+use crate::config::{parse_config, parse_config_path, ChainConfig, Config};
+use crate::utils::{create_and_move_data, reward_address_parser, size_parser};
 
 // function for config cli command
 pub(crate) async fn config(
@@ -104,7 +104,7 @@ pub(crate) async fn config(
 
         // update (optional) the chain
         if let Some(c) = chain {
-            config.chain = chain_parser(&c)?;
+            config.chain = ChainConfig::from_str(&c)?;
             println!("Chain updated as {:?}", c);
 
             // wipe everything (farmer, node, summary) except config file
@@ -125,7 +125,7 @@ pub(crate) async fn config(
 
         // update (optional) the node directory
         if let Some(ref n) = node_dir {
-            let node_dir = dir_parser(&n).expect("Invalid node directory");
+            let node_dir = PathBuf::from_str(&n).expect("Invalid node directory");
             create_and_move_data(config.node.directory.clone(), node_dir.clone())
                 .expect("Error in setting new node directory.");
             config.node.directory = node_dir;
@@ -133,7 +133,7 @@ pub(crate) async fn config(
 
         // update (optional) the farm directory
         if let Some(ref fd) = farm_dir {
-            let farm_dir = dir_parser(&fd).expect("Invalid farm directory");
+            let farm_dir = PathBuf::from_str(&fd).expect("Invalid farm directory");
             create_and_move_data(config.farmer.farm_directory.clone(), farm_dir.clone())
                 .expect("Error in setting new farm directory.");
             if farm_dir.exists() {
@@ -142,7 +142,6 @@ pub(crate) async fn config(
         }
 
         // Save the updated configuration back to the file
-        // FIXME: might be needed to use `to_string_pretty`
         fs::write(config_path, toml::to_string(&config)?)?;
     }
 
