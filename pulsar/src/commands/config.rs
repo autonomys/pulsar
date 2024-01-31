@@ -118,11 +118,18 @@ pub(crate) async fn config(
 
         // update (optional) the chain
         if let Some(c) = chain {
-            config.chain = ChainConfig::from_str(&c)?;
-            println!("Chain updated as {:?}", c);
+            let new_chain = ChainConfig::from_str(&c)?;
+            if config.chain == new_chain.clone() {
+                bail!("Chain already set");
+            }
 
-            // wipe everything (farmer, node, summary) except config file
-            wipe(true, true, true, false).await.expect("Error while wiping.");
+            config.chain = new_chain.clone();
+
+            // if chain is changed, then wipe everything (farmer, node, summary) except
+            // config file
+            if parse_config()?.chain == new_chain {
+                wipe(true, true, true, false).await.expect("Error while wiping.");
+            }
         }
 
         // update (optional) the farm size

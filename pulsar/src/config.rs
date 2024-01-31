@@ -150,7 +150,7 @@ impl FarmerConfig {
 }
 
 /// Enum for Chain
-#[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
+#[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter, PartialEq)]
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3g,
