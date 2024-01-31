@@ -7,6 +7,7 @@ use color_eyre::eyre::{eyre, Context, Result};
 use futures::prelude::*;
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use strum::IntoEnumIterator;
 use subspace_sdk::{ByteSize, PublicKey};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
@@ -16,7 +17,7 @@ use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter, Layer};
 
-use crate::config::MIN_FARM_SIZE;
+use crate::config::{ChainConfig, MIN_FARM_SIZE};
 use crate::summary::Rewards;
 
 /// for how long a log file should be valid
@@ -415,4 +416,10 @@ pub(crate) fn dir_parser(path: &str) -> Result<PathBuf> {
     let dir = PathBuf::from(path);
 
     Ok(dir)
+}
+
+pub(crate) fn chain_parser(c: &str) -> Result<ChainConfig> {
+    let valid_chain = ChainConfig::from_str(c)?;
+
+    Ok(valid_chain)
 }

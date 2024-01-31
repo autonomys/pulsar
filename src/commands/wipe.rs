@@ -42,7 +42,7 @@ pub(crate) async fn wipe_config(farmer: bool, node: bool) -> Result<()> {
 /// implementation of the `wipe` command
 ///
 /// can wipe farmer, node, summary and farm
-async fn wipe(
+pub(crate) async fn wipe(
     wipe_farmer: bool,
     wipe_node: bool,
     wipe_summary: bool,

@@ -17,7 +17,6 @@ use std::io::{self, Write};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::{Context, Report};
 use color_eyre::Help;
-use config::ChainConfig;
 use crossterm::event::{Event, KeyCode};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{cursor, execute};
@@ -82,7 +81,7 @@ enum Commands {
         #[arg(short, long, action)]
         show: bool,
         #[arg(short, long, action)]
-        chain: Option<ChainConfig>,
+        chain: Option<String>,
         #[arg(short, long, action)]
         farm_size: Option<String>,
         #[arg(short, long, action)]
@@ -205,6 +204,9 @@ async fn arrow_key_mode() -> Result<(), Report> {
             info().await.suggestion(support_message())?;
         }
         4 => {
+            config(true, None, None, None, None, None).await.suggestion(support_message())?;
+        }
+        5 => {
             open_log_dir().suggestion(support_message())?;
         }
         _ => {
@@ -252,8 +254,8 @@ impl std::fmt::Display for Commands {
             Commands::Init => write!(f, "init"),
             Commands::OpenLogs => write!(f, "open logs directory"),
             Commands::Config {
-                chain: _,
                 show: _,
+                chain: _,
                 farm_size: _,
                 reward_address: _,
                 node_dir: _,
