@@ -16,21 +16,34 @@ on:
         required: true
         default: false
         type: boolean
-  merge_group:
-    types: [checks_requested]
+
+concurrency:
+  group: push-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   # Not needed in CI, should make things a bit faster
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
-  # Build smaller artifacts to avoid running out of space in CI
-  # TODO: Try to remove once https://github.com/paritytech/substrate/issues/11538 is resolved
-  RUSTFLAGS: -C strip=symbols -C opt-level=s
-  # Remove unnecessary WASM build artefacts
-  WASM_BUILD_CLEAN_TARGET: 1
+  MAX_TARGET_SIZE: 1024 # MB
+  # TODO: AES flag is such that we have decent performance on ARMv8, remove once `aes` crate bumps MSRV to at least
+  #  1.61: https://github.com/RustCrypto/block-ciphers/issues/373
+  RUSTFLAGS: -C strip=symbols -C opt-level=s --cfg aes_armv8
 
 jobs:
-  clippy-fmt-test:
+  fmt:
+    runs-on: ${{ fromJson(github.repository_owner == 'subspace' && '["self-hosted", "ubuntu-20.04-x86-64"]' || '"ubuntu-22.04"') }}
+    steps:
+      - name: git checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
     strategy:
       fail-fast: false
       matrix:
@@ -45,8 +58,79 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # @v3.1.0
+      - name: git checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+
+      # On macOS, we need a proper Clang version, not Apple's custom version without wasm32 support
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@8852e4d5c58653ed05135c0a5d949d9c2febcb00 # v1.6.1
+        with:
+          version: "15.0"
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Needed for hwloc
+      - name: Install automake (macOS)
+        run: brew install automake
+        if: runner.os == 'macOS'
+
+      # Workaround to resolve link error with C:\msys64\mingw64\bin\libclang.dll
+      - name: Remove msys64
+        run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
+        if: runner.os == 'Windows'
+        continue-on-error: true
+
+      - name: Configure cache
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # @v3.3.2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/bin
+            ~/.cargo/git
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
+
+      - name: Clean unused crate source checkouts and git repo checkouts
+        run: cargo cache
+
+      - name: cargo clippy (Linux & Windows)
+        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # v1.0.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --locked --all-targets -- -D warnings
+        if: runner.os != 'macOS'
+
+      - name: cargo clippy (MacOS)
+        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --locked  --no-default-features -- -D warnings
+        if: runner.os == 'macOS'
+
+      - name: Clean unused artifacts
+        run: cargo sweep --maxsize ${{ env.MAX_TARGET_SIZE }}
+
+  test:
+    strategy:
+      matrix:
+        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-12-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-12", "windows-2022"]') }}
+        run-all:
+          - ${{ inputs.test-macos-and-windows || github.ref == 'refs/heads/master' }}
+        exclude: # exclude macos-12 and window-2022 when the condition is false
+          - run-all: false
+            os: macos-12
+          - run-all: false
+            os: windows-2022
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: git checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
 
       # On macOS, we need a proper Clang version, not Apple's custom version without wasm32 support
       - name: Install LLVM and Clang
@@ -69,35 +153,57 @@ jobs:
       - name: Remove msys64
         run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
         if: runner.os == 'Windows'
-        # May not exist on self-hosted runners
         continue-on-error: true
 
-      - name: cargo fmt
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
+      - name: Add cache
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # @v3.3.2
+        if: runner.os != 'Windows'
         with:
-          command: fmt
-          args: --all -- --check
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/bin
+            ~/.cargo/git
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cargo-
 
-      - name: cargo test
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # @v1.0.1
-        with:
-          command: test
+      - name: Install utils for caching
+        if: runner.os != 'Windows'
+        run: |
+          test -x ~/.cargo/bin/cargo-sweep || cargo install cargo-sweep
+          test -x ~/.cargo/bin/cargo-cache || cargo install cargo-cache --no-default-features --features ci-autoclean cargo-cache
 
-      - name: cargo clippy --locked (Linux & Windows)
-        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --all-targets -- -D warnings
+      - name: Clean unused crate source checkouts and git repo checkouts
+        if: runner.os != 'Windows'
+        run: cargo cache
+
+      - name: Build and run tests (linux & windows)
+        run: cargo test --locked
         if: runner.os != 'macOS'
 
-      - name: cargo clippy --locked (macOS)
-        uses: actions-rs/clippy-check@b5b5f21f4797c02da247df37026fcd0a5024aa4d # @v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --locked --all-targets --no-default-features -- -D warnings
+      - name: Build and run tests (macOS)
+        run: cargo test --locked --no-default-features
         if: runner.os == 'macOS'
 
+      - name: Clean unused artifacts
+        if: runner.os != 'Windows'
+        run: cargo sweep --maxsize ${{ env.MAX_TARGET_SIZE }}
+
+  docs:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@9b1ee5b22b0a3f1feb8c2ff99b32c89b3c3191e9 # v2.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure cache
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # v2.2.0
+
       - name: Check Documentation
-        run: cargo doc --locked --all --no-deps
+        run: cargo doc --locked --no-deps
         env:
           RUSTDOCFLAGS: "-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links"

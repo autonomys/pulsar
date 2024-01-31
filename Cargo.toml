@@ -1,82 +1,9 @@
-[package]
-name = "pulsar"
-version = "0.7.4"
-edition = "2021"
-
-[dependencies]
-anyhow = "1"
-async-stream = "0.3.5"
-bytesize = "1.1"
-bytesize-serde = "0.2"
-clap = { version = "4.1.1", features = ["derive"] }
-color-eyre = "0.6.2"
-crossterm = "0.26.1"
-derivative = "2.2.0"
-derive_more = "0.99.17"
-dirs = "4.0.0"
-fdlimit = "0.2"
-futures = "0.3"
-indicatif = { version = "0.17.1", features = ["improved_unicode"] }
-libp2p-core = "0.38"
-num-rational = "0.4.1"
-num-traits = "0.2.14"
-open = "4.0.2"
-owo-colors = "3.5.0"
-rand = "0.8.5"
-serde = "1"
-serde_derive = "1"
-serde_json = "1.0.113"
-single-instance = "0.3.3"
-sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "c63a8b28a9fd26d42116b0dcef1f2a5cefb9cd1c", features = ["full_crypto"] }
-strum = "0.24.1"
-strum_macros = "0.24.3"
-subspace-sdk = { git = "https://github.com/subspace/subspace-sdk", rev = "000c6c774f3dd995e783d6d78d1d59669540b454", default-features = false }
-thiserror = "1"
-tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread", "tracing", "signal"] }
-toml = "0.7"
-tracing = "0.1.37"
-tracing-appender = "0.2"
-tracing-bunyan-formatter = "0.3.4"
-tracing-error = "0.2.0"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
-whoami = "1"
-zeroize = "1.6.0"
-
-[dev-dependencies]
-rand = "0.8.5"
-
-[features]
-default = [
-    "numa"
+[workspace]
+resolver = "2"
+members = [
+    "pulsar",
+    "sdk/*"
 ]
-numa = [
-    "subspace-sdk/numa"
-]
-
-# The only triple tested and confirmed as working in `jemallocator` crate is `x86_64-unknown-linux-gnu`
-[target.'cfg(all(target_arch = "x86_64", target_vendor = "unknown", target_os = "linux", target_env = "gnu"))'.dependencies]
-jemallocator = "0.5.0"
-
-[target.'cfg(tokio_unstable)'.dependencies]
-console-subscriber = "0.1"
-
-[patch.crates-io]
-# TODO: remove once tracing-appender has a new release
-tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-appender = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-core = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-error = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-tracing-subscriber = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
-
-[profile.production]
-inherits = "release"
-lto = "fat"
-codegen-units = 1
-
-# TODO: get rid of this when we have bigger RAM for aarch64 linux
-[profile.aarch64linux]
-inherits = "release"
-codegen-units = 1
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
@@ -86,15 +13,13 @@ codegen-units = 1
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
-ark-bls12-381 = { opt-level = 3 }
-ark-ec = { opt-level = 3 }
-ark-ff = { opt-level = 3 }
-ark-ff-asm = { opt-level = 3 }
-ark-poly = { opt-level = 3 }
-ark-serialize = { opt-level = 3 }
-ark-std = { opt-level = 3 }
+bitvec = { opt-level = 3 }
 blake2 = { opt-level = 3 }
+blake3 = { opt-level = 3 }
 blake2b_simd = { opt-level = 3 }
+blst = { opt-level = 3 }
+rust-kzg-blst = { opt-level = 3 }
+chacha20 = { opt-level = 3 }
 chacha20poly1305 = { opt-level = 3 }
 cranelift-codegen = { opt-level = 3 }
 cranelift-wasm = { opt-level = 3 }
@@ -112,7 +37,7 @@ httparse = { opt-level = 3 }
 integer-sqrt = { opt-level = 3 }
 k256 = { opt-level = 3 }
 keccak = { opt-level = 3 }
-libm = { opt-level = 3 }
+kzg = { opt-level = 3 }
 libsecp256k1 = { opt-level = 3 }
 libz-sys = { opt-level = 3 }
 mio = { opt-level = 3 }
@@ -129,14 +54,40 @@ sha2 = { opt-level = 3 }
 sha3 = { opt-level = 3 }
 smallvec = { opt-level = 3 }
 snow = { opt-level = 3 }
-subspace-core-primitives = { opt-level = 3 }
 subspace-archiving = { opt-level = 3 }
+subspace-chiapos = { opt-level = 3 }
+subspace-core-primitives = { opt-level = 3 }
+subspace-erasure-coding = { opt-level = 3 }
+subspace-farmer-components = { opt-level = 3 }
+subspace-proof-of-space = { opt-level = 3 }
+subspace-proof-of-time = { opt-level = 3 }
 twox-hash = { opt-level = 3 }
 uint = { opt-level = 3 }
-wasmi = { opt-level = 3 }
 x25519-dalek = { opt-level = 3 }
 yamux = { opt-level = 3 }
 zeroize = { opt-level = 3 }
+
+[profile.release]
+# Substrate runtime requires unwinding.
+panic = "unwind"
+
+[profile.production]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+
+# TODO: get rid of this when we have bigger RAM for aarch64 linux
+[profile.aarch64linux]
+inherits = "release"
+codegen-units = 1
+
+[patch.crates-io]
+# TODO: remove once tracing-appender has a new release
+tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
+tracing-appender = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
+tracing-core = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
+tracing-error = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
+tracing-subscriber = { git = "https://github.com/tokio-rs/tracing", branch = "v0.1.x" }
 
 # Reason: We need to patch substrate dependency of snowfork and frontier libraries to our fork
 # TODO: Remove when we are using upstream substrate instead of fork

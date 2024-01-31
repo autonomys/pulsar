@@ -4468,11 +4468,11 @@ dependencies = [
 
 [[package]]
 name = "hdrhistogram"
-version = "7.5.3"
+version = "7.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5b38e5c02b7c7be48c8dc5217c4f1634af2ea221caae2e024bffc7a7651c691"
+checksum = "765c9198f173dd59ce26ff9f95ef0aafd0a0fe01fb9d72841bc5066a4c06511d"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.21.5",
  "byteorder",
  "flate2",
  "nom",
@@ -5103,26 +5103,6 @@ name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
-
-[[package]]
-name = "jemalloc-sys"
-version = "0.5.4+5.3.0-patched"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac6c1946e1cea1788cbfde01c993b52a10e2da07f4bac608228d1bed20bfebf2"
-dependencies = [
- "cc",
- "libc",
-]
-
-[[package]]
-name = "jemallocator"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0de374a9f8e63150e6f5e8a60cc14c668226d7a347d8aee1a45766e3c4dd3bc"
-dependencies = [
- "jemalloc-sys",
- "libc",
-]
 
 [[package]]
 name = "jobserver"
@@ -8291,7 +8271,6 @@ dependencies = [
  "bytesize-serde",
  "clap",
  "color-eyre",
- "console-subscriber",
  "crossterm",
  "derivative",
  "derive_more",
@@ -8299,8 +8278,8 @@ dependencies = [
  "fdlimit 0.2.1",
  "futures",
  "indicatif",
- "jemallocator",
  "libp2p-core 0.38.0",
+ "mimalloc",
  "num-rational",
  "num-traits",
  "open",
@@ -10181,7 +10160,6 @@ dependencies = [
 [[package]]
 name = "sdk-dsn"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "anyhow",
  "derivative",
@@ -10205,7 +10183,6 @@ dependencies = [
 [[package]]
 name = "sdk-farmer"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10239,7 +10216,6 @@ dependencies = [
 [[package]]
 name = "sdk-node"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "anyhow",
  "backoff",
@@ -10306,7 +10282,6 @@ dependencies = [
 [[package]]
 name = "sdk-substrate"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "bytesize",
  "derivative",
@@ -10330,7 +10305,6 @@ dependencies = [
 [[package]]
 name = "sdk-traits"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "async-trait",
  "parking_lot 0.12.1",
@@ -10344,7 +10318,6 @@ dependencies = [
 [[package]]
 name = "sdk-utils"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -12024,15 +11997,29 @@ dependencies = [
 [[package]]
 name = "subspace-sdk"
 version = "0.1.0"
-source = "git+https://github.com/subspace/subspace-sdk?rev=000c6c774f3dd995e783d6d78d1d59669540b454#000c6c774f3dd995e783d6d78d1d59669540b454"
 dependencies = [
+ "anyhow",
+ "clap",
+ "console-subscriber",
+ "derive_builder 0.12.0",
+ "derive_more",
+ "fdlimit 0.2.1",
+ "futures",
+ "mimalloc",
  "sdk-dsn",
  "sdk-farmer",
  "sdk-node",
  "sdk-substrate",
  "sdk-utils",
+ "serde_json",
  "static_assertions",
+ "subspace-farmer-components",
  "subspace-proof-of-space",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-futures",
+ "tracing-subscriber 0.3.18",
 ]
 
 [[package]]
