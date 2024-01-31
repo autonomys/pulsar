@@ -75,7 +75,9 @@ enum Commands {
     #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)")]
     Info,
-    #[command(about = "set the config params: farm-size, reward-address, node-dir, farm-dir")]
+    #[command(
+        about = "set the config params: chain, farm-size, reward-address, node-dir, farm-dir"
+    )]
     Config {
         #[arg(short, long, action)]
         show: bool,

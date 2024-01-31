@@ -46,10 +46,24 @@
 //! ```
 //!
 //! ### Node directory
-//! TODO: add usage
+//! ```
+//! $ pulsar config -n "/Users/abhi3700/test/pulsar1/node"
+//! ```
 //!
 //! ### Farm directory
-//! TODO: add usage
+//! ```
+//! $ pulsar config -d "/Users/abhi3700/test/pulsar1/farms"
+//! ```
+//!
+//! ### All params
+//! ```
+//! $ pulsar config \
+//!   --chain devnet \
+//!   --farm-size 5GB \
+//!   --reward-address 5DXRtoHJePQBEk44onMy5yG4T8CjpPaK4qKNmrwpxqxZALGY \
+//!   --node-directory "/Users/abhi3700/test/pulsar1/node" \
+//!   --farm-directory "/Users/abhi3700/test/pulsar1/farms"
+//! ```
 
 use std::fs;
 use std::path::PathBuf;
@@ -59,7 +73,7 @@ use color_eyre::eyre::{self, bail};
 
 use crate::commands::wipe::wipe;
 use crate::config::{parse_config, parse_config_path, ChainConfig, Config};
-use crate::utils::{create_and_move_data, reward_address_parser, size_parser};
+use crate::utils::{create_or_move_data, reward_address_parser, size_parser};
 
 // function for config cli command
 pub(crate) async fn config(
@@ -126,16 +140,14 @@ pub(crate) async fn config(
         // update (optional) the node directory
         if let Some(ref n) = node_dir {
             let node_dir = PathBuf::from_str(&n).expect("Invalid node directory");
-            create_and_move_data(config.node.directory.clone(), node_dir.clone())
-                .expect("Error in setting new node directory.");
+            create_or_move_data(config.node.directory.clone(), node_dir.clone())?;
             config.node.directory = node_dir;
         }
 
         // update (optional) the farm directory
         if let Some(ref fd) = farm_dir {
             let farm_dir = PathBuf::from_str(&fd).expect("Invalid farm directory");
-            create_and_move_data(config.farmer.farm_directory.clone(), farm_dir.clone())
-                .expect("Error in setting new farm directory.");
+            create_or_move_data(config.farmer.farm_directory.clone(), farm_dir.clone())?;
             if farm_dir.exists() {
                 config.farmer.farm_directory = farm_dir;
             }
