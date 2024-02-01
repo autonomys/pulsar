@@ -91,6 +91,17 @@ If you ever want to delete/kill your farming session, enter the command:
 screen -S farming -X quit
 ```
 
+## Binary
+
+### macOS  
+
+Install using [homebrew](https://brew.sh/) package manager:
+
+```sh
+brew tap subspace/homebrew-pulsar
+brew install pulsar
+```
+
 ## Developer
 
 ### Pre-requisites
