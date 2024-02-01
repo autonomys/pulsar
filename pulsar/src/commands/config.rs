@@ -133,26 +133,26 @@ pub(crate) async fn config(
         }
 
         // update (optional) the farm size
-        if let Some(ref f) = farm_size {
+        if let Some(f) = farm_size {
             let farm_size = size_parser(&f)?;
             config.farmer.farm_size = farm_size;
         }
 
         // update (optional) the reward address
-        if let Some(ref r) = reward_address {
+        if let Some(r) = reward_address {
             let reward_address = reward_address_parser(&r)?;
             config.farmer.reward_address = reward_address;
         }
 
         // update (optional) the node directory
-        if let Some(ref n) = node_dir {
+        if let Some(n) = node_dir {
             let node_dir = PathBuf::from_str(&n).expect("Invalid node directory");
             create_or_move_data(config.node.directory.clone(), node_dir.clone())?;
             config.node.directory = node_dir;
         }
 
         // update (optional) the farm directory
-        if let Some(ref fd) = farm_dir {
+        if let Some(fd) = farm_dir {
             let farm_dir = PathBuf::from_str(&fd).expect("Invalid farm directory");
             create_or_move_data(config.farmer.farm_directory.clone(), farm_dir.clone())?;
             if farm_dir.exists() {
