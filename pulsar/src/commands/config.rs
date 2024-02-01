@@ -11,7 +11,7 @@
 //! ## Usage
 //!
 //! ### Show
-//! ```
+//! ```bash
 //! $ pulsar config -s
 //! Current Config set as:
 //! {
@@ -30,33 +30,33 @@
 //! ```
 //!
 //! ### Chain
-//! ```
+//! ```bash
 //! $ pulsar config -c devnet
 //! ```
 //!
 //! ### Farm size
-//! ```
+//! ```bash
 //! $ pulsar config -f 3GB
 //! ```
 //!
 //! ### Reward address
 //!
-//! ```
+//! ```bash
 //! $ pulsar config -r 5CDstQSbxPrPAaRTuVR2n9PHuhGYnnQvXdbJSQmodD5i16x2
 //! ```
 //!
 //! ### Node directory
-//! ```
+//! ```bash
 //! $ pulsar config -n "/Users/abhi3700/test/pulsar1/node"
 //! ```
 //!
 //! ### Farm directory
-//! ```
+//! ```bash
 //! $ pulsar config -d "/Users/abhi3700/test/pulsar1/farms"
 //! ```
 //!
 //! ### All params
-//! ```
+//! ```bash
 //! $ pulsar config \
 //!   --chain devnet \
 //!   --farm-size 5GB \
