@@ -38,7 +38,7 @@ In some instances, you may want to move the farming process to the background. T
 ### Example with `tmux`
 
 ```sh
-tmux -S farming
+$ tmux -S farming
 ```
 
 This will create a new `tmux` session using a socket file named `farming`.
@@ -46,7 +46,7 @@ This will create a new `tmux` session using a socket file named `farming`.
 Once the tmux session is created, you can go ahead and run the farming process.
 
 ```sh
-./pulsar farm
+$ ./pulsar farm
 ```
 
 Once it's running, you can detach the process by pressing `CTRL+b d` (read more about [detaching a sessions](https://linuxhint.com/detach-session-tmux/))
@@ -56,7 +56,7 @@ That's it, you should be back to your terminal, with _subspace farming_ running 
 To re-attach to your session, use tmux:
 
 ```sh
-tmux -S farming attach
+$ tmux -S farming attach
 ```
 
 If you ever want to delete/kill your farming session, enter the command:
@@ -107,11 +107,30 @@ sudo apt-get install llvm clang cmake
 
 #### macOS
 
-Install via Homebrew:
+1. Install via Homebrew:
 
 ```bash
-brew tap subspace/homebrew-pulsar
-brew install pulsar
+brew install llvm@15 clang cmake
+```
+
+2. Add `llvm` to your `~/.zshrc` or `~/.bashrc`:
+
+```bash
+export PATH="/opt/homebrew/opt/llvm@15/bin:$PATH"
+```
+
+3. Activate the changes:
+
+```bash
+source ~/.zshrc
+# or
+source ~/.bashrc
+```
+
+4. Verify that `llvm` is installed:
+
+```bash
+llvm-config --version
 ```
 
 ### Build from Source
@@ -121,7 +140,7 @@ Ensure the [pre-requisites](#pre-requisites).
 And then run:
 
 ```sh
-cargo build
+$ cargo build
 ```
 
 > Use `--release` flag for a release build and optimized binary - `./target/release/pulsar`
@@ -133,7 +152,7 @@ cargo build
 After ensuring the [pre-requisites](#pre-requisites), just build using cargo:
 
 ```sh
-cargo build --release
+$ cargo build --release
 ```
 
 This would generate an optimized binary.
@@ -141,7 +160,7 @@ This would generate an optimized binary.
 And then, you can install the binary (optimized) to your system:
 
 ```sh
-cargo install --path .
+$ cargo install --path .
 ```
 
 The binary gets added to `~/.cargo/bin`, which is included in the PATH environment variable by default during installation of Rust tools. So you can run it immediately from the shell.
