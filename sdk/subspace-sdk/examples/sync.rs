@@ -1,8 +1,10 @@
 use std::num::NonZeroU8;
 use std::path::PathBuf;
 
+use anyhow::anyhow;
 use clap::Parser;
 use futures::stream::StreamExt;
+use sdk_node::ChainSpec;
 use subspace_sdk::node::NetworkBuilder;
 use subspace_sdk::{
     chain_spec, ByteSize, FarmDescription, Farmer, MultiaddrWithPeerId, Node, PublicKey,
@@ -49,9 +51,16 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     match args {
         Args::GenerateSpec { path } =>
-            tokio::fs::write(path, serde_json::to_string_pretty(&chain_spec::dev_config())?).await?,
+            tokio::fs::write(
+                path,
+                chain_spec::dev_config()
+                    .as_json(false)
+                    .map_err(|e| anyhow!("unable to write json spec, error: {}", e))?,
+            )
+            .await?,
         Args::Farm { plot, plot_size, node, spec } => {
-            let chain_spec = serde_json::from_str(&tokio::fs::read_to_string(spec).await?)?;
+            let chain_spec = ChainSpec::from_json_file(spec)
+                .map_err(|e| anyhow!("unable to read json spec, error: {}", e))?;
             let (plot_size, _cache_size) =
                 (ByteSize::b(plot_size.as_u64() * 9 / 10), ByteSize::b(plot_size.as_u64() / 10));
             let plots = [FarmDescription::new(plot.join("plot"), plot_size)];
@@ -86,7 +95,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Args::Sync { boot_nodes, spec } => {
             let node = TempDir::new()?;
-            let chain_spec = serde_json::from_str(&tokio::fs::read_to_string(spec).await?)?;
+            let chain_spec = ChainSpec::from_json_file(spec)
+                .map_err(|e| anyhow!("unable to read json spec, error: {}", e))?;
             let node = Node::builder()
                 .force_authoring(true)
                 .role(subspace_sdk::node::Role::Authority)

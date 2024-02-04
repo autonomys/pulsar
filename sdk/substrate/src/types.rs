@@ -161,7 +161,7 @@ impl OffchainWorkerBuilder {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::default().enabled(true)
     }
 

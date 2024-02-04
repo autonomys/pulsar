@@ -12,7 +12,7 @@ use sc_consensus_subspace::block_import::BlockImportingNotification;
 use sc_consensus_subspace::notification::SubspaceNotificationStream;
 use sc_consensus_subspace::slot_worker::NewSlotNotification;
 use sc_network::NetworkService;
-use sc_service::{BasePath, Configuration, RpcHandlers};
+use sc_service::{Configuration, RpcHandlers};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sc_utils::mpsc::{TracingUnboundedReceiver, TracingUnboundedSender};
 use sp_core::H256;
@@ -23,9 +23,7 @@ use subspace_runtime_primitives::opaque::Block as CBlock;
 use subspace_service::FullClient as CFullClient;
 use tokio::task::JoinHandle;
 
-use crate::domains::evm_domain_executor_dispatch::EVMDomainExecutorDispatch;
 use crate::domains::utils::AccountId20;
-use crate::ExecutorDispatch as CExecutorDispatch;
 
 /// `DomainInstanceStarter` used to start a domain instance node based on the
 /// given bootstrap result
@@ -35,7 +33,7 @@ pub struct DomainInstanceStarter {
     pub domain_id: DomainId,
     pub runtime_type: RuntimeType,
     pub additional_arguments: Vec<String>,
-    pub consensus_client: Arc<CFullClient<CRuntimeApi, CExecutorDispatch>>,
+    pub consensus_client: Arc<CFullClient<CRuntimeApi>>,
     pub consensus_network: Arc<NetworkService<CBlock, H256>>,
     pub block_importing_notification_stream:
         SubspaceNotificationStream<BlockImportingNotification<CBlock>>,
@@ -103,15 +101,11 @@ impl DomainInstanceStarter {
                 let eth_provider = EthProvider::<
                     evm_domain_runtime::TransactionConverter,
                     DefaultEthConfig<
-                        FullClient<
-                            DomainBlock,
-                            evm_domain_runtime::RuntimeApi,
-                            EVMDomainExecutorDispatch,
-                        >,
+                        FullClient<DomainBlock, evm_domain_runtime::RuntimeApi>,
                         FullBackend<DomainBlock>,
                     >,
                 >::new(
-                    Some(BasePath::new(service_config.base_path.path())),
+                    Some(service_config.base_path.path()),
                     additional_arguments.drain(..),
                 );
 
@@ -139,7 +133,6 @@ impl DomainInstanceStarter {
                     _,
                     _,
                     evm_domain_runtime::RuntimeApi,
-                    EVMDomainExecutorDispatch,
                     AccountId20,
                     _,
                     _,

@@ -49,19 +49,19 @@ impl NodeConfig {
             self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3g => {
-                let mut node = Node::gemini_3g()
-                    .network(NetworkBuilder::gemini_3g().name(name))
+            ChainConfig::Gemini3h => {
+                let mut node = Node::gemini_3h()
+                    .network(NetworkBuilder::gemini_3h().name(name))
                     .dsn(
-                        DsnBuilder::gemini_3g()
+                        DsnBuilder::gemini_3h()
                             .provider_storage_path(provider_storage_dir_getter()),
                     )
                     .sync_from_dsn(true)
                     .enable_subspace_block_relay(true);
                 if enable_domains {
-                    node = node.domain(Some(DomainConfigBuilder::gemini_3g().configuration()));
+                    node = node.domain(Some(DomainConfigBuilder::gemini_3h().configuration()));
                 }
-                let chain_spec = chain_spec::gemini_3g();
+                let chain_spec = chain_spec::gemini_3h();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
@@ -153,7 +153,7 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3g,
+    Gemini3h,
     Dev,
     DevNet,
 }
@@ -163,7 +163,7 @@ impl std::str::FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3g" => Ok(ChainConfig::Gemini3g),
+            "gemini3h" => Ok(ChainConfig::Gemini3h),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),

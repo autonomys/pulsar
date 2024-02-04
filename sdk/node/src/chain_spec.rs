@@ -6,8 +6,8 @@ use std::num::NonZeroU32;
 
 use hex_literal::hex;
 use parity_scale_codec::Encode;
-use sc_service::{ChainType, NoExtension};
-use sc_subspace_chain_specs::{SerializableChainSpec, DEVNET_CHAIN_SPEC, GEMINI_3G_CHAIN_SPEC};
+use sc_service::{ChainType, GenericChainSpec, NoExtension};
+use sc_subspace_chain_specs::{DEVNET_CHAIN_SPEC, GEMINI_3H_CHAIN_SPEC};
 use sc_telemetry::TelemetryEndpoints;
 use sdk_utils::chain_spec as utils;
 use sdk_utils::chain_spec::{chain_spec_properties, get_public_key_from_seed};
@@ -18,9 +18,9 @@ use sp_domains::{OperatorAllowList, OperatorPublicKey, RuntimeType};
 use sp_runtime::{BuildStorage, Percent};
 use subspace_core_primitives::PotKey;
 use subspace_runtime::{
-    AllowAuthoringBy, BalancesConfig, DomainsConfig, MaxDomainBlockSize, MaxDomainBlockWeight,
-    RuntimeConfigsConfig, RuntimeGenesisConfig, SubspaceConfig, SudoConfig, SystemConfig,
-    VestingConfig, MILLISECS_PER_BLOCK, WASM_BINARY,
+    AllowAuthoringBy, BalancesConfig, DomainsConfig, EnableRewardsAt, MaxDomainBlockSize,
+    MaxDomainBlockWeight, RuntimeConfigsConfig, RuntimeGenesisConfig, SubspaceConfig, SudoConfig,
+    SystemConfig, VestingConfig, MILLISECS_PER_BLOCK, WASM_BINARY,
 };
 use subspace_runtime_primitives::{AccountId, Balance, BlockNumber, SSC};
 
@@ -53,12 +53,13 @@ const TOKEN_GRANTS: &[(&str, u128)] = &[
 
 /// Additional subspace specific genesis parameters.
 pub struct GenesisParams {
-    enable_rewards: bool,
-    enable_storage_access: bool,
+    enable_rewards_at: EnableRewardsAt<BlockNumber>,
     allow_authoring_by: AllowAuthoringBy,
     pot_slot_iterations: NonZeroU32,
     enable_domains: bool,
+    enable_dynamic_cost_of_storage: bool,
     enable_balance_transfers: bool,
+    enable_non_root_calls: bool,
     confirmation_depth_k: u32,
 }
 
@@ -69,21 +70,23 @@ struct GenesisDomainParams {
 }
 
 /// Chain spec type for the subspace
-pub type ChainSpec = SerializableChainSpec<RuntimeGenesisConfig>;
+pub type ChainSpec = GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Gemini 3g chain spec
-pub fn gemini_3g() -> ChainSpec {
-    ChainSpec::from_json_bytes(GEMINI_3G_CHAIN_SPEC.as_bytes()).expect("Always valid")
+pub fn gemini_3h() -> ChainSpec {
+    ChainSpec::from_json_bytes(GEMINI_3H_CHAIN_SPEC.as_bytes()).expect("Always valid")
 }
 
 /// Gemini 3g compiled chain spec
-pub fn gemini_3g_compiled() -> ChainSpec {
-    ChainSpec::from_genesis(
+pub fn gemini_3h_compiled() -> Result<GenericChainSpec<RuntimeGenesisConfig>, String> {
+    // TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    #[allow(deprecated)]
+    Ok(GenericChainSpec::from_genesis(
         // Name
-        "Subspace Gemini 3g",
+        "Subspace Gemini 3h",
         // ID
-        "subspace_gemini_3g",
-        ChainType::Custom("Subspace Gemini 3g".to_string()),
+        "subspace_gemini_3h",
+        ChainType::Custom("Subspace Gemini 3h".to_string()),
         || {
             let sudo_account =
                 AccountId::from_ss58check("5DNwQTHfARgKoa2NdiUM51ZUow7ve5xG9S2yYdSbVQcnYxBA")
@@ -122,13 +125,11 @@ pub fn gemini_3g_compiled() -> ChainSpec {
                 .collect::<Vec<_>>();
             subspace_genesis_config(
                 SpecId::Gemini,
-                WASM_BINARY.expect("Wasm binary must be built for Gemini"),
                 sudo_account.clone(),
                 balances,
                 vesting_schedules,
                 GenesisParams {
-                    enable_rewards: false,
-                    enable_storage_access: false,
+                    enable_rewards_at: EnableRewardsAt::Manually,
                     allow_authoring_by: AllowAuthoringBy::RootFarmer(
                         FarmerPublicKey::unchecked_from(hex_literal::hex!(
                             "8aecbcf0b404590ddddc01ebacb205a562d12fdb5c2aa6a4035c1a20f23c9515"
@@ -137,8 +138,10 @@ pub fn gemini_3g_compiled() -> ChainSpec {
                     // TODO: Adjust once we bench PoT on faster hardware
                     // About 1s on 6.0 GHz Raptor Lake CPU (14900K)
                     pot_slot_iterations: NonZeroU32::new(200_032_000).expect("Not zero; qed"),
-                    enable_domains: true,
+                    enable_domains: false,
+                    enable_dynamic_cost_of_storage: false,
                     enable_balance_transfers: true,
+                    enable_non_root_calls: false,
                     confirmation_depth_k: 100, // TODO: Proper value here
                 },
                 GenesisDomainParams {
@@ -157,23 +160,25 @@ pub fn gemini_3g_compiled() -> ChainSpec {
         // Telemetry
         Some(
             TelemetryEndpoints::new(vec![(SUBSPACE_TELEMETRY_URL.into(), 1)])
-                .expect("Telemetry value is valid"),
+                .map_err(|error| error.to_string())?,
         ),
         // Protocol ID
-        Some("subspace-gemini-3g"),
+        Some("subspace-gemini-3h"),
         None,
         // Properties
         Some({
             let mut properties = chain_spec_properties();
             properties.insert(
                 "potExternalEntropy".to_string(),
-                serde_json::to_value(None::<PotKey>).expect("Serialization is not infallible; qed"),
+                serde_json::to_value(None::<PotKey>).expect("Serialization is infallible; qed"),
             );
             properties
         }),
         // Extensions
         NoExtension::None,
-    )
+        // Code
+        WASM_BINARY.expect("Wasm binary must be built for Gemini"),
+    ))
 }
 
 /// Dev net raw configuration
@@ -183,6 +188,8 @@ pub fn devnet_config() -> ChainSpec {
 
 /// Dev net compiled configuration
 pub fn devnet_config_compiled() -> ChainSpec {
+    // TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    #[allow(deprecated)]
     ChainSpec::from_genesis(
         // Name
         "Subspace Dev network",
@@ -227,17 +234,17 @@ pub fn devnet_config_compiled() -> ChainSpec {
                 .collect::<Vec<_>>();
             subspace_genesis_config(
                 evm_chain_spec::SpecId::DevNet,
-                WASM_BINARY.expect("Wasm binary must be built for Gemini"),
                 sudo_account,
                 balances,
                 vesting_schedules,
                 GenesisParams {
-                    enable_rewards: false,
-                    enable_storage_access: false,
+                    enable_rewards_at: EnableRewardsAt::Manually,
                     allow_authoring_by: AllowAuthoringBy::FirstFarmer,
                     pot_slot_iterations: NonZeroU32::new(150_000_000).expect("Not zero; qed"),
                     enable_domains: true,
+                    enable_dynamic_cost_of_storage: false,
                     enable_balance_transfers: true,
+                    enable_non_root_calls: false,
                     confirmation_depth_k: 100, // TODO: Proper value here
                 },
                 GenesisDomainParams {
@@ -270,13 +277,15 @@ pub fn devnet_config_compiled() -> ChainSpec {
         }),
         // Extensions
         None,
+        // Code
+        WASM_BINARY.expect("WASM binary was not build, please build it!"),
     )
 }
 
 /// New dev chain spec
 pub fn dev_config() -> ChainSpec {
-    let wasm_binary = WASM_BINARY.expect("Development wasm not available");
-
+    // TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    #[allow(deprecated)]
     ChainSpec::from_genesis(
         // Name
         "Subspace development",
@@ -286,7 +295,6 @@ pub fn dev_config() -> ChainSpec {
         || {
             subspace_genesis_config(
                 evm_chain_spec::SpecId::Dev,
-                wasm_binary,
                 // Sudo account
                 utils::get_account_id_from_seed("Alice"),
                 // Pre-funded accounts
@@ -298,13 +306,14 @@ pub fn dev_config() -> ChainSpec {
                 ],
                 vec![],
                 GenesisParams {
-                    enable_rewards: false,
-                    enable_balance_transfers: true,
-                    enable_storage_access: false,
+                    enable_rewards_at: EnableRewardsAt::Manually,
                     allow_authoring_by: AllowAuthoringBy::Anyone,
                     pot_slot_iterations: NonZeroU32::new(100_000_000).expect("Not zero; qed"),
                     enable_domains: true,
-                    confirmation_depth_k: 100,
+                    enable_dynamic_cost_of_storage: false,
+                    enable_balance_transfers: true,
+                    enable_non_root_calls: true,
+                    confirmation_depth_k: 5,
                 },
                 GenesisDomainParams {
                     domain_name: "evm-domain".to_owned(),
@@ -331,82 +340,14 @@ pub fn dev_config() -> ChainSpec {
         }),
         // Extensions
         None,
-    )
-}
-
-/// New local chain spec
-pub fn local_config() -> ChainSpec {
-    let wasm_binary = WASM_BINARY.expect("Development wasm not available");
-
-    ChainSpec::from_genesis(
-        // Name
-        "Subspace local",
-        // ID
-        "subspace_local",
-        ChainType::Local,
-        || {
-            subspace_genesis_config(
-                evm_chain_spec::SpecId::Local,
-                wasm_binary,
-                // Sudo account
-                utils::get_account_id_from_seed("Alice"),
-                // Pre-funded accounts
-                vec![
-                    (utils::get_account_id_from_seed("Alice"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Bob"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Charlie"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Dave"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Eve"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Ferdie"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Alice//stash"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Bob//stash"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Charlie//stash"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Dave//stash"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Eve//stash"), 1_000 * SSC),
-                    (utils::get_account_id_from_seed("Ferdie//stash"), 1_000 * SSC),
-                ],
-                vec![],
-                GenesisParams {
-                    enable_rewards: false,
-                    enable_balance_transfers: true,
-                    enable_storage_access: false,
-                    allow_authoring_by: AllowAuthoringBy::Anyone,
-                    pot_slot_iterations: NonZeroU32::new(100_000_000).expect("Not zero; qed"),
-                    enable_domains: true,
-                    confirmation_depth_k: 1,
-                },
-                GenesisDomainParams {
-                    domain_name: "evm-domain".to_owned(),
-                    operator_allow_list: OperatorAllowList::Anyone,
-                    operator_signing_key: get_public_key_from_seed::<OperatorPublicKey>("Alice"),
-                },
-            )
-        },
-        // Bootnodes
-        vec![],
-        // Telemetry
-        None,
-        // Protocol ID
-        None,
-        None,
-        // Properties
-        Some({
-            let mut properties = chain_spec_properties();
-            properties.insert(
-                "potExternalEntropy".to_string(),
-                serde_json::to_value(None::<PotKey>).expect("Serialization is not infallible; qed"),
-            );
-            properties
-        }),
-        // Extensions
-        None,
+        // Code
+        WASM_BINARY.expect("WASM binary was not build, please build it!"),
     )
 }
 
 /// Configure initial storage state for FRAME modules.
 fn subspace_genesis_config(
     evm_domain_spec_id: evm_chain_spec::SpecId,
-    wasm_binary: &[u8],
     sudo_account: AccountId,
     balances: Vec<(AccountId, Balance)>,
     // who, start, period, period_count, per_period
@@ -415,19 +356,29 @@ fn subspace_genesis_config(
     genesis_domain_params: GenesisDomainParams,
 ) -> RuntimeGenesisConfig {
     let GenesisParams {
-        enable_rewards,
-        enable_storage_access,
+        enable_rewards_at,
         allow_authoring_by,
         pot_slot_iterations,
         enable_domains,
+        enable_dynamic_cost_of_storage,
         enable_balance_transfers,
+        enable_non_root_calls,
         confirmation_depth_k,
     } = genesis_params;
 
-    let domain_genesis_config = evm_chain_spec::get_testnet_genesis_by_spec_id(evm_domain_spec_id);
-
     let raw_genesis_storage = {
-        let storage = domain_genesis_config
+        let domain_chain_spec = match evm_domain_spec_id {
+            SpecId::Dev => evm_chain_spec::development_config(move || {
+                evm_chain_spec::get_testnet_genesis_by_spec_id(evm_domain_spec_id)
+            }),
+            SpecId::Gemini => evm_chain_spec::gemini_3h_config(move || {
+                evm_chain_spec::get_testnet_genesis_by_spec_id(evm_domain_spec_id)
+            }),
+            SpecId::DevNet => evm_chain_spec::devnet_config(move || {
+                evm_chain_spec::get_testnet_genesis_by_spec_id(evm_domain_spec_id)
+            }),
+        };
+        let storage = domain_chain_spec
             .build_storage()
             .expect("Failed to build genesis storage from genesis runtime config");
         let raw_genesis = RawGenesis::from_storage(storage);
@@ -455,11 +406,7 @@ fn subspace_genesis_config(
                 minimum_nominator_stake: 100 * SSC,
             }),
         },
-        system: SystemConfig {
-            // Add Wasm runtime to storage.
-            code: wasm_binary.to_vec(),
-            ..Default::default()
-        },
+        system: SystemConfig::default(),
         balances: BalancesConfig { balances },
         transaction_payment: Default::default(),
         sudo: SudoConfig {
@@ -467,8 +414,7 @@ fn subspace_genesis_config(
             key: Some(sudo_account),
         },
         subspace: SubspaceConfig {
-            enable_rewards,
-            enable_storage_access,
+            enable_rewards_at,
             allow_authoring_by,
             pot_slot_iterations,
             phantom: PhantomData,
@@ -476,7 +422,9 @@ fn subspace_genesis_config(
         vesting: VestingConfig { vesting },
         runtime_configs: RuntimeConfigsConfig {
             enable_domains,
+            enable_dynamic_cost_of_storage,
             enable_balance_transfers,
+            enable_non_root_calls,
             confirmation_depth_k,
         },
     }
@@ -490,11 +438,10 @@ mod tests {
 
     #[test]
     fn test_chain_specs() {
-        gemini_3g_compiled();
-        gemini_3g();
+        gemini_3h_compiled().expect("Compiled chain spec is okay always");
+        gemini_3h();
         devnet_config_compiled();
         devnet_config();
         dev_config();
-        local_config();
     }
 }
