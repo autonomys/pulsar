@@ -34,8 +34,7 @@ use subspace_core_primitives::{Piece, PieceIndex, SegmentHeader, SegmentIndex, P
 use subspace_farmer::jsonrpsee::tracing;
 use subspace_farmer::node_client::{Error as NodeClientError, NodeClient};
 use subspace_rpc_primitives::{
-    FarmerAppInfo, NodeSyncStatus, RewardSignatureResponse, RewardSigningInfo, SlotInfo,
-    SolutionResponse,
+    FarmerAppInfo, RewardSignatureResponse, RewardSigningInfo, SlotInfo, SolutionResponse,
 };
 
 /// Output that indicates whether the task was cancelled or successfully
@@ -173,16 +172,6 @@ impl NodeClient for Rpc {
     ) -> Result<Pin<Box<dyn Stream<Item = SegmentHeader> + Send + 'static>>, NodeClientError> {
         Ok(Box::pin(
             SubspaceRpcApiClient::subscribe_archived_segment_header(self)
-                .await?
-                .filter_map(|result| futures::future::ready(result.ok())),
-        ))
-    }
-
-    async fn subscribe_node_sync_status_change(
-        &self,
-    ) -> Result<Pin<Box<dyn Stream<Item = NodeSyncStatus> + Send + 'static>>, NodeClientError> {
-        Ok(Box::pin(
-            SubspaceRpcApiClient::subscribe_node_sync_status_change(self)
                 .await?
                 .filter_map(|result| futures::future::ready(result.ok())),
         ))

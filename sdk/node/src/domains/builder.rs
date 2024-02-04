@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use cross_domain_message_gossip::{ChainTxPoolMsg, Message};
 use derivative::Derivative;
 use derive_builder::Builder;
-use domain_client_operator::{BootstrapResult, Bootstrapper};
+use domain_client_operator::{fetch_domain_bootstrap_info, BootstrapResult};
 use domain_runtime_primitives::opaque::Block as DomainBlock;
 use futures::future;
 use futures::future::Either::{Left, Right};
@@ -30,12 +30,11 @@ use tokio::sync::{oneshot, RwLock};
 use crate::domains::domain::{Domain, DomainBuildingProgress};
 use crate::domains::domain_instance_starter::DomainInstanceStarter;
 use crate::domains::evm_chain_spec;
-use crate::ExecutorDispatch as CExecutorDispatch;
 
 /// Link to the consensus node
 pub struct ConsensusNodeLink {
     /// Consensus client
-    pub consensus_client: Arc<CFullClient<CRuntimeApi, CExecutorDispatch>>,
+    pub consensus_client: Arc<CFullClient<CRuntimeApi>>,
     /// Consensus network
     pub consensus_network: Arc<NetworkService<CBlock, H256>>,
     /// Block import notification stream for consensus chain
@@ -46,13 +45,8 @@ pub struct ConsensusNodeLink {
     /// Reference to the consensus node's network sync service
     pub consensus_sync_service: Arc<sc_network_sync::SyncingService<CBlock>>,
     /// Consensus tx pool
-    pub consensus_transaction_pool: Arc<
-        FullPool<
-            CFullClient<CRuntimeApi, CExecutorDispatch>,
-            CBlock,
-            <DomainBlock as BlockT>::Header,
-        >,
-    >,
+    pub consensus_transaction_pool:
+        Arc<FullPool<CFullClient<CRuntimeApi>, CBlock, <DomainBlock as BlockT>::Header>>,
     /// Cross domain message gossip worker's message sink
     pub gossip_message_sink: TracingUnboundedSender<Message>,
     /// Cross domain message receiver for the domain
@@ -116,8 +110,8 @@ impl DomainConfig {
     }
 
     /// Gemini 3g configuraiton
-    pub fn gemini_3g() -> DomainConfigBuilder {
-        DomainConfigBuilder::gemini_3g()
+    pub fn gemini_3h() -> DomainConfigBuilder {
+        DomainConfigBuilder::gemini_3h()
     }
 
     /// Devnet configuraiton
@@ -138,7 +132,7 @@ impl DomainConfigBuilder {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::new().chain_id("gemini-3g").domain_id(DomainId::new(0))
     }
 
@@ -196,10 +190,11 @@ impl DomainConfig {
                 let shared_progress_data = shared_progress_data.clone();
                 async move {
                     *shared_progress_data.write().await = DomainBuildingProgress::BuildingStarted;
-                    let bootstrapper =
-                        Bootstrapper::<DomainBlock, _, _>::new(consensus_client.clone());
                     match future::select(
-                        Box::pin(bootstrapper.fetch_domain_bootstrap_info(self.domain_id)),
+                        Box::pin(fetch_domain_bootstrap_info::<DomainBlock, CBlock, _>(
+                            &*consensus_client,
+                            self.domain_id,
+                        )),
                         bootstrapping_worker_drop_receiver,
                     )
                     .await

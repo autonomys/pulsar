@@ -11,7 +11,7 @@ sdk-substrate = { path = "../substrate" }
 sdk-utils = { path = "../utils" }
 static_assertions = "1.1.0"
 
-subspace-proof-of-space = { git = "https://github.com/subspace/subspace", rev = "bd435100200b3dcce6d6f50534d52e3cd039ca8e" }
+subspace-proof-of-space = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
 
 [dev-dependencies]
 anyhow = "1"
@@ -22,7 +22,7 @@ fdlimit = "0.2"
 futures = "0.3"
 mimalloc = { version = "*", default-features = false }
 serde_json = "1"
-subspace-farmer-components = { git = "https://github.com/subspace/subspace", rev = "bd435100200b3dcce6d6f50534d52e3cd039ca8e" }
+subspace-farmer-components = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
 tempfile = "3"
 tokio = { version = "1.34.0", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1"

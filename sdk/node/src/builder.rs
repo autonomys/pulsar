@@ -100,8 +100,8 @@ impl<F: Farmer + 'static> Config<F> {
     }
 
     /// Gemini 3g configuraiton
-    pub fn gemini_3g() -> Builder<F> {
-        Builder::gemini_3g()
+    pub fn gemini_3h() -> Builder<F> {
+        Builder::gemini_3h()
     }
 
     /// Devnet configuraiton
@@ -123,12 +123,12 @@ impl<F: Farmer + 'static> Builder<F> {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::new()
-            .network(NetworkBuilder::gemini_3g())
-            .dsn(DsnBuilder::gemini_3g())
-            .rpc(RpcBuilder::gemini_3g())
-            .offchain_worker(OffchainWorkerBuilder::gemini_3g())
+            .network(NetworkBuilder::gemini_3h())
+            .dsn(DsnBuilder::gemini_3h())
+            .rpc(RpcBuilder::gemini_3h())
+            .offchain_worker(OffchainWorkerBuilder::gemini_3h())
             .role(Role::Authority)
             .state_pruning(PruningMode::ArchiveAll)
             .blocks_pruning(BlocksPruning::Some(256))

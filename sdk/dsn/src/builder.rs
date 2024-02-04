@@ -14,12 +14,11 @@ use serde::{Deserialize, Serialize};
 use subspace_farmer::piece_cache::PieceCache as FarmerPieceCache;
 use subspace_farmer::utils::readers_and_pieces::ReadersAndPieces;
 use subspace_farmer::KNOWN_PEERS_CACHE_SIZE;
-use subspace_networking::libp2p::metrics::Metrics;
 use subspace_networking::utils::strip_peer_id;
 use subspace_networking::{
-    KademliaMode, KnownPeersManager, KnownPeersManagerConfig, PeerInfo, PeerInfoProvider,
-    PieceByIndexRequest, PieceByIndexRequestHandler, PieceByIndexResponse,
-    SegmentHeaderBySegmentIndexesRequestHandler, SegmentHeaderRequest, SegmentHeaderResponse,
+    KademliaMode, KnownPeersManager, KnownPeersManagerConfig, PieceByIndexRequest,
+    PieceByIndexRequestHandler, PieceByIndexResponse, SegmentHeaderBySegmentIndexesRequestHandler,
+    SegmentHeaderRequest, SegmentHeaderResponse,
 };
 
 use super::local_provider_record_utils::MaybeLocalRecordProvider;
@@ -142,7 +141,7 @@ impl DsnBuilder {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::new().listen_addresses(vec![
             "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
             "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
@@ -231,7 +230,6 @@ impl Dsn {
         let local_records_provider = MaybeLocalRecordProvider::new(farmer_piece_cache.clone());
 
         let mut metrics_registry = Registry::default();
-        let metrics = is_metrics_enabled.then(|| Metrics::new(&mut metrics_registry));
 
         tracing::debug!(genesis_hash = protocol_version, "Setting DSN protocol version...");
 
@@ -242,11 +240,11 @@ impl Dsn {
             provider_storage_path: _,
             in_connections: InConnections(max_established_incoming_connections),
             out_connections: OutConnections(max_established_outgoing_connections),
-            target_connections: TargetConnections(target_connections),
             pending_in_connections: PendingInConnections(max_pending_incoming_connections),
             pending_out_connections: PendingOutConnections(max_pending_outgoing_connections),
             boot_nodes,
             external_addresses,
+            ..
         } = self;
 
         let bootstrap_nodes = boot_nodes.into_iter().map(Into::into).collect::<Vec<_>>();
@@ -269,7 +267,7 @@ impl Dsn {
             protocol_version,
             keypair,
             local_records_provider.clone(),
-            Some(PeerInfoProvider::new_farmer()),
+            is_metrics_enabled.then_some(&mut metrics_registry),
         );
 
         let config = subspace_networking::Config {
@@ -305,23 +303,6 @@ impl Dsn {
             bootstrap_addresses: bootstrap_nodes,
             kademlia_mode: KademliaMode::Dynamic,
             external_addresses: external_addresses.into_iter().map(Into::into).collect(),
-            // Proactively maintain permanent connections with farmers (least restrictive value
-            // taken from farmer)
-            special_connected_peers_handler: Some(Arc::new(PeerInfo::is_farmer)),
-            // Maintain proactive connections with all peers (least restrictive value taken from
-            // node)
-            general_connected_peers_handler: Some(Arc::new(|_| true)),
-            // Maintain some number of persistent connections (taken from farmer)
-            general_connected_peers_target: 0,
-            // Special peers (taken from farmer)
-            special_connected_peers_target: target_connections,
-            // Allow up to quarter of incoming connections to be maintained (taken from node)
-            general_connected_peers_limit: max_established_incoming_connections / 4,
-            // Allow to maintain some extra farmer connections beyond direct interest too (taken
-            // from farmer)
-            special_connected_peers_limit: target_connections
-                + max_established_incoming_connections / 4,
-            metrics,
             ..default_networking_config
         };
 

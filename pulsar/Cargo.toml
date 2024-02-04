@@ -27,7 +27,7 @@ rand = "0.8.5"
 serde = "1"
 serde_derive = "1"
 single-instance = "0.3.3"
-sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "c63a8b28a9fd26d42116b0dcef1f2a5cefb9cd1c", features = ["full_crypto"] }
+sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "d6b500960579d73c43fc4ef550b703acfa61c4c8", features = ["full_crypto"] }
 strum = "0.24.1"
 strum_macros = "0.24.3"
 subspace-sdk = { path = "../sdk/subspace-sdk", default-features = false }
