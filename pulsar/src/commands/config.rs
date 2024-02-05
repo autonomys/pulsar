@@ -12,7 +12,7 @@
 //!
 //! ### Show
 //! ```bash
-//! $ pulsar config -s
+//! $ pulsar config
 //! Current Config set as:
 //! {
 //!   "chain": "Gemini3g",
@@ -77,7 +77,6 @@ use crate::utils::{create_or_move_data, reward_address_parser, size_parser};
 
 // function for config cli command
 pub(crate) async fn config(
-    show: bool,
     chain: Option<String>,
     farm_size: Option<String>,
     reward_address: Option<String>,
@@ -95,16 +94,12 @@ pub(crate) async fn config(
     // Load the current configuration
     let mut config: Config = parse_config()?;
 
-    if show {
-        // Display the current configuration as JSON
-        // Serialize `config` to a pretty-printed JSON string
-        let serialized = serde_json::to_string_pretty(&config)?;
-        println!(
-            "Current Config set as: \n{}\nin file: {:?}",
-            serialized,
-            config_path.to_str().expect("Expected stringified config path")
-        );
-    } else {
+    if chain.is_some()
+        || farm_size.is_some()
+        || reward_address.is_some()
+        || node_dir.is_some()
+        || farm_dir.is_some()
+    {
         // no options provided
         if chain.is_none()
             && farm_size.is_none()
@@ -162,6 +157,15 @@ pub(crate) async fn config(
 
         // Save the updated configuration back to the file
         fs::write(config_path, toml::to_string(&config)?)?;
+    } else {
+        // Display the current configuration as JSON
+        // Serialize `config` to a pretty-printed JSON string
+        let serialized = serde_json::to_string_pretty(&config)?;
+        println!(
+            "Current Config already set as: \n{}\nin file: {:?}",
+            serialized,
+            config_path.to_str().expect("Expected stringified config path")
+        );
     }
 
     Ok(())

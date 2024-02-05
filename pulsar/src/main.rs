@@ -74,8 +74,6 @@ enum Commands {
     )]
     Config {
         #[arg(short, long, action)]
-        show: bool,
-        #[arg(short, long, action)]
         chain: Option<String>,
         #[arg(short, long, action)]
         farm_size: Option<String>,
@@ -106,8 +104,8 @@ async fn main() -> Result<(), Report> {
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
         }
-        Some(Commands::Config { chain, show, farm_size, reward_address, node_dir, farm_dir }) => {
-            config(show, chain, farm_size, reward_address, node_dir, farm_dir)
+        Some(Commands::Config { chain, farm_size, reward_address, node_dir, farm_dir }) => {
+            config(chain, farm_size, reward_address, node_dir, farm_dir)
                 .await
                 .suggestion(support_message())?;
         }
@@ -200,7 +198,7 @@ async fn arrow_key_mode() -> Result<(), Report> {
             info().await.suggestion(support_message())?;
         }
         4 => {
-            config(true, None, None, None, None, None).await.suggestion(support_message())?;
+            config(None, None, None, None, None).await.suggestion(support_message())?;
         }
         5 => {
             open_log_dir().suggestion(support_message())?;
@@ -249,7 +247,6 @@ impl std::fmt::Display for Commands {
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
             Commands::Config {
-                show: _,
                 chain: _,
                 farm_size: _,
                 reward_address: _,
