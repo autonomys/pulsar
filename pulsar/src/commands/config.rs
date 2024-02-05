@@ -61,8 +61,8 @@
 //!   --chain devnet \
 //!   --farm-size 5GB \
 //!   --reward-address 5DXRtoHJePQBEk44onMy5yG4T8CjpPaK4qKNmrwpxqxZALGY \
-//!   --node-directory "/Users/abhi3700/test/pulsar1/node" \
-//!   --farm-directory "/Users/abhi3700/test/pulsar1/farms"
+//!   --node-dir "/Users/abhi3700/test/pulsar1/node" \
+//!   --farm-dir "/Users/abhi3700/test/pulsar1/farms"
 //! ```
 
 use std::fs;
