@@ -207,7 +207,7 @@ mod create_or_move_data_tests {
         let old_dir = temp_dir.join("node");
         let new_dir = temp_dir.join("node");
 
-        assert!(create_or_move_data(PathBuf::from(old_dir), PathBuf::from(new_dir)).is_err());
+        assert!(create_or_move_data(&old_dir, &new_dir).is_err());
 
         teardown_temp_directory(temp_dir);
     }
@@ -221,15 +221,22 @@ mod create_or_move_data_tests {
         let old_dir = temp_dir.join("old_node");
         let new_dir = "pulsar/node";
 
-        assert!(create_or_move_data(PathBuf::from(old_dir), PathBuf::from(new_dir)).is_err());
+        assert!(create_or_move_data(&old_dir, &PathBuf::from(new_dir)).is_err());
 
         teardown_temp_directory(temp_dir);
     }
 
     /// test if old dir doesn't exist
     #[test]
-    fn test_if_old_dir_doesnt_exist() {
+    fn test_pass_even_if_old_dir_doesnt_exist() {
+        let old_dir = "/path/that/does/not/exist";
+        let temp_dir = setup_temp_directory();
+        let new_dir = temp_dir.join("node");
         // TODO: Add test logic
+        assert!(create_or_move_data(&PathBuf::from(old_dir), &new_dir).is_ok());
+        assert!(new_dir.exists());
+
+        teardown_temp_directory(temp_dir);
     }
 
     /// test if empty old dir is removed after the data is moved from there to

@@ -142,14 +142,14 @@ pub(crate) async fn config(
         // update (optional) the node directory
         if let Some(n) = node_dir {
             let node_dir = PathBuf::from_str(&n).expect("Invalid node directory");
-            create_or_move_data(config.node.directory.clone(), node_dir.clone())?;
+            create_or_move_data(&config.node.directory, &node_dir)?;
             config.node.directory = node_dir;
         }
 
         // update (optional) the farm directory
         if let Some(fd) = farm_dir {
             let farm_dir = PathBuf::from_str(&fd).expect("Invalid farm directory");
-            create_or_move_data(config.farmer.farm_directory.clone(), farm_dir.clone())?;
+            create_or_move_data(&config.farmer.farm_directory, &farm_dir)?;
             if farm_dir.exists() {
                 config.farmer.farm_directory = farm_dir;
             }

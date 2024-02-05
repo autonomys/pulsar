@@ -391,7 +391,7 @@ impl<'de> Deserialize<'de> for Rewards {
 
 /// move data from old directory (if any) to new directory, or else just create
 /// the new directory.
-pub(crate) fn create_or_move_data(old_dir: PathBuf, new_dir: PathBuf) -> Result<()> {
+pub(crate) fn create_or_move_data(old_dir: &PathBuf, new_dir: &PathBuf) -> Result<()> {
     if old_dir == new_dir {
         bail!("This directory is already set");
     }
@@ -403,12 +403,12 @@ pub(crate) fn create_or_move_data(old_dir: PathBuf, new_dir: PathBuf) -> Result<
 
     // Create the new directory if it doesn't exist
     if !new_dir.exists() {
-        fs::create_dir_all(&new_dir)?;
+        fs::create_dir_all(new_dir)?;
     }
 
     // Move contents if the old directory exists
     if old_dir.exists() {
-        let entries = fs::read_dir(&old_dir)?;
+        let entries = fs::read_dir(old_dir)?;
         for entry in entries {
             let entry = entry?;
             let file_name = entry.file_name();
@@ -416,8 +416,8 @@ pub(crate) fn create_or_move_data(old_dir: PathBuf, new_dir: PathBuf) -> Result<
         }
 
         // Check if the old directory is empty now and remove it
-        if fs::read_dir(&old_dir)?.next().is_none() {
-            fs::remove_dir(&old_dir)?;
+        if fs::read_dir(old_dir)?.next().is_none() {
+            fs::remove_dir(old_dir)?;
         }
     }
 
