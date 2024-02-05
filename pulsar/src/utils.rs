@@ -396,6 +396,7 @@ pub(crate) fn create_or_move_data(old_dir: PathBuf, new_dir: PathBuf) -> Result<
         bail!("This directory is already set");
     }
 
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     if !new_dir.starts_with("/") {
         bail!("New directory path must start with /");
     }
