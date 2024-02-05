@@ -47,12 +47,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-12-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-12", "windows-2022"]') }}
+        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-14-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-14", "windows-2022"]') }}
         run-all:
           - ${{ inputs.test-macos-and-windows == true || github.ref == 'refs/heads/main' }}
-        exclude: # exclude macos-12 and windows-2022 when the condition is false
+        exclude: # exclude macos-14 and windows-2022 when the condition is false
           - run-all: false
-            os: macos-12
+            os: macos-14
           - run-all: false
             os: windows-2022
 
@@ -117,12 +117,12 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-12-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-12", "windows-2022"]') }}
+        os: ${{ fromJson(github.repository_owner == 'subspace' && '[["self-hosted", "ubuntu-20.04-x86-64"], ["self-hosted", "macos-14-arm64"], ["self-hosted", "windows-server-2022-x86-64"]]' || '["ubuntu-20.04", "macos-14", "windows-2022"]') }}
         run-all:
           - ${{ inputs.test-macos-and-windows || github.ref == 'refs/heads/master' }}
-        exclude: # exclude macos-12 and window-2022 when the condition is false
+        exclude: # exclude macos-14 and window-2022 when the condition is false
           - run-all: false
-            os: macos-12
+            os: macos-14
           - run-all: false
             os: windows-2022
 
