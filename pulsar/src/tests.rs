@@ -181,68 +181,44 @@ fn custom_log_dir_test() {
 #[cfg(test)]
 mod create_or_move_data_tests {
 
-    use std::fs::{self};
-    use std::path::Path;
+    use std::fs;
 
     use super::*;
-
-    /// Set up a temporary directory for testing.
-    /// Returns a `PathBuf` representing the path to the temporary directory.
-    fn setup_temp_directory() -> PathBuf {
-        let temp_dir = Path::new("/tmp").join(format!("test_pulsar"));
-        fs::create_dir_all(&temp_dir).expect("Failed to create temp directory for test");
-        temp_dir
-    }
-
-    /// Tear down the temporary directory used in testing.
-    fn teardown_temp_directory(temp_dir: PathBuf) {
-        fs::remove_dir_all(temp_dir).expect("Failed to remove temp directory after test");
-    }
+    use crate::utils::data_dir_getter;
 
     /// Ensuring the function correctly handles the case where the old and new
     /// directories are the same.
     #[test]
     fn test_fails_when_old_new_dirs_same() {
-        let temp_dir = setup_temp_directory();
-        let old_dir = temp_dir.join("node");
-        let new_dir = temp_dir.join("node");
+        let old_dir = node_directory_getter();
+        let new_dir = node_directory_getter();
 
         assert!(create_or_move_data(&old_dir, &new_dir).is_err());
-
-        teardown_temp_directory(temp_dir);
     }
 
     /// Verifying the function fails when the new directory path does not start
     /// with "/".
     #[test]
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    fn test_fails_when_new_dir_no_slash() {
-        let temp_dir = setup_temp_directory();
-        let old_dir = temp_dir.join("old_node");
-        let new_dir = "pulsar/node";
+    fn test_fails_new_dir_wo_slash() {
+        let old_dir = node_directory_getter();
+        let new_dir = PathBuf::from("pulsar/node");
 
-        assert!(create_or_move_data(&old_dir, &PathBuf::from(new_dir)).is_err());
-
-        teardown_temp_directory(temp_dir);
+        assert!(create_or_move_data(&old_dir, &new_dir).is_err());
     }
 
-    /// test if old dir doesn't exist
+    /// test as expected by parsing valid old & new dirs
     #[test]
-    fn test_pass_even_if_old_dir_doesnt_exist() {
-        let old_dir = "/path/that/does/not/exist";
-        let temp_dir = setup_temp_directory();
-        let new_dir = temp_dir.join("node");
-        // TODO: Add test logic
-        assert!(create_or_move_data(&PathBuf::from(old_dir), &new_dir).is_ok());
-        assert!(new_dir.exists());
+    fn test_create_or_move_data_success() {
+        let old_dir = node_directory_getter();
+        let new_dir = data_dir_getter().join("node2");
 
-        teardown_temp_directory(temp_dir);
-    }
+        assert!(create_or_move_data(&old_dir, &new_dir).is_ok());
 
-    /// test if empty old dir is removed after the data is moved from there to
-    /// new dir.
-    #[test]
-    fn test_remove_dir_if_old_dir_empty() {
-        // TODO: Add test logic
+        // old dir shouldn't exist
+        assert!(!old_dir.exists());
+
+        // delete the newly created dir to reset
+        fs::remove_dir_all(new_dir).unwrap();
     }
 }
