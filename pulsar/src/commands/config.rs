@@ -150,9 +150,7 @@ pub(crate) async fn config(
         if let Some(fd) = farm_dir {
             let farm_dir = PathBuf::from_str(&fd).expect("Invalid farm directory");
             create_or_move_data(&config.farmer.farm_directory, &farm_dir)?;
-            if farm_dir.exists() {
-                config.farmer.farm_directory = farm_dir;
-            }
+            config.farmer.farm_directory = farm_dir;
         }
 
         // Save the updated configuration back to the file
