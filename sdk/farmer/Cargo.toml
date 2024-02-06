@@ -16,6 +16,7 @@ lru = "0.12.2"
 libmimalloc-sys = { version = "0.1.35", features = ["extended"] }
 parking_lot = "0.12"
 pin-project = "1"
+prometheus-client = "0.22.0"
 rayon = "1.7.0"
 sdk-traits = { path = "../traits" }
 sdk-utils = { path = "../utils" }
@@ -24,6 +25,7 @@ subspace-core-primitives = { git = "https://github.com/subspace/subspace", rev =
 subspace-erasure-coding = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
 subspace-farmer = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382", default-features = false }
 subspace-farmer-components = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
+subspace-metrics = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
 subspace-networking = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
 subspace-proof-of-space = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382", features = ["parallel"] }
 subspace-rpc-primitives = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
