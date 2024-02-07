@@ -178,11 +178,11 @@ jobs:
         run: cargo cache
 
       - name: Build and run tests (linux & windows)
-        run: cargo test --locked
+        run: cargo test --locked -- --test-threads 1
         if: runner.os != 'macOS'
 
       - name: Build and run tests (macOS)
-        run: cargo test --locked --no-default-features
+        run: cargo test --locked --no-default-features -- --test-threads 1
         if: runner.os == 'macOS'
 
       - name: Clean unused artifacts
