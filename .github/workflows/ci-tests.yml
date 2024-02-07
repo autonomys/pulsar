@@ -25,9 +25,10 @@ env:
   # Not needed in CI, should make things a bit faster
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
+  MAX_TARGET_SIZE: 1024 # MB
   # TODO: AES flag is such that we have decent performance on ARMv8, remove once `aes` crate bumps MSRV to at least
   #  1.61: https://github.com/RustCrypto/block-ciphers/issues/373
-  RUSTFLAGS: -C strip=symbols -C opt-level=3 --cfg aes_armv8
+  RUSTFLAGS: -C strip=symbols -C opt-level=s --cfg aes_armv8
 
 jobs:
   fmt:
@@ -177,11 +178,11 @@ jobs:
         run: cargo cache
 
       - name: Build and run tests (linux & windows)
-        run: cargo test --locked
+        run: cargo test --locked -- --test-threads 1
         if: runner.os != 'macOS'
 
       - name: Build and run tests (macOS)
-        run: cargo test --locked --no-default-features
+        run: cargo test --locked --no-default-features -- --test-threads 1
         if: runner.os == 'macOS'
 
       - name: Clean unused artifacts
