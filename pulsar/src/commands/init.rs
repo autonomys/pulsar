@@ -1,7 +1,7 @@
 use std::io::{BufRead, Write};
 use std::str::FromStr;
 
-use color_eyre::eyre::{eyre, Context, Error, Result};
+use color_eyre::eyre::{bail, Context, Error, Result};
 use crossterm::terminal::{Clear, ClearType};
 use crossterm::{cursor, execute};
 use rand::prelude::IteratorRandom;
@@ -137,7 +137,7 @@ fn generate_or_get_reward_address(reward_address_exist: bool) -> Result<PublicKe
     )?;
 
     if !wants_new_key {
-        return Err(eyre!("New key creation was not confirmed"));
+        bail!("New key creation was not confirmed")
     }
 
     // generate new mnemonic and key pair
