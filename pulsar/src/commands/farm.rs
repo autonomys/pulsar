@@ -2,7 +2,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use color_eyre::eyre::{eyre, Context, Error, Result};
+use color_eyre::eyre::{bail, eyre, Context, Error, Result};
 use color_eyre::Report;
 use futures::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -42,9 +42,7 @@ pub(crate) async fn farm(is_verbose: bool, enable_domains: bool, no_rotation: bo
     let instance = SingleInstance::new(SINGLE_INSTANCE)
         .context("Cannot take the instance lock from the OS! Aborting...")?;
     if !instance.is_single() {
-        return Err(eyre!(
-            "It seems like there is already a farming instance running. Aborting...",
-        ));
+        bail!("It seems like there is already a farming instance running. Aborting...",)
     }
     // raise file limit
     raise_fd_limit();

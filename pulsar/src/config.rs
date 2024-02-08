@@ -2,7 +2,7 @@ use std::fs::{create_dir_all, remove_file, File};
 use std::num::NonZeroU8;
 use std::path::PathBuf;
 
-use color_eyre::eyre::{eyre, Report, Result, WrapErr};
+use color_eyre::eyre::{bail, eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
@@ -150,7 +150,7 @@ impl FarmerConfig {
 }
 
 /// Enum for Chain
-#[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
+#[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter, PartialEq)]
 pub(crate) enum ChainConfig {
     #[default]
     Gemini3g,
@@ -189,13 +189,19 @@ pub(crate) fn create_config() -> Result<(File, PathBuf)> {
     Ok((file, config_path))
 }
 
-/// parses the config, and returns [`Config`]
+/// parses the config path, and returns `ConfigPath`
 #[instrument]
-pub(crate) fn parse_config() -> Result<Config> {
+pub(crate) fn parse_config_path() -> Result<PathBuf> {
     let config_path = dirs::config_dir().expect("couldn't get the default config directory!");
     let config_path = config_path.join("pulsar").join("settings.toml");
 
-    let config: Config = toml::from_str(&std::fs::read_to_string(config_path)?)?;
+    Ok(config_path)
+}
+
+/// parses the config, and returns [`Config`]
+#[instrument]
+pub(crate) fn parse_config() -> Result<Config> {
+    let config: Config = toml::from_str(&std::fs::read_to_string(parse_config_path()?)?)?;
     Ok(config)
 }
 
@@ -206,7 +212,7 @@ pub(crate) fn validate_config() -> Result<Config> {
 
     // validity checks
     if config.farmer.farm_size < MIN_FARM_SIZE {
-        return Err(eyre!("farm size should be bigger than {MIN_FARM_SIZE}!"));
+        bail!("farm size should be bigger than {MIN_FARM_SIZE}!");
     }
 
     Ok(config)

@@ -25,6 +25,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use tracing::instrument;
 
+use crate::commands::config::config;
 use crate::commands::farm::farm;
 use crate::commands::info::info;
 use crate::commands::init::init;
@@ -68,6 +69,21 @@ enum Commands {
     #[command(about = "displays info about the farmer instance (i.e. total amount of rewards, \
                        and status of initial plotting)")]
     Info,
+    #[command(
+        about = "set the config params: chain, farm-size, reward-address, node-dir, farm-dir"
+    )]
+    Config {
+        #[arg(short, long, action)]
+        chain: Option<String>,
+        #[arg(short, long, action)]
+        farm_size: Option<String>,
+        #[arg(short, long, action)]
+        reward_address: Option<String>,
+        #[arg(short, long, action)]
+        node_dir: Option<String>,
+        #[arg(short = 'd', long, action)]
+        farm_dir: Option<String>,
+    },
     OpenLogs,
 }
 
@@ -87,6 +103,11 @@ async fn main() -> Result<(), Report> {
         }
         Some(Commands::Wipe { farmer, node }) => {
             wipe_config(farmer, node).await.suggestion(support_message())?;
+        }
+        Some(Commands::Config { chain, farm_size, reward_address, node_dir, farm_dir }) => {
+            config(chain, farm_size, reward_address, node_dir, farm_dir)
+                .await
+                .suggestion(support_message())?;
         }
         Some(Commands::OpenLogs) => {
             open_log_dir().suggestion(support_message())?;
@@ -177,10 +198,13 @@ async fn arrow_key_mode() -> Result<(), Report> {
             info().await.suggestion(support_message())?;
         }
         4 => {
+            config(None, None, None, None, None).await.suggestion(support_message())?;
+        }
+        5 => {
             open_log_dir().suggestion(support_message())?;
         }
         _ => {
-            unreachable!("this number must stay in [0-4]")
+            unreachable!("this number must stay in [0-5]")
         }
     }
 
@@ -222,6 +246,13 @@ impl std::fmt::Display for Commands {
             Commands::Wipe { farmer: _, node: _ } => write!(f, "wipe"),
             Commands::Info => write!(f, "info"),
             Commands::Init => write!(f, "init"),
+            Commands::Config {
+                chain: _,
+                farm_size: _,
+                reward_address: _,
+                node_dir: _,
+                farm_dir: _,
+            } => write!(f, "config"),
             Commands::OpenLogs => write!(f, "open logs directory"),
         }
     }

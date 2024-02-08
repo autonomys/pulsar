@@ -26,6 +26,7 @@ owo-colors = "3.5.0"
 rand = "0.8.5"
 serde = "1"
 serde_derive = "1"
+serde_json = "1.0.113"
 single-instance = "0.3.3"
 sp-core = { version = "21.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "c63a8b28a9fd26d42116b0dcef1f2a5cefb9cd1c", features = ["full_crypto"] }
 strum = "0.24.1"

@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use rand::rngs::SmallRng;
@@ -7,8 +8,9 @@ use subspace_sdk::ByteSize;
 use crate::config::ChainConfig;
 use crate::summary::*;
 use crate::utils::{
-    apply_extra_options, custom_log_dir, directory_parser, farm_directory_getter,
-    node_directory_getter, node_name_parser, reward_address_parser, size_parser, yes_or_no_parser,
+    apply_extra_options, create_or_move_data, custom_log_dir, directory_parser,
+    farm_directory_getter, node_directory_getter, node_name_parser, reward_address_parser,
+    size_parser, yes_or_no_parser,
 };
 
 async fn update_summary_file_randomly(summary_file: SummaryFile) {
@@ -174,4 +176,49 @@ fn custom_log_dir_test() {
 
     #[cfg(target_os = "windows")]
     assert!(log_path.ends_with("AppData/Local/pulsar/logs"));
+}
+
+#[cfg(test)]
+mod create_or_move_data_tests {
+
+    use std::fs;
+
+    use super::*;
+    use crate::utils::data_dir_getter;
+
+    /// Ensuring the function correctly handles the case where the old and new
+    /// directories are the same.
+    #[test]
+    fn test_fails_when_old_new_dirs_same() {
+        let old_dir = node_directory_getter();
+        let new_dir = node_directory_getter();
+
+        assert!(create_or_move_data(&old_dir, &new_dir).is_err());
+    }
+
+    /// Verifying the function fails when the new directory path does not start
+    /// with "/".
+    #[test]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    fn test_fails_new_dir_wo_slash() {
+        let old_dir = node_directory_getter();
+        let new_dir = PathBuf::from("pulsar/node");
+
+        assert!(create_or_move_data(&old_dir, &new_dir).is_err());
+    }
+
+    /// test as expected by parsing valid old & new dirs
+    #[test]
+    fn test_create_or_move_data_success() {
+        let old_dir = node_directory_getter();
+        let new_dir = data_dir_getter().join("node2");
+
+        assert!(create_or_move_data(&old_dir, &new_dir).is_ok());
+
+        // old dir shouldn't exist
+        assert!(!old_dir.exists());
+
+        // delete the newly created dir to reset
+        fs::remove_dir_all(new_dir).unwrap();
+    }
 }

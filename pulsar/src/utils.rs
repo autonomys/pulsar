@@ -1,9 +1,9 @@
 use std::env;
-use std::fs::create_dir_all;
+use std::fs::{self, create_dir_all};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use color_eyre::eyre::{eyre, Context, Result};
+use color_eyre::eyre::{bail, eyre, Context, Result};
 use futures::prelude::*;
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -121,9 +121,7 @@ pub(crate) fn directory_parser(location: &str) -> Result<PathBuf> {
 
 /// utilize `ByteSize` crate for the validation
 pub(crate) fn size_parser(size: &str) -> Result<ByteSize> {
-    let Ok(size) = size.parse::<ByteSize>() else {
-        return Err(eyre!("could not parse the value!"));
-    };
+    let Ok(size) = size.parse::<ByteSize>() else { bail!("could not parse the value!") };
     if size < MIN_FARM_SIZE {
         Err(eyre!(format!("farm size cannot be smaller than {}", MIN_FARM_SIZE)))
     } else {
@@ -153,7 +151,7 @@ pub(crate) fn provider_storage_dir_getter() -> PathBuf {
     node_directory_getter().join("provider-storage")
 }
 
-fn data_dir_getter() -> PathBuf {
+pub(crate) fn data_dir_getter() -> PathBuf {
     dirs::data_dir().expect("data folder must be present in every major OS").join("pulsar")
 }
 
@@ -387,4 +385,39 @@ impl<'de> Deserialize<'de> for Rewards {
         let value = s.parse::<u128>().map_err(serde::de::Error::custom)?;
         Ok(Rewards(value))
     }
+}
+
+/// move data from old directory (if any) to new directory, or else just create
+/// the new directory.
+pub(crate) fn create_or_move_data(old_dir: &PathBuf, new_dir: &PathBuf) -> Result<()> {
+    if old_dir == new_dir {
+        bail!("This directory is already set");
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    if !new_dir.starts_with("/") {
+        bail!("New directory path must start with /");
+    }
+
+    // Create the new directory if it doesn't exist
+    if !new_dir.exists() {
+        fs::create_dir_all(new_dir)?;
+    }
+
+    // Move contents if the old directory exists
+    if old_dir.exists() {
+        let entries = fs::read_dir(old_dir)?;
+        for entry in entries {
+            let entry = entry?;
+            let file_name = entry.file_name();
+            fs::rename(entry.path(), new_dir.join(file_name))?;
+        }
+
+        // Check if the old directory is empty now and remove it
+        if fs::read_dir(old_dir)?.next().is_none() {
+            fs::remove_dir(old_dir)?;
+        }
+    }
+
+    Ok(())
 }
