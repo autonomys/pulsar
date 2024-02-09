@@ -19,4 +19,4 @@ sc-storage-monitor = { version = "0.1.0", git = "https://github.com/subspace/pol
 sdk-utils = { path = "../utils" }
 serde = { version = "1", features = ["derive"] }
 sp-runtime = { version = "24.0.0", git = "https://github.com/subspace/polkadot-sdk", rev = "d6b500960579d73c43fc4ef550b703acfa61c4c8" }
-subspace-service = { git = "https://github.com/subspace/subspace", rev = "e8ed377ecee4e1992ffb731d67cd04bf444e6382" }
+subspace-service = { git = "https://github.com/subspace/subspace", rev = "a2e0318a75705ab31975ac8b172c999cab378e90" }

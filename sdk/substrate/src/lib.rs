@@ -212,7 +212,7 @@ impl Base {
             impl_version,
             transaction_pool: Default::default(),
             network,
-            state_pruning: Some(state_pruning.into()),
+            state_pruning: state_pruning.into(),
             blocks_pruning: blocks_pruning.into(),
             rpc_options: SubstrateRpcConfiguration {
                 listen_on: rpc_addr.unwrap_or(SocketAddr::new(

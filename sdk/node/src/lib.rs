@@ -211,6 +211,7 @@ impl<F: Farmer + 'static> Config<F> {
             sync_from_dsn,
             is_timekeeper,
             timekeeper_cpu_cores,
+            dsn_piece_getter: None, // TODO: Use custom piece getter for better performance
         };
 
         let node_runner_future = subspace_farmer::utils::run_future_in_dedicated_thread(

@@ -8,7 +8,7 @@ use subspace_sdk::{chain_spec, node, ByteSize, FarmDescription, Farmer, Node, Pu
 async fn main() {
     let plots = [FarmDescription::new("plot", ByteSize::gb(10))];
     let node: Node = Node::builder()
-        .blocks_pruning(node::BlocksPruning::Some(1000))
+        .blocks_pruning(node::BlocksPruning::Number(1000))
         .state_pruning(node::PruningMode::ArchiveCanonical)
         .network(NetworkBuilder::new().name("i1i1"))
         .build("node", chain_spec::dev_config())
@@ -56,7 +56,7 @@ async fn main() {
 
     // Restarting
     let node = Node::builder()
-        .blocks_pruning(node::BlocksPruning::Some(1000))
+        .blocks_pruning(node::BlocksPruning::Number(1000))
         .state_pruning(node::PruningMode::ArchiveCanonical)
         .build("node", chain_spec::dev_config())
         .await
