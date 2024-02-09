@@ -907,7 +907,7 @@ impl<T: subspace_proof_of_space::Table> Farm<T> {
             plotting_thread_pool_manager,
         }: FarmOptions<
             '_,
-            impl subspace_farmer_components::plotting::PieceGetter + Clone + Send + Sync + 'static,
+            impl subspace_farmer_components::PieceGetter + Clone + Send + Sync + 'static,
             impl sdk_traits::Node,
         >,
     ) -> Result<(Self, SingleDiskFarm), BuildError> {
