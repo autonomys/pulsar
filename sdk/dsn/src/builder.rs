@@ -85,10 +85,6 @@ pub struct PendingOutConnections(#[derivative(Default(value = "150"))] pub u32);
 #[non_exhaustive]
 pub struct Dsn {
     /// Listen on some address for other nodes
-    #[builder(default, setter(into, strip_option))]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub provider_storage_path: Option<std::path::PathBuf>,
-    /// Listen on some address for other nodes
     #[builder(default, setter(into))]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub listen_addresses: ListenAddresses,
@@ -125,11 +121,6 @@ pub struct Dsn {
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub pending_out_connections: PendingOutConnections,
-    /// Defines target total (in and out) connection number for DSN that
-    /// should be maintained.
-    #[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub target_connections: TargetConnections,
 }
 
 sdk_utils::generate_builder!(Dsn);
@@ -237,14 +228,12 @@ impl Dsn {
             listen_addresses,
             reserved_nodes,
             allow_non_global_addresses_in_dht,
-            provider_storage_path: _,
             in_connections: InConnections(max_established_incoming_connections),
             out_connections: OutConnections(max_established_outgoing_connections),
             pending_in_connections: PendingInConnections(max_pending_incoming_connections),
             pending_out_connections: PendingOutConnections(max_pending_outgoing_connections),
             boot_nodes,
             external_addresses,
-            ..
         } = self;
 
         let bootstrap_nodes = boot_nodes.into_iter().map(Into::into).collect::<Vec<_>>();

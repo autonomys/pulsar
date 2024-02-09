@@ -40,6 +40,7 @@ use subspace_farmer::utils::{
     all_cpu_cores, create_plotting_thread_pool_manager, thread_pool_core_indices,
 };
 use subspace_farmer::{Identity, KNOWN_PEERS_CACHE_SIZE};
+use subspace_farmer_components::plotting::PlottedSector;
 use subspace_farmer_components::sector::{sector_size, SectorMetadataChecksummed};
 use subspace_networking::libp2p::kad::RecordKey;
 use subspace_networking::utils::multihash::ToMultihash;
@@ -343,20 +344,12 @@ async fn create_readers_and_pieces(
     Ok(readers_and_pieces)
 }
 
-fn handler_on_sector_update(
-    sector_update: &SectorUpdate,
+fn handler_on_sector_plotted(
+    plotted_sector: &PlottedSector,
+    maybe_old_plotted_sector: &Option<PlottedSector>,
     disk_farm_index: usize,
     readers_and_pieces: Arc<parking_lot::Mutex<Option<ReadersAndPieces>>>,
 ) {
-    let (plotted_sector, maybe_old_plotted_sector) = match sector_update {
-        SectorUpdate::Plotting(SectorPlottingDetails::Finished {
-            plotted_sector,
-            old_plotted_sector,
-            ..
-        }) => (plotted_sector, old_plotted_sector),
-        _ => return,
-    };
-
     let disk_farm_index = disk_farm_index
         .try_into()
         .expect("More than 256 farms are not supported, this is checked above already; qed");
@@ -632,8 +625,19 @@ impl Config {
             sector_plotting_handler_ids.push(single_disk_farm.on_sector_update(Arc::new(
                 move |(_plotted_sector, sector_update)| {
                     let _span_guard = span.enter();
-                    handler_on_sector_update(
-                        sector_update,
+
+                    let (plotted_sector, maybe_old_plotted_sector) = match sector_update {
+                        SectorUpdate::Plotting(SectorPlottingDetails::Finished {
+                            plotted_sector,
+                            old_plotted_sector,
+                            ..
+                        }) => (plotted_sector, old_plotted_sector),
+                        _ => return,
+                    };
+
+                    handler_on_sector_plotted(
+                        plotted_sector,
+                        maybe_old_plotted_sector,
                         disk_farm_index,
                         readers_and_pieces.clone(),
                     )

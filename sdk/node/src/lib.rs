@@ -30,6 +30,7 @@ use sc_utils::mpsc::tracing_unbounded;
 use sdk_dsn::{DsnOptions, DsnShared};
 use sdk_traits::Farmer;
 use sdk_utils::{DestructorSet, MultiaddrWithPeerId, PublicKey, TaskOutput};
+use serde_json::Value;
 use sp_consensus::SyncOracle;
 use sp_consensus_subspace::digests::PreDigest;
 use sp_core::traits::SpawnEssentialNamed;
@@ -70,28 +71,31 @@ const SEGMENT_HEADERS_NUMBER_LIMIT: u64 = MAX_SEGMENT_HEADERS_PER_REQUEST as u64
 
 fn pot_external_entropy(
     consensus_chain_config: &Configuration,
-    config_pot_external_entropy: Option<Vec<u8>>,
+    maybe_pot_external_entropy: Option<String>,
 ) -> Result<Vec<u8>, sc_service::Error> {
     let maybe_chain_spec_pot_external_entropy = consensus_chain_config
         .chain_spec
         .properties()
         .get("potExternalEntropy")
-        .map(|d| serde_json::from_value(d.clone()))
-        .transpose()
-        .map_err(|error| {
-            sc_service::Error::Other(format!("Failed to decode PoT initial key: {error:?}"))
-        })?
-        .flatten();
+        .map(|d| match d.clone() {
+            Value::String(s) => Ok(s),
+            Value::Null => Ok(String::new()),
+            _ => Err(sc_service::Error::Other("Failed to decode PoT initial key".to_string())),
+        })
+        .transpose()?;
     if maybe_chain_spec_pot_external_entropy.is_some()
-        && config_pot_external_entropy.is_some()
-        && maybe_chain_spec_pot_external_entropy != config_pot_external_entropy
+        && maybe_pot_external_entropy.is_some()
+        && maybe_chain_spec_pot_external_entropy != maybe_pot_external_entropy
     {
         tracing::warn!(
             "--pot-external-entropy CLI argument was ignored due to chain spec having a different \
              explicit value"
         );
     }
-    Ok(maybe_chain_spec_pot_external_entropy.or(config_pot_external_entropy).unwrap_or_default())
+    Ok(maybe_chain_spec_pot_external_entropy
+        .or(maybe_pot_external_entropy)
+        .unwrap_or_default()
+        .into_bytes())
 }
 
 impl<F: Farmer + 'static> Config<F> {

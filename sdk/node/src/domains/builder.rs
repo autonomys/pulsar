@@ -128,7 +128,7 @@ impl DomainConfigBuilder {
 
     /// Dev chain configuration
     pub fn dev() -> Self {
-        Self::new().chain_id("dev").domain_id(DomainId::new(0)).dev_key_seed("//Alice")
+        Self::new().chain_id("dev").domain_id(DomainId::new(0))
     }
 
     /// Gemini 3g configuration

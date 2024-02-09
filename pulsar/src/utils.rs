@@ -149,10 +149,6 @@ pub(crate) fn node_directory_getter() -> PathBuf {
     data_dir_getter().join("node")
 }
 
-pub(crate) fn provider_storage_dir_getter() -> PathBuf {
-    node_directory_getter().join("provider-storage")
-}
-
 fn data_dir_getter() -> PathBuf {
     dirs::data_dir().expect("data folder must be present in every major OS").join("pulsar")
 }

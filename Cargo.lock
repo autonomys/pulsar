@@ -10057,7 +10057,6 @@ dependencies = [
  "sc-storage-monitor",
  "sdk-utils",
  "serde",
- "serde_json",
  "sp-runtime",
  "subspace-service",
 ]
