@@ -8,8 +8,7 @@ use derive_more::{Deref, DerefMut, Display, From};
 use sc_service::BlocksPruning;
 use sdk_dsn::{Dsn, DsnBuilder};
 use sdk_substrate::{
-    Base, BaseBuilder, NetworkBuilder, OffchainWorkerBuilder, PruningMode, Role, RpcBuilder,
-    StorageMonitor,
+    Base, BaseBuilder, NetworkBuilder, PruningMode, Role, RpcBuilder, StorageMonitor,
 };
 use sdk_utils::ByteSize;
 use serde::{Deserialize, Serialize};
@@ -90,7 +89,7 @@ pub struct Config<F: Farmer> {
     /// Proof of time entropy
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub pot_external_entropy: Option<Vec<u8>>,
+    pub pot_external_entropy: Option<String>,
 }
 
 impl<F: Farmer + 'static> Config<F> {
@@ -119,7 +118,6 @@ impl<F: Farmer + 'static> Builder<F> {
             .network(NetworkBuilder::dev())
             .dsn(DsnBuilder::dev())
             .rpc(RpcBuilder::dev())
-            .offchain_worker(OffchainWorkerBuilder::dev())
     }
 
     /// Gemini 3g configuration
@@ -128,9 +126,8 @@ impl<F: Farmer + 'static> Builder<F> {
             .network(NetworkBuilder::gemini_3h())
             .dsn(DsnBuilder::gemini_3h())
             .rpc(RpcBuilder::gemini_3h())
-            .offchain_worker(OffchainWorkerBuilder::gemini_3h())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
+            .state_pruning(PruningMode::ArchiveCanonical)
             .blocks_pruning(BlocksPruning::Some(256))
     }
 
@@ -140,9 +137,8 @@ impl<F: Farmer + 'static> Builder<F> {
             .network(NetworkBuilder::devnet())
             .dsn(DsnBuilder::devnet())
             .rpc(RpcBuilder::devnet())
-            .offchain_worker(OffchainWorkerBuilder::devnet())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
+            .state_pruning(PruningMode::ArchiveCanonical)
             .blocks_pruning(BlocksPruning::Some(256))
     }
 

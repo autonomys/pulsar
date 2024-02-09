@@ -76,18 +76,9 @@ async fn main() -> anyhow::Result<()> {
 
     let node_dir = base_path.join("node");
     let node = match chain {
-        Chain::Gemini3h => Node::gemini_3h().dsn(
-            subspace_sdk::node::DsnBuilder::gemini_3h()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
-        Chain::Devnet => Node::devnet().dsn(
-            subspace_sdk::node::DsnBuilder::devnet()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
-        Chain::Dev => Node::dev().dsn(
-            subspace_sdk::node::DsnBuilder::dev()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
+        Chain::Gemini3h => Node::gemini_3h().dsn(subspace_sdk::node::DsnBuilder::gemini_3h()),
+        Chain::Devnet => Node::devnet().dsn(subspace_sdk::node::DsnBuilder::devnet()),
+        Chain::Dev => Node::dev().dsn(subspace_sdk::node::DsnBuilder::dev()),
     }
     .role(node::Role::Authority);
 

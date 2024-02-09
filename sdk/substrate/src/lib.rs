@@ -64,10 +64,6 @@ pub struct Base {
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub network: Network,
-    /// Offchain worker settings
-    #[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub offchain_worker: OffchainWorker,
     /// Enable color for substrate informant
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -76,10 +72,6 @@ pub struct Base {
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub telemetry: Vec<(Multiaddr, u8)>,
-    /// Dev key seed
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub dev_key_seed: Option<String>,
 }
 
 #[doc(hidden)]
@@ -124,14 +116,10 @@ macro_rules! derive_base {
             rpc: $crate::Rpc,
             /// Network settings
             network: $crate::Network,
-            /// Offchain worker settings
-            offchain_worker: $crate::OffchainWorker,
             /// Enable color for substrate informant
             informant_enable_color: bool,
             /// Additional telemetry endpoints
             telemetry: Vec<(sdk_utils::Multiaddr, u8)>,
-            /// Dev key seed
-            dev_key_seed: String
         });
     }
 }
@@ -152,6 +140,7 @@ impl Base {
 
         let Self {
             force_authoring,
+            role,
             blocks_pruning,
             state_pruning,
             impl_name: ImplName(impl_name),
@@ -164,21 +153,18 @@ impl Base {
                     cors: rpc_cors,
                     methods: rpc_methods,
                     max_subs_per_conn: rpc_max_subs_per_conn,
-                    ..
                 },
             network,
             informant_enable_color,
             telemetry,
-            ..
         } = self;
 
         let base_path = BasePath::new(directory.as_ref());
         let config_dir = base_path.config_dir(chain_spec.id());
 
         let network = {
-            let Network {
-                listen_addresses, boot_nodes, force_synced, name, allow_private_ip, ..
-            } = network;
+            let Network { listen_addresses, boot_nodes, force_synced, name, allow_private_ip } =
+                network;
             let name = name.unwrap_or_else(|| {
                 names::Generator::with_naming(names::Name::Numbered)
                     .next()
@@ -213,25 +199,8 @@ impl Base {
             }
         };
 
-        // HACK: Tricky way to add extra endpoints as we can't push into telemetry
-        // endpoints
         let telemetry_endpoints = match chain_spec.telemetry_endpoints() {
-            Some(endpoints) => {
-                let Ok(serde_json::Value::Array(extra_telemetry)) =
-                    serde_json::to_value(&telemetry)
-                else {
-                    unreachable!("Will always return an array")
-                };
-                let Ok(serde_json::Value::Array(telemetry)) = serde_json::to_value(endpoints)
-                else {
-                    unreachable!("Will always return an array")
-                };
-
-                serde_json::from_value(serde_json::Value::Array(
-                    telemetry.into_iter().chain(extra_telemetry).collect::<Vec<_>>(),
-                ))
-                .expect("Serialization is always valid")
-            }
+            Some(endpoints) => endpoints.clone(),
             None => sc_service::config::TelemetryEndpoints::new(
                 telemetry.into_iter().map(|(endpoint, n)| (endpoint.to_string(), n)).collect(),
             )
@@ -263,7 +232,7 @@ impl Base {
             informant_output_format: sc_informant::OutputFormat {
                 enable_color: informant_enable_color,
             },
-            farmer: self.role == Role::Authority,
+            farmer: role == Role::Authority,
         }
         .into()
     }
@@ -297,14 +266,6 @@ pub struct Rpc {
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub methods: RpcMethods,
-    /// Maximum payload of a rpc request
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_request_size: Option<usize>,
-    /// Maximum payload of a rpc request
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_response_size: Option<usize>,
     /// Maximum allowed subscriptions per rpc connection
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -323,8 +284,6 @@ impl RpcBuilder {
             .addr(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port))
             .port(port)
             .max_connections(100)
-            .max_request_size(10 * 1024)
-            .max_response_size(10 * 1024)
             .max_subs_per_conn(Some(100))
     }
 
@@ -359,15 +318,7 @@ pub struct Network {
     /// Listen on some address for other nodes
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub enable_mdns: bool,
-    /// Listen on some address for other nodes
-    #[builder(default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub allow_private_ip: bool,
-    /// Allow non globals in network DHT
-    #[builder(default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub allow_non_globals_in_dht: bool,
     /// Listen on some address for other nodes
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -384,10 +335,6 @@ pub struct Network {
     #[builder(setter(into, strip_option), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub name: Option<String>,
-    /// Client id for telemetry (default is `{IMPL_NAME}/v{IMPL_VERSION}`)
-    #[builder(setter(into, strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub client_id: Option<String>,
 }
 
 impl NetworkBuilder {
@@ -398,22 +345,18 @@ impl NetworkBuilder {
 
     /// Gemini 3g configuration
     pub fn gemini_3h() -> Self {
-        Self::default()
-            .listen_addresses(vec![
-                "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-            ])
-            .enable_mdns(true)
+        Self::default().listen_addresses(vec![
+            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
+        ])
     }
 
     /// Dev network configuration
     pub fn devnet() -> Self {
-        Self::default()
-            .listen_addresses(vec![
-                "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-            ])
-            .enable_mdns(true)
+        Self::default().listen_addresses(vec![
+            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
+        ])
     }
 }
 
