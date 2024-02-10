@@ -92,7 +92,7 @@ impl NodeConfig {
         node = node
             .role(Role::Authority)
             .impl_version(format!("{}-{}", env!("CARGO_PKG_VERSION"), env!("GIT_HASH")))
-            .impl_name("Subspace CLI".to_string());
+            .impl_name("pulsar".to_string());
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
