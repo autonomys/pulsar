@@ -36,8 +36,8 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[derive(Debug, Parser)]
 #[command(subcommand_required = false)]
-#[command(name = "subspace")]
-#[command(about = "Subspace CLI", long_about = None)]
+#[command(name = "pulsar")]
+#[command(about = "pulsar", long_about = None)]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
