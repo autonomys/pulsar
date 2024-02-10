@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/domains/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/domains/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../sdk_node/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -455,11 +457,6 @@
 <a href="#455" id="455">455</a>
 <a href="#456" id="456">456</a>
 <a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -467,7 +464,7 @@
 <span class="kw">use </span>cross_domain_message_gossip::{ChainTxPoolMsg, Message};
 <span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>derive_builder::Builder;
-<span class="kw">use </span>domain_client_operator::{BootstrapResult, Bootstrapper};
+<span class="kw">use </span>domain_client_operator::{fetch_domain_bootstrap_info, BootstrapResult};
 <span class="kw">use </span>domain_runtime_primitives::opaque::Block <span class="kw">as </span>DomainBlock;
 <span class="kw">use </span>futures::future;
 <span class="kw">use </span>futures::future::Either::{Left, Right};
@@ -492,12 +489,11 @@
 <span class="kw">use </span><span class="kw">crate</span>::domains::domain::{Domain, DomainBuildingProgress};
 <span class="kw">use </span><span class="kw">crate</span>::domains::domain_instance_starter::DomainInstanceStarter;
 <span class="kw">use </span><span class="kw">crate</span>::domains::evm_chain_spec;
-<span class="kw">use </span><span class="kw">crate</span>::ExecutorDispatch <span class="kw">as </span>CExecutorDispatch;
 
 <span class="doccomment">/// Link to the consensus node
 </span><span class="kw">pub struct </span>ConsensusNodeLink {
     <span class="doccomment">/// Consensus client
-    </span><span class="kw">pub </span>consensus_client: Arc&lt;CFullClient&lt;CRuntimeApi, CExecutorDispatch&gt;&gt;,
+    </span><span class="kw">pub </span>consensus_client: Arc&lt;CFullClient&lt;CRuntimeApi&gt;&gt;,
     <span class="doccomment">/// Consensus network
     </span><span class="kw">pub </span>consensus_network: Arc&lt;NetworkService&lt;CBlock, H256&gt;&gt;,
     <span class="doccomment">/// Block import notification stream for consensus chain
@@ -505,17 +501,12 @@
         SubspaceNotificationStream&lt;BlockImportingNotification&lt;CBlock&gt;&gt;,
     <span class="doccomment">/// New slot notification stream for consensus chain
     </span><span class="kw">pub </span>new_slot_notification_stream: SubspaceNotificationStream&lt;NewSlotNotification&gt;,
-    <span class="doccomment">/// Reference to the consensus node&#39;s network sync service
+    <span class="doccomment">/// Reference to the consensus node's network sync service
     </span><span class="kw">pub </span>consensus_sync_service: Arc&lt;sc_network_sync::SyncingService&lt;CBlock&gt;&gt;,
     <span class="doccomment">/// Consensus tx pool
-    </span><span class="kw">pub </span>consensus_transaction_pool: Arc&lt;
-        FullPool&lt;
-            CFullClient&lt;CRuntimeApi, CExecutorDispatch&gt;,
-            CBlock,
-            &lt;DomainBlock <span class="kw">as </span>BlockT&gt;::Header,
-        &gt;,
-    &gt;,
-    <span class="doccomment">/// Cross domain message gossip worker&#39;s message sink
+    </span><span class="kw">pub </span>consensus_transaction_pool:
+        Arc&lt;FullPool&lt;CFullClient&lt;CRuntimeApi&gt;, CBlock, &lt;DomainBlock <span class="kw">as </span>BlockT&gt;::Header&gt;&gt;,
+    <span class="doccomment">/// Cross domain message gossip worker's message sink
     </span><span class="kw">pub </span>gossip_message_sink: TracingUnboundedSender&lt;Message&gt;,
     <span class="doccomment">/// Cross domain message receiver for the domain
     </span><span class="kw">pub </span>domain_message_receiver: TracingUnboundedReceiver&lt;ChainTxPoolMsg&gt;,
@@ -525,42 +516,42 @@
 
 <span class="doccomment">/// Domain node configuration
 </span><span class="attr">#[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
-#[builder(pattern = <span class="string">&quot;owned&quot;</span>, build_fn(private, name = <span class="string">&quot;_build&quot;</span>))]
+#[builder(pattern = <span class="string">"owned"</span>, build_fn(private, name = <span class="string">"_build"</span>))]
 #[non_exhaustive]
 </span><span class="kw">pub struct </span>DomainConfig {
-    <span class="doccomment">/// Chain ID of domain node (must be same as the consensus node&#39;s chain id)
+    <span class="doccomment">/// Chain ID of domain node (must be same as the consensus node's chain id)
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>chain_id: String,
 
     <span class="doccomment">/// Uniquely identifies a domain
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>domain_id: DomainId,
 
     <span class="doccomment">/// Operator Id
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>maybe_operator_id: <span class="prelude-ty">Option</span>&lt;OperatorId&gt;,
 
     <span class="doccomment">/// Additional arguments to pass to domain instance starter
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>additional_args: Vec&lt;String&gt;,
 
     <span class="attr">#[doc(hidden)]
     #[builder(
         setter(into, strip_option),
-        field(<span class="kw">type </span>= <span class="string">&quot;BaseBuilder&quot;</span>, build = <span class="string">&quot;self.base.build()&quot;</span>)
+        field(<span class="kw">type </span>= <span class="string">"BaseBuilder"</span>, build = <span class="string">"self.base.build()"</span>)
     )]
-    #[serde(flatten, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(flatten, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>base: Base,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>DomainConfig {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         DomainConfig {
-            chain_id: <span class="string">&quot;&quot;</span>.to_string(),
+            chain_id: <span class="string">""</span>.to_string(),
             domain_id: Default::default(),
             maybe_operator_id: <span class="prelude-val">None</span>,
             additional_args: <span class="macro">vec!</span>[],
@@ -578,8 +569,8 @@
     }
 
     <span class="doccomment">/// Gemini 3g configuraiton
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; DomainConfigBuilder {
-        DomainConfigBuilder::gemini_3g()
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; DomainConfigBuilder {
+        DomainConfigBuilder::gemini_3h()
     }
 
     <span class="doccomment">/// Devnet configuraiton
@@ -596,28 +587,28 @@
 
     <span class="doccomment">/// Dev chain configuration
     </span><span class="kw">pub fn </span>dev() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new().chain_id(<span class="string">&quot;dev&quot;</span>).domain_id(DomainId::new(<span class="number">0</span>)).dev_key_seed(<span class="string">&quot;//Alice&quot;</span>)
+        <span class="self">Self</span>::new().chain_id(<span class="string">"dev"</span>).domain_id(DomainId::new(<span class="number">0</span>))
     }
 
     <span class="doccomment">/// Gemini 3g configuration
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new().chain_id(<span class="string">&quot;gemini-3g&quot;</span>).domain_id(DomainId::new(<span class="number">0</span>))
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new().chain_id(<span class="string">"gemini-3g"</span>).domain_id(DomainId::new(<span class="number">0</span>))
     }
 
     <span class="doccomment">/// Devnet chain configuration
     </span><span class="kw">pub fn </span>devnet() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new().chain_id(<span class="string">&quot;devnet&quot;</span>).domain_id(DomainId::new(<span class="number">0</span>))
+        <span class="self">Self</span>::new().chain_id(<span class="string">"devnet"</span>).domain_id(DomainId::new(<span class="number">0</span>))
     }
 
     <span class="doccomment">/// Get configuration for saving on disk
     </span><span class="kw">pub fn </span>configuration(<span class="self">self</span>) -&gt; DomainConfig {
-        <span class="self">self</span>._build().expect(<span class="string">&quot;Build is infallible&quot;</span>)
+        <span class="self">self</span>._build().expect(<span class="string">"Build is infallible"</span>)
     }
 
     <span class="doccomment">/// Build a domain node
     </span><span class="kw">pub async fn </span>build(
         <span class="self">self</span>,
-        directory: <span class="kw">impl </span>AsRef&lt;Path&gt; + Send + <span class="lifetime">&#39;static</span>,
+        directory: <span class="kw">impl </span>AsRef&lt;Path&gt; + Send + <span class="lifetime">'static</span>,
         consensus_node_link: ConsensusNodeLink,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Domain&gt; {
         <span class="self">self</span>.configuration().build(directory, consensus_node_link).<span class="kw">await
@@ -628,7 +619,7 @@
     <span class="doccomment">/// Build a domain node
     </span><span class="kw">pub async fn </span>build(
         <span class="self">self</span>,
-        directory: <span class="kw">impl </span>AsRef&lt;Path&gt; + Send + <span class="lifetime">&#39;static</span>,
+        directory: <span class="kw">impl </span>AsRef&lt;Path&gt; + Send + <span class="lifetime">'static</span>,
         consensus_node_link: ConsensusNodeLink,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Domain&gt; {
         <span class="kw">let </span>ConsensusNodeLink {
@@ -644,7 +635,7 @@
         } = consensus_node_link;
         <span class="kw">let </span>printable_domain_id: u32 = <span class="self">self</span>.domain_id.into();
         <span class="kw">let </span><span class="kw-2">mut </span>destructor_set =
-            DestructorSet::new(<span class="macro">format!</span>(<span class="string">&quot;domain-{}-worker-destructor&quot;</span>, printable_domain_id));
+            DestructorSet::new(<span class="macro">format!</span>(<span class="string">"domain-{}-worker-destructor"</span>, printable_domain_id));
         <span class="kw">let </span>shared_rpc_handler = Arc::new(RwLock::new(<span class="prelude-val">None</span>));
         <span class="kw">let </span>shared_progress_data = Arc::new(RwLock::new(DomainBuildingProgress::Default));
 
@@ -652,16 +643,17 @@
         <span class="kw">let </span>(bootstrapping_worker_drop_sender, bootstrapping_worker_drop_receiver) =
             oneshot::channel();
         <span class="kw">let </span>domain_bootstrapper_join_handle = sdk_utils::task_spawn(
-            <span class="macro">format!</span>(<span class="string">&quot;domain/domain-{}/bootstrapping&quot;</span>, printable_domain_id),
+            <span class="macro">format!</span>(<span class="string">"domain/domain-{}/bootstrapping"</span>, printable_domain_id),
             {
                 <span class="kw">let </span>consensus_client = consensus_client.clone();
                 <span class="kw">let </span>shared_progress_data = shared_progress_data.clone();
                 <span class="kw">async move </span>{
                     <span class="kw-2">*</span>shared_progress_data.write().<span class="kw">await </span>= DomainBuildingProgress::BuildingStarted;
-                    <span class="kw">let </span>bootstrapper =
-                        Bootstrapper::&lt;DomainBlock, <span class="kw">_</span>, <span class="kw">_</span>&gt;::new(consensus_client.clone());
                     <span class="kw">match </span>future::select(
-                        Box::pin(bootstrapper.fetch_domain_bootstrap_info(<span class="self">self</span>.domain_id)),
+                        Box::pin(fetch_domain_bootstrap_info::&lt;DomainBlock, CBlock, <span class="kw">_</span>&gt;(
+                            <span class="kw-2">&amp;*</span>consensus_client,
+                            <span class="self">self</span>.domain_id,
+                        )),
                         bootstrapping_worker_drop_receiver,
                     )
                     .<span class="kw">await
@@ -670,7 +662,7 @@
                             <span class="kw">let </span>result = result
                                 .map_err(|bootstrapping_error| {
                                     <span class="macro">anyhow!</span>(
-                                        <span class="string">&quot;Error while bootstrapping the domain:{} : {:?}&quot;</span>,
+                                        <span class="string">"Error while bootstrapping the domain:{} : {:?}"</span>,
                                         printable_domain_id,
                                         bootstrapping_error
                                     )
@@ -680,14 +672,14 @@
                         }
                         Right(<span class="kw">_</span>) =&gt; {
                             <span class="macro">tracing::info!</span>(
-                                <span class="string">&quot;Received drop signal while bootstrapping the domain with \
-                                 domain_id: {:?}. exiting...&quot;</span>,
+                                <span class="string">"Received drop signal while bootstrapping the domain with \
+                                 domain_id: {:?}. exiting..."</span>,
                                 printable_domain_id
                             );
                             <span class="kw">let _ </span>= bootstrapping_result_sender.send(<span class="prelude-val">Ok</span>(TaskOutput::Cancelled(
                                 <span class="macro">format!</span>(
-                                    <span class="string">&quot;received cancellation signal while bootstrapping the domain: \
-                                     {}.&quot;</span>,
+                                    <span class="string">"received cancellation signal while bootstrapping the domain: \
+                                     {}."</span>,
                                     printable_domain_id
                                 ),
                             )));
@@ -701,8 +693,8 @@
             <span class="kw">async move </span>{
                 <span class="kw">let _ </span>= bootstrapping_worker_drop_sender.send(());
                 domain_bootstrapper_join_handle.<span class="kw">await</span>.expect(
-                    <span class="string">&quot;If joining is failing; that means the future being joined panicked, so we \
-                     need to propagate it; qed.&quot;</span>,
+                    <span class="string">"If joining is failing; that means the future being joined panicked, so we \
+                     need to propagate it; qed."</span>,
                 );
             }
         })<span class="question-mark">?</span>;
@@ -710,7 +702,7 @@
         <span class="kw">let </span>(domain_runner_result_sender, domain_runner_result_receiver) = oneshot::channel();
         <span class="kw">let </span>(domain_runner_drop_sender, <span class="kw-2">mut </span>domain_runner_drop_receiver) = oneshot::channel();
         <span class="kw">let </span>domain_runner_join_handle =
-            sdk_utils::task_spawn(<span class="macro">format!</span>(<span class="string">&quot;domain/domain-{}/running&quot;</span>, printable_domain_id), {
+            sdk_utils::task_spawn(<span class="macro">format!</span>(<span class="string">"domain/domain-{}/running"</span>, printable_domain_id), {
                 <span class="kw">let </span>shared_rpc_handler = shared_rpc_handler.clone();
                 <span class="kw">let </span>shared_progress_data = shared_progress_data.clone();
                 <span class="kw">async move </span>{
@@ -726,15 +718,15 @@
                                     TaskOutput::Value(bootstrap_result) =&gt; bootstrap_result,
                                     TaskOutput::Cancelled(reason) =&gt; {
                                         <span class="macro">tracing::info!</span>(
-                                            <span class="string">&quot;Bootstrapping task was cancelled for reason: {:?} \
-                                             for domain_id: {:?}. exiting...&quot;</span>,
+                                            <span class="string">"Bootstrapping task was cancelled for reason: {:?} \
+                                             for domain_id: {:?}. exiting..."</span>,
                                             reason,
                                             printable_domain_id
                                         );
                                         <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Ok</span>(
                                             TaskOutput::Cancelled(<span class="macro">format!</span>(
-                                                <span class="string">&quot;Bootstrapping task was cancelled for reason: \
-                                                 {:?} for domain_id: {:?}. exiting...&quot;</span>,
+                                                <span class="string">"Bootstrapping task was cancelled for reason: \
+                                                 {:?} for domain_id: {:?}. exiting..."</span>,
                                                 reason, printable_domain_id
                                             )),
                                         ));
@@ -743,8 +735,8 @@
                                 },
                                 <span class="prelude-val">Err</span>(bootstrap_error) =&gt; {
                                     <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                        <span class="string">&quot;received an error from domain bootstrapper for domain \
-                                         id: {}  error: {}&quot;</span>,
+                                        <span class="string">"received an error from domain bootstrapper for domain \
+                                         id: {}  error: {}"</span>,
                                         printable_domain_id,
                                         bootstrap_error
                                     )));
@@ -753,8 +745,8 @@
                             },
                             <span class="prelude-val">Err</span>(recv_err) =&gt; {
                                 <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                    <span class="string">&quot;unable to receive message from domain bootstrapper for \
-                                     domain id: {} due to an error: {}&quot;</span>,
+                                    <span class="string">"unable to receive message from domain bootstrapper for \
+                                     domain id: {} due to an error: {}"</span>,
                                     printable_domain_id,
                                     recv_err
                                 )));
@@ -763,14 +755,14 @@
                         },
                         Right(<span class="kw">_</span>) =&gt; {
                             <span class="macro">tracing::info!</span>(
-                                <span class="string">&quot;Received drop signal while bootstrapping the domain with \
-                                 domain_id: {:?}. exiting...&quot;</span>,
+                                <span class="string">"Received drop signal while bootstrapping the domain with \
+                                 domain_id: {:?}. exiting..."</span>,
                                 <span class="self">self</span>.domain_id
                             );
                             <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Ok</span>(TaskOutput::Cancelled(
                                 <span class="macro">format!</span>(
-                                    <span class="string">&quot;received cancellation signal while waiting for bootstrapping \
-                                     result for domain: {}.&quot;</span>,
+                                    <span class="string">"received cancellation signal while waiting for bootstrapping \
+                                     result for domain: {}."</span>,
                                     printable_domain_id
                                 ),
                             )));
@@ -797,7 +789,7 @@
                         <span class="prelude-val">Ok</span>(domain_spec) =&gt; domain_spec,
                         <span class="prelude-val">Err</span>(domain_spec_creation_error) =&gt; {
                             <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                <span class="string">&quot;Error while creating domain spec for the domain: {} Error: {:?}&quot;</span>,
+                                <span class="string">"Error while creating domain spec for the domain: {} Error: {:?}"</span>,
                                 printable_domain_id,
                                 domain_spec_creation_error
                             )));
@@ -806,7 +798,7 @@
                     };
 
                     <span class="kw">let </span>domains_directory =
-                        directory.as_ref().join(<span class="macro">format!</span>(<span class="string">&quot;domain-{}&quot;</span>, printable_domain_id));
+                        directory.as_ref().join(<span class="macro">format!</span>(<span class="string">"domain-{}"</span>, printable_domain_id));
                     <span class="kw">let </span><span class="kw-2">mut </span>service_config =
                         <span class="self">self</span>.base.configuration(domains_directory, domain_spec).<span class="kw">await</span>;
 
@@ -845,8 +837,8 @@
                         <span class="prelude-val">Ok</span>(start_data) =&gt; start_data,
                         <span class="prelude-val">Err</span>(start_error) =&gt; {
                             <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                <span class="string">&quot;Error while preparing to start domain for the domain id: {} \
-                                 Error: {:?}&quot;</span>,
+                                <span class="string">"Error while preparing to start domain for the domain id: {} \
+                                 Error: {:?}"</span>,
                                 printable_domain_id,
                                 start_error
                             )));
@@ -870,8 +862,8 @@
                                 }
                                 <span class="prelude-val">Err</span>(run_error) =&gt; {
                                     <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                        <span class="string">&quot;received an error while trying to run the domain id: {}  \
-                                         error: {}&quot;</span>,
+                                        <span class="string">"received an error while trying to run the domain id: {}  \
+                                         error: {}"</span>,
                                         printable_domain_id,
                                         run_error
                                     )));
@@ -879,8 +871,8 @@
                             },
                             <span class="prelude-val">Err</span>(join_error) =&gt; {
                                 <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                                    <span class="string">&quot;unable to join domain runner for domain id: {} due to an \
-                                     error: {}&quot;</span>,
+                                    <span class="string">"unable to join domain runner for domain id: {} due to an \
+                                     error: {}"</span>,
                                     printable_domain_id,
                                     join_error
                                 )));
@@ -888,14 +880,14 @@
                         },
                         Right(<span class="kw">_</span>) =&gt; {
                             <span class="macro">tracing::info!</span>(
-                                <span class="string">&quot;Received drop signal while running the domain with domain_id: \
-                                 {:?}. exiting...&quot;</span>,
+                                <span class="string">"Received drop signal while running the domain with domain_id: \
+                                 {:?}. exiting..."</span>,
                                 <span class="self">self</span>.domain_id
                             );
                             <span class="kw">let _ </span>= domain_runner_result_sender.send(<span class="prelude-val">Ok</span>(TaskOutput::Cancelled(
                                 <span class="macro">format!</span>(
-                                    <span class="string">&quot;Received cancellation signal while waiting for domain runner \
-                                     for domain: {}.&quot;</span>,
+                                    <span class="string">"Received cancellation signal while waiting for domain runner \
+                                     for domain: {}."</span>,
                                     printable_domain_id
                                 ),
                             )));
@@ -908,8 +900,8 @@
             <span class="kw">async move </span>{
                 <span class="kw">let _ </span>= domain_runner_drop_sender.send(());
                 domain_runner_join_handle.<span class="kw">await</span>.expect(
-                    <span class="string">&quot;If joining is failing; that means the future being joined panicked, so we \
-                     need to propagate it; qed.&quot;</span>,
+                    <span class="string">"If joining is failing; that means the future being joined panicked, so we \
+                     need to propagate it; qed."</span>,
                 );
             }
         })<span class="question-mark">?</span>;

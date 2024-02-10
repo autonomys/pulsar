@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/domains/evm_chain_spec.rs`."><title>evm_chain_spec.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/domains/evm_chain_spec.rs`."><title>evm_chain_spec.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../sdk_node/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -210,32 +212,6 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! System domain chain specs
 
 </span><span class="kw">use </span>std::str::FromStr;
@@ -245,31 +221,29 @@
     SudoConfig, SystemConfig, WASM_BINARY,
 };
 <span class="kw">use </span>hex_literal::hex;
-<span class="kw">use </span>sc_service::{ChainSpec <span class="kw">as _</span>, ChainType};
-<span class="kw">use </span>sc_subspace_chain_specs::ExecutionChainSpec;
+<span class="kw">use </span>sc_service::{ChainSpec <span class="kw">as _</span>, ChainType, GenericChainSpec};
 <span class="kw">use </span>sdk_utils::chain_spec::chain_spec_properties;
 <span class="kw">use </span>sp_domains::storage::RawGenesis;
 <span class="kw">use </span>subspace_runtime_primitives::SSC;
 
 <span class="doccomment">/// Chain spec type for the system domain
-</span><span class="kw">pub type </span>ChainSpec = ExecutionChainSpec&lt;RuntimeGenesisConfig&gt;;
+</span><span class="kw">pub type </span>ChainSpec = GenericChainSpec&lt;RuntimeGenesisConfig&gt;;
 
-<span class="kw">pub enum </span>SpecId {
+<span class="attr">#[derive(Copy, Clone)]
+</span><span class="kw">pub enum </span>SpecId {
     Dev,
     Gemini,
     DevNet,
-    Local,
 }
 
 <span class="kw">pub fn </span>create_domain_spec(chain_id: <span class="kw-2">&amp;</span>str, raw_genesis: RawGenesis) -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
-    <span class="comment">// The value of the `RuntimeGenesisConfig` doesn&#39;t matter since it will be
+    <span class="comment">// The value of the `RuntimeGenesisConfig` doesn't matter since it will be
     // overwritten later
     </span><span class="kw">let </span>constructor = RuntimeGenesisConfig::default;
     <span class="kw">let </span><span class="kw-2">mut </span>chain_spec = <span class="kw">match </span>chain_id {
-        <span class="string">&quot;dev&quot; </span>=&gt; development_config(constructor),
-        <span class="string">&quot;gemini-3g&quot; </span>=&gt; gemini_3g_config(constructor),
-        <span class="string">&quot;devnet&quot; </span>=&gt; devnet_config(constructor),
-        <span class="string">&quot;&quot; </span>| <span class="string">&quot;local&quot; </span>=&gt; local_testnet_config(constructor),
+        <span class="string">"dev" </span>=&gt; development_config(constructor),
+        <span class="string">"gemini-3g" </span>=&gt; gemini_3h_config(constructor),
+        <span class="string">"devnet" </span>=&gt; devnet_config(constructor),
         path =&gt; ChainSpec::from_json_file(std::path::PathBuf::from(path))<span class="question-mark">?</span>,
     };
 
@@ -282,13 +256,13 @@
 </span><span class="kw">fn </span>get_dev_accounts() -&gt; Vec&lt;AccountId&gt; {
     <span class="macro">vec!</span>[
         <span class="comment">// Alith key
-        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">&quot;f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac&quot;</span>)),
+        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">"f24FF3a9CF04c71Dbc94D0b566f7A27B94566cac"</span>)),
         <span class="comment">// Baltathar key
-        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">&quot;3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0&quot;</span>)),
+        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">"3Cd0A705a2DC65e5b1E1205896BaA2be8A07c6e0"</span>)),
         <span class="comment">// Charleth key
-        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">&quot;798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc&quot;</span>)),
+        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">"798d4Ba9baf0064Ec19eB4F0a1a45785ae9D6DFc"</span>)),
         <span class="comment">// Dorothy
-        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">&quot;773539d4Ac0e786233D90A233654ccEE26a613D9&quot;</span>)),
+        </span>AccountId::from(<span class="macro">hex!</span>(<span class="string">"773539d4Ac0e786233D90A233654ccEE26a613D9"</span>)),
     ]
 }
 
@@ -303,8 +277,8 @@
             )
         }
         SpecId::Gemini =&gt; {
-            <span class="kw">let </span>sudo_account = AccountId::from_str(<span class="string">&quot;f31e60022e290708c17d6997c34de6a30d09438f&quot;</span>)
-                .expect(<span class="string">&quot;Invalid Sudo account&quot;</span>);
+            <span class="kw">let </span>sudo_account = AccountId::from_str(<span class="string">"f31e60022e290708c17d6997c34de6a30d09438f"</span>)
+                .expect(<span class="string">"Invalid Sudo account"</span>);
             testnet_genesis(
                 <span class="macro">vec!</span>[
                     <span class="comment">// Sudo account
@@ -314,8 +288,8 @@
             )
         }
         SpecId::DevNet =&gt; {
-            <span class="kw">let </span>sudo_account = AccountId::from_str(<span class="string">&quot;b66a91845249464309fad766fd0ece8144547736&quot;</span>)
-                .expect(<span class="string">&quot;Invalid Sudo account&quot;</span>);
+            <span class="kw">let </span>sudo_account = AccountId::from_str(<span class="string">"b66a91845249464309fad766fd0ece8144547736"</span>)
+                .expect(<span class="string">"Invalid Sudo account"</span>);
             testnet_genesis(
                 <span class="macro">vec!</span>[
                     <span class="comment">// Sudo account
@@ -324,26 +298,20 @@
                 <span class="prelude-val">Some</span>(sudo_account),
             )
         }
-        SpecId::Local =&gt; {
-            <span class="kw">let </span>accounts = get_dev_accounts();
-            testnet_genesis(
-                accounts.clone(),
-                <span class="comment">// Alith is sudo
-                </span><span class="prelude-val">Some</span>(accounts[<span class="number">0</span>]),
-            )
-        }
     }
 }
 
 <span class="doccomment">/// Development config
-</span><span class="kw">pub fn </span>development_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">&#39;static </span>+ Send + Sync&gt;(
+</span><span class="kw">pub fn </span>development_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">'static </span>+ Send + Sync&gt;(
     constructor: F,
 ) -&gt; ChainSpec {
-    ChainSpec::from_genesis(
+    <span class="comment">// TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    </span><span class="attr">#[allow(deprecated)]
+    </span>ChainSpec::from_genesis(
         <span class="comment">// Name
-        </span><span class="string">&quot;Development&quot;</span>,
+        </span><span class="string">"Development"</span>,
         <span class="comment">// ID
-        </span><span class="string">&quot;evm_domain_dev&quot;</span>,
+        </span><span class="string">"evm_domain_dev"</span>,
         ChainType::Development,
         constructor,
         <span class="macro">vec!</span>[],
@@ -352,43 +320,22 @@
         <span class="prelude-val">None</span>,
         <span class="prelude-val">Some</span>(chain_spec_properties()),
         <span class="prelude-val">None</span>,
-    )
-}
-
-<span class="doccomment">/// Local config
-</span><span class="kw">pub fn </span>local_testnet_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">&#39;static </span>+ Send + Sync&gt;(
-    constructor: F,
-) -&gt; ChainSpec {
-    ChainSpec::from_genesis(
-        <span class="comment">// Name
-        </span><span class="string">&quot;Local Testnet&quot;</span>,
-        <span class="comment">// ID
-        </span><span class="string">&quot;evm_domain_local_testnet&quot;</span>,
-        ChainType::Local,
-        constructor,
-        <span class="comment">// Bootnodes
-        </span><span class="macro">vec!</span>[],
-        <span class="comment">// Telemetry
-        </span><span class="prelude-val">None</span>,
-        <span class="comment">// Protocol ID
-        </span><span class="prelude-val">Some</span>(<span class="string">&quot;evm-local&quot;</span>),
-        <span class="prelude-val">None</span>,
-        <span class="comment">// Properties
-        </span><span class="prelude-val">Some</span>(chain_spec_properties()),
-        <span class="comment">// Extensions
-        </span><span class="prelude-val">None</span>,
+        <span class="comment">// Code
+        </span>WASM_BINARY.expect(<span class="string">"WASM binary was not build, please build it!"</span>),
     )
 }
 
 <span class="doccomment">/// Gemini 3g config
-</span><span class="kw">pub fn </span>gemini_3g_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">&#39;static </span>+ Send + Sync&gt;(
+</span><span class="kw">pub fn </span>gemini_3h_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">'static </span>+ Send + Sync&gt;(
     constructor: F,
 ) -&gt; ChainSpec {
-    ChainSpec::from_genesis(
+    <span class="comment">// TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    </span><span class="attr">#[allow(deprecated)]
+    </span>ChainSpec::from_genesis(
         <span class="comment">// Name
-        </span><span class="string">&quot;Subspace Gemini 3g EVM Domain&quot;</span>,
+        </span><span class="string">"Subspace Gemini 3g EVM Domain"</span>,
         <span class="comment">// ID
-        </span><span class="string">&quot;subspace_gemini_3g_evm_domain&quot;</span>,
+        </span><span class="string">"subspace_gemini_3h_evm_domain"</span>,
         ChainType::Live,
         constructor,
         <span class="comment">// Bootnodes
@@ -396,36 +343,42 @@
         <span class="comment">// Telemetry
         </span><span class="prelude-val">None</span>,
         <span class="comment">// Protocol ID
-        </span><span class="prelude-val">Some</span>(<span class="string">&quot;subspace-gemini-3g-evm-domain&quot;</span>),
+        </span><span class="prelude-val">Some</span>(<span class="string">"subspace-gemini-3g-evm-domain"</span>),
         <span class="prelude-val">None</span>,
         <span class="comment">// Properties
         </span><span class="prelude-val">Some</span>(chain_spec_properties()),
         <span class="comment">// Extensions
         </span><span class="prelude-val">None</span>,
+        <span class="comment">// Code
+        </span>WASM_BINARY.expect(<span class="string">"WASM binary was not build, please build it!"</span>),
     )
 }
 
-<span class="kw">pub fn </span>devnet_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">&#39;static </span>+ Send + Sync&gt;(
+<span class="kw">pub fn </span>devnet_config&lt;F: Fn() -&gt; RuntimeGenesisConfig + <span class="lifetime">'static </span>+ Send + Sync&gt;(
     constructor: F,
 ) -&gt; ChainSpec {
-    ChainSpec::from_genesis(
+    <span class="comment">// TODO: Migrate once https://github.com/paritytech/polkadot-sdk/issues/2963 is un-broken
+    </span><span class="attr">#[allow(deprecated)]
+    </span>ChainSpec::from_genesis(
         <span class="comment">// Name
-        </span><span class="string">&quot;Subspace Devnet EVM Domain&quot;</span>,
+        </span><span class="string">"Subspace Devnet EVM Domain"</span>,
         <span class="comment">// ID
-        </span><span class="string">&quot;subspace_devnet_evm_domain&quot;</span>,
-        ChainType::Custom(<span class="string">&quot;Testnet&quot;</span>.to_string()),
+        </span><span class="string">"subspace_devnet_evm_domain"</span>,
+        ChainType::Custom(<span class="string">"Testnet"</span>.to_string()),
         constructor,
         <span class="comment">// Bootnodes
         </span><span class="macro">vec!</span>[],
         <span class="comment">// Telemetry
         </span><span class="prelude-val">None</span>,
         <span class="comment">// Protocol ID
-        </span><span class="prelude-val">Some</span>(<span class="string">&quot;subspace-devnet-evm-domain&quot;</span>),
+        </span><span class="prelude-val">Some</span>(<span class="string">"subspace-devnet-evm-domain"</span>),
         <span class="prelude-val">None</span>,
         <span class="comment">// Properties
         </span><span class="prelude-val">Some</span>(chain_spec_properties()),
         <span class="comment">// Extensions
         </span><span class="prelude-val">None</span>,
+        <span class="comment">// Code
+        </span>WASM_BINARY.expect(<span class="string">"WASM binary was not build, please build it!"</span>),
     )
 }
 
@@ -440,10 +393,7 @@
     </span><span class="kw">let </span>revert_bytecode = <span class="macro">vec!</span>[<span class="number">0x60</span>, <span class="number">0x00</span>, <span class="number">0x60</span>, <span class="number">0x00</span>, <span class="number">0xFD</span>];
 
     RuntimeGenesisConfig {
-        system: SystemConfig {
-            code: WASM_BINARY.expect(<span class="string">&quot;WASM binary was not build, please build it!&quot;</span>).to_vec(),
-            ..Default::default()
-        },
+        system: SystemConfig::default(),
         sudo: SudoConfig { key: maybe_sudo_account },
         transaction_payment: Default::default(),
         balances: BalancesConfig {

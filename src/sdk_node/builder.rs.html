@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../sdk_node/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -162,11 +164,6 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::num::NonZeroUsize;
 <span class="kw">use </span>std::path::Path;
@@ -174,11 +171,9 @@
 <span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>derive_builder::Builder;
 <span class="kw">use </span>derive_more::{Deref, DerefMut, Display, From};
-<span class="kw">use </span>sc_service::BlocksPruning;
 <span class="kw">use </span>sdk_dsn::{Dsn, DsnBuilder};
 <span class="kw">use </span>sdk_substrate::{
-    Base, BaseBuilder, NetworkBuilder, OffchainWorkerBuilder, PruningMode, Role, RpcBuilder,
-    StorageMonitor,
+    Base, BaseBuilder, BlocksPruning, NetworkBuilder, PruningMode, Role, RpcBuilder, StorageMonitor,
 };
 <span class="kw">use </span>sdk_utils::ByteSize;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -194,7 +189,7 @@
 #[serde(transparent)]
 </span><span class="doccomment">/// Size of cache of pieces that node produces
 /// TODO: Set it to 1 GB once DSN is fixed
-</span><span class="kw">pub struct </span>PieceCacheSize(<span class="attr">#[derivative(Default(value = <span class="string">&quot;ByteSize::gib(3)&quot;</span>))] </span><span class="kw">pub</span>(<span class="kw">crate</span>) ByteSize);
+</span><span class="kw">pub struct </span>PieceCacheSize(<span class="attr">#[derivative(Default(value = <span class="string">"ByteSize::gib(3)"</span>))] </span><span class="kw">pub</span>(<span class="kw">crate</span>) ByteSize);
 
 <span class="doccomment">/// Wrapper with default value for segment publish concurrent jobs
 </span><span class="attr">#[derive(
@@ -203,74 +198,74 @@
 #[derivative(Default)]
 #[serde(transparent)]
 </span><span class="kw">pub struct </span>SegmentPublishConcurrency(
-    <span class="attr">#[derivative(Default(value = <span class="string">&quot;NonZeroUsize::new(10).expect(\&quot;10 &gt; 0\&quot;)&quot;</span>))]
+    <span class="attr">#[derivative(Default(value = <span class="string">"NonZeroUsize::new(10).expect(\"10 &gt; 0\")"</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>)  NonZeroUsize,
 );
 
 <span class="doccomment">/// Node builder
 </span><span class="attr">#[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
-#[derivative(Default(bound = <span class="string">&quot;&quot;</span>))]
-#[builder(pattern = <span class="string">&quot;owned&quot;</span>, build_fn(private, name = <span class="string">&quot;_build&quot;</span>), name = <span class="string">&quot;Builder&quot;</span>)]
+#[derivative(Default(bound = <span class="string">""</span>))]
+#[builder(pattern = <span class="string">"owned"</span>, build_fn(private, name = <span class="string">"_build"</span>), name = <span class="string">"Builder"</span>)]
 #[non_exhaustive]
 </span><span class="kw">pub struct </span>Config&lt;F: Farmer&gt; {
     <span class="doccomment">/// Max number of segments that can be published concurrently, impacts
     /// RAM usage and network bandwidth.
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>segment_publish_concurrency: SegmentPublishConcurrency,
     <span class="doccomment">/// Should we sync blocks from the DSN?
     </span><span class="attr">#[builder(default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>sync_from_dsn: bool,
     <span class="attr">#[doc(hidden)]
     #[builder(
         setter(into, strip_option),
-        field(<span class="kw">type </span>= <span class="string">&quot;BaseBuilder&quot;</span>, build = <span class="string">&quot;self.base.build()&quot;</span>)
+        field(<span class="kw">type </span>= <span class="string">"BaseBuilder"</span>, build = <span class="string">"self.base.build()"</span>)
     )]
-    #[serde(flatten, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(flatten, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>base: Base,
     <span class="doccomment">/// DSN settings
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>dsn: Dsn,
     <span class="doccomment">/// Storage monitor settings
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>storage_monitor: <span class="prelude-ty">Option</span>&lt;StorageMonitor&gt;,
     <span class="doccomment">/// Enables subspace block relayer
     </span><span class="attr">#[builder(default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>enable_subspace_block_relay: bool,
     <span class="attr">#[builder(setter(skip), default)]
     #[serde(skip, default)]
     </span>_farmer: std::marker::PhantomData&lt;F&gt;,
     <span class="doccomment">/// Optional domain configuration
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>domain: <span class="prelude-ty">Option</span>&lt;DomainConfig&gt;,
     <span class="doccomment">/// Flag indicating if the node is authority for Proof of time consensus
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>is_timekeeper: bool,
     <span class="doccomment">/// CPU cores that timekeeper can use
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>timekeeper_cpu_cores: HashSet&lt;usize&gt;,
     <span class="doccomment">/// Proof of time entropy
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
-    </span><span class="kw">pub </span>pot_external_entropy: <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;,
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
+    </span><span class="kw">pub </span>pot_external_entropy: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
-<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">&#39;static</span>&gt; Config&lt;F&gt; {
+<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">'static</span>&gt; Config&lt;F&gt; {
     <span class="doccomment">/// Dev configuraiton
     </span><span class="kw">pub fn </span>dev() -&gt; Builder&lt;F&gt; {
         Builder::dev()
     }
 
     <span class="doccomment">/// Gemini 3g configuraiton
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; Builder&lt;F&gt; {
-        Builder::gemini_3g()
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; Builder&lt;F&gt; {
+        Builder::gemini_3h()
     }
 
     <span class="doccomment">/// Devnet configuraiton
@@ -279,7 +274,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">&#39;static</span>&gt; Builder&lt;F&gt; {
+<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">'static</span>&gt; Builder&lt;F&gt; {
     <span class="doccomment">/// Dev chain configuration
     </span><span class="kw">pub fn </span>dev() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new()
@@ -288,19 +283,17 @@
             .network(NetworkBuilder::dev())
             .dsn(DsnBuilder::dev())
             .rpc(RpcBuilder::dev())
-            .offchain_worker(OffchainWorkerBuilder::dev())
     }
 
     <span class="doccomment">/// Gemini 3g configuration
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new()
-            .network(NetworkBuilder::gemini_3g())
-            .dsn(DsnBuilder::gemini_3g())
-            .rpc(RpcBuilder::gemini_3g())
-            .offchain_worker(OffchainWorkerBuilder::gemini_3g())
+            .network(NetworkBuilder::gemini_3h())
+            .dsn(DsnBuilder::gemini_3h())
+            .rpc(RpcBuilder::gemini_3h())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
-            .blocks_pruning(BlocksPruning::Some(<span class="number">256</span>))
+            .state_pruning(PruningMode::ArchiveCanonical)
+            .blocks_pruning(BlocksPruning::Number(<span class="number">256</span>))
     }
 
     <span class="doccomment">/// Devnet chain configuration
@@ -309,15 +302,14 @@
             .network(NetworkBuilder::devnet())
             .dsn(DsnBuilder::devnet())
             .rpc(RpcBuilder::devnet())
-            .offchain_worker(OffchainWorkerBuilder::devnet())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
-            .blocks_pruning(BlocksPruning::Some(<span class="number">256</span>))
+            .state_pruning(PruningMode::ArchiveCanonical)
+            .blocks_pruning(BlocksPruning::Number(<span class="number">256</span>))
     }
 
     <span class="doccomment">/// Get configuration for saving on disk
     </span><span class="kw">pub fn </span>configuration(<span class="self">self</span>) -&gt; Config&lt;F&gt; {
-        <span class="self">self</span>._build().expect(<span class="string">&quot;Build is infallible&quot;</span>)
+        <span class="self">self</span>._build().expect(<span class="string">"Build is infallible"</span>)
     }
 
     <span class="doccomment">/// New builder
@@ -335,5 +327,5 @@
     </span>}
 }
 
-<span class="macro">sdk_substrate::derive_base!</span>(&lt;F: Farmer + <span class="lifetime">&#39;static</span>&gt; @ Base =&gt; Builder);
+<span class="macro">sdk_substrate::derive_base!</span>(&lt;F: Farmer + <span class="lifetime">'static</span>&gt; @ Base =&gt; Builder);
 </code></pre></div></section></main></body></html>

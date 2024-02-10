@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/commands/farm.rs`."><title>farm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/commands/farm.rs`."><title>farm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../pulsar/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -503,7 +505,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::utils::{install_tracing, raise_fd_limit, spawn_task, IntoEyre, IntoEyreStream};
 
 <span class="doccomment">/// allows us to detect multiple instances of the farmer and act on it
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SINGLE_INSTANCE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;.subspaceFarmer&quot;</span>;
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SINGLE_INSTANCE: <span class="kw-2">&amp;</span>str = <span class="string">".subspaceFarmer"</span>;
 <span class="kw">const </span>BATCH_BLOCKS: usize = <span class="number">1000</span>;
 <span class="kw">const </span>N_TASKS: usize = <span class="number">10</span>;
 
@@ -521,71 +523,71 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>farm(is_verbose: bool, enable_domains: bool, no_rotation: bool) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     install_tracing(is_verbose, no_rotation);
     color_eyre::install()
-        .context(<span class="string">&quot;color eyre installment failed, it should have been the first one&quot;</span>)<span class="question-mark">?</span>;
+        .context(<span class="string">"color eyre installment failed, it should have been the first one"</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>instance = SingleInstance::new(SINGLE_INSTANCE)
-        .context(<span class="string">&quot;Cannot take the instance lock from the OS! Aborting...&quot;</span>)<span class="question-mark">?</span>;
+        .context(<span class="string">"Cannot take the instance lock from the OS! Aborting..."</span>)<span class="question-mark">?</span>;
     <span class="kw">if </span>!instance.is_single() {
         <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(
-            <span class="string">&quot;It seems like there is already a farming instance running. Aborting...&quot;</span>,
+            <span class="string">"It seems like there is already a farming instance running. Aborting..."</span>,
         ));
     }
     <span class="comment">// raise file limit
     </span>raise_fd_limit();
 
     <span class="kw">let </span>Config { chain, farmer: farmer_config, node: <span class="kw-2">mut </span>node_config } =
-        validate_config().context(<span class="string">&quot;couldn&#39;t validate config&quot;</span>)<span class="question-mark">?</span>;
+        validate_config().context(<span class="string">"couldn't validate config"</span>)<span class="question-mark">?</span>;
     <span class="kw">let </span>reward_address = farmer_config.reward_address;
 
     <span class="comment">// apply advanced options (flags)
     </span><span class="kw">if </span>enable_domains {
-        <span class="macro">println!</span>(<span class="string">&quot;Setting the {} flag for the node...&quot;</span>, <span class="string">&quot;enable_domains&quot;</span>.underline());
+        <span class="macro">println!</span>(<span class="string">"Setting the {} flag for the node..."</span>, <span class="string">"enable_domains"</span>.underline());
         node_config.advanced.enable_domains = <span class="bool-val">true</span>;
     }
 
-    <span class="macro">println!</span>(<span class="string">&quot;Starting node ...&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"Starting node ..."</span>);
     <span class="kw">let </span>node = Arc::new(
         node_config
             .clone()
             .build(chain.clone(), is_verbose)
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;error building the node&quot;</span>)<span class="question-mark">?</span>,
+            </span>.context(<span class="string">"error building the node"</span>)<span class="question-mark">?</span>,
     );
-    <span class="macro">println!</span>(<span class="string">&quot;Node started successfully!&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"Node started successfully!"</span>);
 
     <span class="kw">if </span>!<span class="macro">matches!</span>(chain, ChainConfig::Dev) {
         <span class="kw">if </span>!is_verbose {
-            subscribe_to_node_syncing(<span class="kw-2">&amp;</span>node).<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t subscribe to syncing&quot;</span>)<span class="question-mark">?</span>;
+            subscribe_to_node_syncing(<span class="kw-2">&amp;</span>node).<span class="kw">await</span>.context(<span class="string">"couldn't subscribe to syncing"</span>)<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            node.sync().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;Node syncing failed&quot;</span>)<span class="question-mark">?</span>;
+            node.sync().<span class="kw">await</span>.into_eyre().context(<span class="string">"Node syncing failed"</span>)<span class="question-mark">?</span>;
         }
     }
 
     <span class="kw">let </span>summary_file = SummaryFile::new(<span class="prelude-val">Some</span>(farmer_config.farm_size))
         .<span class="kw">await
-        </span>.context(<span class="string">&quot;constructing new SummaryFile failed&quot;</span>)<span class="question-mark">?</span>;
+        </span>.context(<span class="string">"constructing new SummaryFile failed"</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">println!</span>(<span class="string">&quot;Starting farmer ...&quot;</span>);
-    <span class="kw">let </span>farmer = Arc::new(farmer_config.build(<span class="kw-2">&amp;</span>node).<span class="kw">await</span>.context(<span class="string">&quot;farmer couldn&#39;t be build&quot;</span>)<span class="question-mark">?</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;Farmer started successfully!&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"Starting farmer ..."</span>);
+    <span class="kw">let </span>farmer = Arc::new(farmer_config.build(<span class="kw-2">&amp;</span>node).<span class="kw">await</span>.context(<span class="string">"farmer couldn't be build"</span>)<span class="question-mark">?</span>);
+    <span class="macro">println!</span>(<span class="string">"Farmer started successfully!"</span>);
 
     <span class="kw">let </span>maybe_handles = <span class="kw">if </span>!is_verbose {
         <span class="comment">// we need this to handle errors when block is not found
         // if this fails, it might be due to: https://github.com/toml-rs/toml/issues/405 and https://github.com/toml-rs/toml/issues/329
         </span><span class="kw">let </span>blocks_pruning =
-            node_config.advanced.clone().extra.get(<span class="string">&quot;blocks_pruning&quot;</span>).is_some_and(|value| {
+            node_config.advanced.clone().extra.get(<span class="string">"blocks_pruning"</span>).is_some_and(|value| {
                 value.as_table().is_some_and(|table| {
-                    table.get(<span class="string">&quot;Some&quot;</span>).is_some_and(|value| value.as_integer().is_some())
+                    table.get(<span class="string">"Some"</span>).is_some_and(|value| value.as_integer().is_some())
                 })
             });
 
         <span class="comment">// this will be shared between the two subscriptions
         </span><span class="kw">let </span>is_initial_progress_finished = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
         <span class="kw">let </span>sector_size_bytes =
-            farmer.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;Failed to get farmer into&quot;</span>)<span class="question-mark">?</span>.sector_size;
+            farmer.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">"Failed to get farmer into"</span>)<span class="question-mark">?</span>.sector_size;
 
         <span class="kw">let </span>plotting_sub_handle = spawn_task(
-            <span class="string">&quot;plotting_subscriber&quot;</span>,
+            <span class="string">"plotting_subscriber"</span>,
             subscribe_to_plotting_progress(
                 summary_file.clone(),
                 farmer.clone(),
@@ -595,7 +597,7 @@
         );
 
         <span class="kw">let </span>solution_sub_handle = spawn_task(
-            <span class="string">&quot;solution_subscriber&quot;</span>,
+            <span class="string">"solution_subscriber"</span>,
             subscribe_to_solutions(
                 summary_file.clone(),
                 node.clone(),
@@ -607,11 +609,11 @@
 
         <span class="prelude-val">Some</span>((plotting_sub_handle, solution_sub_handle))
     } <span class="kw">else </span>{
-        <span class="comment">// we don&#39;t have handles if it is verbose
+        <span class="comment">// we don't have handles if it is verbose
         </span><span class="prelude-val">None
     </span>};
 
-    wait_on_farmer(maybe_handles, farmer, node).<span class="kw">await</span>.context(<span class="string">&quot;waiting on farmer failed&quot;</span>)<span class="question-mark">?</span>;
+    wait_on_farmer(maybe_handles, farmer, node).<span class="kw">await</span>.context(<span class="string">"waiting on farmer failed"</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -628,46 +630,46 @@
         <span class="macro">futures::select! </span>{
             <span class="kw">_ </span>= signal::ctrl_c().fuse() =&gt; {
                <span class="macro">println!</span>(
-                    <span class="string">&quot;\nWill try to gracefully exit the application now. Please wait for a couple of seconds... If you press ctrl+c again, it will \
-                    try to forcefully close the app!&quot;
+                    <span class="string">"\nWill try to gracefully exit the application now. Please wait for a couple of seconds... If you press ctrl+c again, it will \
+                    try to forcefully close the app!"
                 </span>);
                 plotting_handle.abort();
                 solution_handle.abort();
             }
             res = solution_handle.fuse() =&gt; {
-                <span class="kw">return </span>res.context(<span class="string">&quot;couldn&#39;t join subscription handle&quot;</span>)<span class="question-mark">?</span>.context(<span class="string">&quot;solution subscription crashed&quot;</span>);
+                <span class="kw">return </span>res.context(<span class="string">"couldn't join subscription handle"</span>)<span class="question-mark">?</span>.context(<span class="string">"solution subscription crashed"</span>);
             }
             <span class="comment">// cannot inspect plotting sub for errors, since it may end and quit from select
         </span>}
     } <span class="kw">else </span>{
         <span class="comment">// if there are not subscriptions, just wait on the kill signal
-        </span>signal::ctrl_c().<span class="kw">await</span>.context(<span class="string">&quot;failed to listen ctrl-c event&quot;</span>)<span class="question-mark">?
+        </span>signal::ctrl_c().<span class="kw">await</span>.context(<span class="string">"failed to listen ctrl-c event"</span>)<span class="question-mark">?
     </span>}
 
     <span class="comment">// shutting down the farmer and the node
-    </span><span class="kw">let </span>graceful_close_handle = spawn_task(<span class="string">&quot;graceful_shutdown_listener&quot;</span>, <span class="kw">async move </span>{
+    </span><span class="kw">let </span>graceful_close_handle = spawn_task(<span class="string">"graceful_shutdown_listener"</span>, <span class="kw">async move </span>{
         <span class="comment">// if one of the subscriptions have not aborted yet, wait
         // Plotting might end, so we ignore result here
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>((plotting_handle, solution_handle)) = maybe_handles {
             <span class="kw">let _ </span>= plotting_handle.<span class="kw">await</span>;
-            solution_handle.<span class="kw">await</span>.expect_err(<span class="string">&quot;Solution subscription never ends&quot;</span>);
+            solution_handle.<span class="kw">await</span>.expect_err(<span class="string">"Solution subscription never ends"</span>);
         }
 
         Arc::try_unwrap(farmer)
-            .expect(<span class="string">&quot;there should have been only 1 strong farmer counter&quot;</span>)
+            .expect(<span class="string">"there should have been only 1 strong farmer counter"</span>)
             .close()
             .<span class="kw">await
-            </span>.expect(<span class="string">&quot;cannot close farmer&quot;</span>);
+            </span>.expect(<span class="string">"cannot close farmer"</span>);
         Arc::try_unwrap(node)
-            .expect(<span class="string">&quot;there should have been only 1 strong node counter&quot;</span>)
+            .expect(<span class="string">"there should have been only 1 strong node counter"</span>)
             .close()
             .<span class="kw">await
-            </span>.expect(<span class="string">&quot;cannot close node&quot;</span>);
+            </span>.expect(<span class="string">"cannot close node"</span>);
     });
 
     <span class="macro">tokio::select! </span>{
-        <span class="kw">_ </span>= graceful_close_handle =&gt; <span class="macro">println!</span>(<span class="string">&quot;gracefully closed the app!&quot;</span>),
-        <span class="kw">_ </span>= signal::ctrl_c() =&gt; <span class="macro">println!</span>(<span class="string">&quot;\nforcefully closing the app!&quot;</span>),
+        <span class="kw">_ </span>= graceful_close_handle =&gt; <span class="macro">println!</span>(<span class="string">"gracefully closed the app!"</span>),
+        <span class="kw">_ </span>= signal::ctrl_c() =&gt; <span class="macro">println!</span>(<span class="string">"\nforcefully closing the app!"</span>),
     }
     <span class="prelude-val">Ok</span>(())
 }
@@ -678,21 +680,21 @@
         .subscribe_syncing_progress()
         .<span class="kw">await
         </span>.into_eyre()
-        .context(<span class="string">&quot;Failed to subscribe to node syncing&quot;</span>)<span class="question-mark">?
+        .context(<span class="string">"Failed to subscribe to node syncing"</span>)<span class="question-mark">?
         </span>.into_eyre()
         .map_ok(|SyncingProgress { at, target, status: <span class="kw">_ </span>}| (target <span class="kw">as _</span>, at <span class="kw">as _</span>));
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(syncing_result) = syncing_progress.next().<span class="kw">await </span>{
-        <span class="kw">let </span>(target_block, current_block) = syncing_result.context(<span class="string">&quot;Sync failed&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(target_block, current_block) = syncing_result.context(<span class="string">"Sync failed"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>syncing_progress_bar = syncing_progress_bar(current_block, target_block);
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(stream_result) = syncing_progress.next().<span class="kw">await </span>{
-            <span class="kw">let </span>(target_block, current_block) = stream_result.context(<span class="string">&quot;Sync failed&quot;</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>(target_block, current_block) = stream_result.context(<span class="string">"Sync failed"</span>)<span class="question-mark">?</span>;
             syncing_progress_bar.set_position(current_block);
             syncing_progress_bar.set_length(target_block);
         }
         syncing_progress_bar.finish_with_message(
-            <span class="string">&quot;Initial syncing is completed! Syncing will continue in the background...&quot;</span>,
+            <span class="string">"Initial syncing is completed! Syncing will continue in the background..."</span>,
         );
     }
     <span class="prelude-val">Ok</span>(())
@@ -705,7 +707,7 @@
     sector_size_bytes: u64,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>(farm_id, farm) <span class="kw">in </span>farmer.iter_farms().<span class="kw">await</span>.enumerate() {
-        <span class="macro">println!</span>(<span class="string">&quot;Initial plotting for farm: #{farm_id} ({})&quot;</span>, farm.directory().display());
+        <span class="macro">println!</span>(<span class="string">"Initial plotting for farm: #{farm_id} ({})"</span>, farm.directory().display());
 
         <span class="kw">let </span><span class="kw-2">mut </span>plotting_progress = farm.subscribe_initial_plotting_progress().<span class="kw">await</span>;
         <span class="kw">let </span>progress_bar;
@@ -727,18 +729,18 @@
         }
         progress_bar.set_style(
             ProgressStyle::with_template(
-                <span class="string">&quot;[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
-                 {msg}&quot;</span>,
+                <span class="string">"[{elapsed_precise}] {percent}% [{bar:40.green/blue}] ({bytes}/{total_bytes}) \
+                 {msg}"</span>,
             )
-            .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>),
+            .expect(<span class="string">"hardcoded template is correct"</span>),
         );
-        progress_bar.finish_with_message(<span class="string">&quot;Initial plotting finished!\n&quot;</span>);
+        progress_bar.finish_with_message(<span class="string">"Initial plotting finished!\n"</span>);
     }
     is_initial_progress_finished.store(<span class="bool-val">true</span>, Ordering::Relaxed);
     summary_file
         .update(SummaryUpdateFields { is_plotting_finished: <span class="bool-val">true</span>, ..Default::default() })
         .<span class="kw">await
-        </span>.context(<span class="string">&quot;couldn&#39;t update the summary&quot;</span>)<span class="question-mark">?</span>;
+        </span>.context(<span class="string">"couldn't update the summary"</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -754,7 +756,7 @@
     </span><span class="macro">println!</span>();
 
     <span class="kw">let </span>Summary { last_processed_block_num, .. } =
-        summary_file.parse().<span class="kw">await</span>.context(<span class="string">&quot;parsing the summary failed&quot;</span>)<span class="question-mark">?</span>;
+        summary_file.parse().<span class="kw">await</span>.context(<span class="string">"parsing the summary failed"</span>)<span class="question-mark">?</span>;
 
     <span class="comment">// first, process the stream in a parallelized fashion,
     // after that, there will be new blocks arrived
@@ -769,21 +771,21 @@
         N_TASKS,
     )
     .<span class="kw">await
-    </span>.context(<span class="string">&quot;parallel block stream couldn&#39;t be processed&quot;</span>)<span class="question-mark">?</span>;
+    </span>.context(<span class="string">"parallel block stream couldn't be processed"</span>)<span class="question-mark">?</span>;
 
     <span class="kw">loop </span>{
         <span class="kw">let </span>Summary { authored_count, last_processed_block_num, .. } =
-            summary_file.parse().<span class="kw">await</span>.context(<span class="string">&quot;couldn&#39;t parse summary&quot;</span>)<span class="question-mark">?</span>;
+            summary_file.parse().<span class="kw">await</span>.context(<span class="string">"couldn't parse summary"</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>is_initial_progress_finished.load(Ordering::Relaxed) {
             <span class="comment">// use carriage return to overwrite the current value
             // instead of inserting a new line
             </span><span class="macro">print!</span>(
-                <span class="string">&quot;\rYou have farmed {authored_count} block(s), This data is derived from the first \
-                 {last_processed_block_num} blocks.&quot;</span>,
+                <span class="string">"\rYou have farmed {authored_count} block(s), This data is derived from the first \
+                 {last_processed_block_num} blocks."</span>,
             );
             <span class="comment">// flush the stdout to make sure values are printed
-            </span>std::io::stdout().flush().expect(<span class="string">&quot;Failed to flush stdout&quot;</span>);
+            </span>std::io::stdout().flush().expect(<span class="string">"Failed to flush stdout"</span>);
 
             <span class="comment">// now, process the blocks without paralellization
             </span>process_block_stream(
@@ -796,7 +798,7 @@
                 <span class="number">1</span>,
             )
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;sequential block stream couldn&#39;t be processed&quot;</span>)<span class="question-mark">?</span>;
+            </span>.context(<span class="string">"sequential block stream couldn't be processed"</span>)<span class="question-mark">?</span>;
         }
         <span class="comment">// sleep 2 secs to avoid spamming the print
         </span>tokio::time::sleep(tokio::time::Duration::from_secs(<span class="number">2</span>)).<span class="kw">await</span>;
@@ -809,10 +811,10 @@
 ) -&gt; <span class="kw">impl </span>Stream&lt;Item = <span class="prelude-ty">Result</span>&lt;subspace_sdk::node::BlockNumber&gt;&gt; {
     <span class="macro">async_stream::try_stream! </span>{
         <span class="kw">loop </span>{
-            <span class="kw">let </span>last_retrieved_block_num = node.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">&quot;failed to receive Info from node&quot;</span>)<span class="question-mark">?</span>.best_block.<span class="number">1</span>;
+            <span class="kw">let </span>last_retrieved_block_num = node.get_info().<span class="kw">await</span>.into_eyre().context(<span class="string">"failed to receive Info from node"</span>)<span class="question-mark">?</span>.best_block.<span class="number">1</span>;
 
             <span class="kw">if </span>last_processed_block_num &gt; last_retrieved_block_num {
-                <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;last_processed_block_num is greater than last_retrieved_block_num&quot;</span>)).context(<span class="string">&quot;Try wiping the summary file and restart&quot;</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"last_processed_block_num is greater than last_retrieved_block_num"</span>)).context(<span class="string">"Try wiping the summary file and restart"</span>)<span class="question-mark">?</span>;
             }
 
             <span class="kw">if </span>last_processed_block_num == last_retrieved_block_num {
@@ -846,12 +848,12 @@
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(block_hash)) =&gt; future::ok(<span class="prelude-val">Some</span>(block_hash)),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">if </span>blocks_pruning =&gt; future::ok(<span class="prelude-val">None</span>),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt;
-                future::err(<span class="macro">eyre!</span>(<span class="string">&quot;node database is probably corrupted, try wiping the node&quot;</span>)),
-            <span class="prelude-val">Err</span>(err) =&gt; future::err(err.wrap_err(<span class="string">&quot;couldn&#39;t get block hash from node&quot;</span>)),
+                future::err(<span class="macro">eyre!</span>(<span class="string">"node database is probably corrupted, try wiping the node"</span>)),
+            <span class="prelude-val">Err</span>(err) =&gt; future::err(err.wrap_err(<span class="string">"couldn't get block hash from node"</span>)),
         })
         <span class="comment">// Chunk block hashes in chunks of `n_blocks`
         </span>.try_chunks(batch_blocks)
-        .map_err(|err| Error::from(err).wrap_err(<span class="string">&quot;Fetching blocks failed&quot;</span>))
+        .map_err(|err| Error::from(err).wrap_err(<span class="string">"Fetching blocks failed"</span>))
         <span class="comment">// For each n_blocks
         </span>.try_for_each(|blocks| {
             <span class="kw">let </span>node_clone = node.clone();
@@ -867,7 +869,7 @@
                     blocks_pruning,
                 )
                 .<span class="kw">await
-                </span>.context(<span class="string">&quot;couldn&#39;t get author info&quot;</span>)<span class="question-mark">?</span>;
+                </span>.context(<span class="string">"couldn't get author info"</span>)<span class="question-mark">?</span>;
 
                 summary_clone
                     .update(SummaryUpdateFields {
@@ -876,7 +878,7 @@
                         ..Default::default()
                     })
                     .<span class="kw">await
-                    </span>.context(<span class="string">&quot;couldn&#39;t update the summary&quot;</span>)<span class="question-mark">?</span>;
+                    </span>.context(<span class="string">"couldn't update the summary"</span>)<span class="question-mark">?</span>;
 
                 <span class="prelude-val">Ok</span>(())
             }
@@ -900,16 +902,16 @@
             <span class="kw">let </span>is_author = <span class="kw">match </span>node
                 .block_header(hash)
                 .into_eyre()
-                .context(<span class="string">&quot;failed to retrieve block header from node&quot;</span>)<span class="question-mark">?
+                .context(<span class="string">"failed to retrieve block header from node"</span>)<span class="question-mark">?
             </span>{
                 <span class="prelude-val">Some</span>(block_header) =&gt; <span class="prelude-val">Ok</span>(block_header
                     .pre_digest
                     .map(|pre_digest| pre_digest.solution().reward_address == reward_address)
                     .unwrap_or_default()),
                 <span class="prelude-val">None </span><span class="kw">if </span>blocks_pruning =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
-                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;node database is probably corrupted, try wiping the node&quot;</span>)),
+                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"node database is probably corrupted, try wiping the node"</span>)),
             }
-            .context(<span class="string">&quot;couldn&#39;t get the author info from block header&quot;</span>)<span class="question-mark">?</span>;
+            .context(<span class="string">"couldn't get the author info from block header"</span>)<span class="question-mark">?</span>;
 
             Result::Ok(futures::future::ok::&lt;u64, Report&gt;(<span class="kw">if </span>is_author { <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>}))
         })
@@ -918,7 +920,7 @@
         <span class="comment">// After that we sum up result
         </span>.try_fold(<span class="number">0</span>, |author, new_author| futures::future::ok(author + new_author))
         .<span class="kw">await
-        </span>.context(<span class="string">&quot;error in stream encountered in try_fold step&quot;</span>)<span class="question-mark">?</span>;
+        </span>.context(<span class="string">"error in stream encountered in try_fold step"</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(author)
 }
@@ -930,16 +932,16 @@
     // uncomment this when plotting is considerably faster
     </span>pb.set_style(
         ProgressStyle::with_template(
-            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
-             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} &quot;</span>,
+            <span class="string">" {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.orange}] \
+             ({bytes}/{total_bytes}) {bytes_per_sec}, {msg}, ETA: {eta_precise} "</span>,
         )
-        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
+        .expect(<span class="string">"hardcoded template is correct"</span>)
         <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">"◜"</span>, <span class="string">"◠"</span>, <span class="string">"◝"</span>, <span class="string">"◞"</span>, <span class="string">"◡"</span>, <span class="string">"◟"</span>])
         <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
+        </span>.progress_chars(<span class="string">"█▉▊▋▌▍▎▏  "</span>),
     );
-    pb.set_message(<span class="string">&quot;plotting&quot;</span>);
+    pb.set_message(<span class="string">"plotting"</span>);
     pb.set_position(current_size);
     pb
 }
@@ -950,19 +952,19 @@
     pb.enable_steady_tick(std::time::Duration::from_millis(<span class="number">100</span>));
     pb.set_style(
         ProgressStyle::with_template(
-            <span class="string">&quot; {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
-             {bps}, {msg}, ETA: {eta_precise} &quot;</span>,
+            <span class="string">" {spinner:2.green} [{elapsed_precise}] {percent}% [{wide_bar:.cyan}] ({pos}/{len}) \
+             {bps}, {msg}, ETA: {eta_precise} "</span>,
         )
-        .expect(<span class="string">&quot;hardcoded template is correct&quot;</span>)
-        .with_key(<span class="string">&quot;bps&quot;</span>, |state: <span class="kw-2">&amp;</span>indicatif::ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>std::fmt::Write| {
-            <span class="macro">write!</span>(w, <span class="string">&quot;{:.2}bps&quot;</span>, state.per_sec()).expect(<span class="string">&quot;terminal write should succeed&quot;</span>)
+        .expect(<span class="string">"hardcoded template is correct"</span>)
+        .with_key(<span class="string">"bps"</span>, |state: <span class="kw-2">&amp;</span>indicatif::ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>std::fmt::Write| {
+            <span class="macro">write!</span>(w, <span class="string">"{:.2}bps"</span>, state.per_sec()).expect(<span class="string">"terminal write should succeed"</span>)
         })
         <span class="comment">// More of those: https://github.com/sindresorhus/cli-spinners/blob/45cef9dff64ac5e36b46a194c68bccba448899ac/spinners.json
-        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">&quot;◜&quot;</span>, <span class="string">&quot;◠&quot;</span>, <span class="string">&quot;◝&quot;</span>, <span class="string">&quot;◞&quot;</span>, <span class="string">&quot;◡&quot;</span>, <span class="string">&quot;◟&quot;</span>])
+        </span>.tick_strings(<span class="kw-2">&amp;</span>[<span class="string">"◜"</span>, <span class="string">"◠"</span>, <span class="string">"◝"</span>, <span class="string">"◞"</span>, <span class="string">"◡"</span>, <span class="string">"◟"</span>])
         <span class="comment">// From here: https://github.com/console-rs/indicatif/blob/d54fb0ef4c314b3c73fc94372a97f14c4bd32d9e/examples/finebars.rs#L10
-        </span>.progress_chars(<span class="string">&quot;█▉▊▋▌▍▎▏  &quot;</span>),
+        </span>.progress_chars(<span class="string">"█▉▊▋▌▍▎▏  "</span>),
     );
-    pb.set_message(<span class="string">&quot;syncing&quot;</span>);
+    pb.set_message(<span class="string">"syncing"</span>);
     pb.set_position(current_block);
     pb
 }

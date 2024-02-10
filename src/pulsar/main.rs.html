@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../pulsar/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -264,8 +266,8 @@
 
 <span class="attr">#[derive(Debug, Parser)]
 #[command(subcommand_required = <span class="bool-val">false</span>)]
-#[command(name = <span class="string">&quot;subspace&quot;</span>)]
-#[command(about = <span class="string">&quot;Subspace CLI&quot;</span>, long_about = <span class="prelude-val">None</span>)]
+#[command(name = <span class="string">"subspace"</span>)]
+#[command(about = <span class="string">"Subspace CLI"</span>, long_about = <span class="prelude-val">None</span>)]
 #[command(version)]
 </span><span class="kw">struct </span>Cli {
     <span class="attr">#[command(subcommand)]
@@ -275,9 +277,9 @@
 <span class="doccomment">/// Available commands for the CLI
 </span><span class="attr">#[derive(Debug, Subcommand, EnumIter)]
 </span><span class="kw">enum </span>Commands {
-    <span class="attr">#[command(about = <span class="string">&quot;initializes the config file required for the farming&quot;</span>)]
+    <span class="attr">#[command(about = <span class="string">"initializes the config file required for the farming"</span>)]
     </span>Init,
-    <span class="attr">#[command(about = <span class="string">&quot;starting the farming process (along with node in the background)&quot;</span>)]
+    <span class="attr">#[command(about = <span class="string">"starting the farming process (along with node in the background)"</span>)]
     </span>Farm {
         <span class="attr">#[arg(short, long, action)]
         </span>verbose: bool,
@@ -286,15 +288,15 @@
         <span class="attr">#[arg(long, action)]
         </span>no_rotation: bool,
     },
-    <span class="attr">#[command(about = <span class="string">&quot;wipes the node and farm instance (along with your farms)&quot;</span>)]
+    <span class="attr">#[command(about = <span class="string">"wipes the node and farm instance (along with your farms)"</span>)]
     </span>Wipe {
         <span class="attr">#[arg(long, action)]
         </span>farmer: bool,
         <span class="attr">#[arg(long, action)]
         </span>node: bool,
     },
-    <span class="attr">#[command(about = <span class="string">&quot;displays info about the farmer instance (i.e. total amount of rewards, \
-                       and status of initial plotting)&quot;</span>)]
+    <span class="attr">#[command(about = <span class="string">"displays info about the farmer instance (i.e. total amount of rewards, \
+                       and status of initial plotting)"</span>)]
     </span>Info,
     OpenLogs,
 }
@@ -347,14 +349,14 @@
     </span><span class="kw">loop </span>{
         <span class="kw">if let </span>Event::Key(event) = crossterm::event::read()<span class="question-mark">? </span>{
             <span class="kw">match </span>event.code {
-                KeyCode::Up | KeyCode::Char(<span class="string">&#39;k&#39;</span>) =&gt; {
+                KeyCode::Up | KeyCode::Char(<span class="string">'k'</span>) =&gt; {
                     <span class="comment">// Move selection up
                     </span><span class="kw">if </span>selected &gt; <span class="number">0 </span>{
                         selected -= <span class="number">1</span>;
                         print_options(<span class="kw-2">&amp;mut </span>stdout, <span class="kw-2">&amp;</span>options, selected, position)<span class="question-mark">?</span>;
                     }
                 }
-                KeyCode::Down | KeyCode::Char(<span class="string">&#39;j&#39;</span>) =&gt; {
+                KeyCode::Down | KeyCode::Char(<span class="string">'j'</span>) =&gt; {
                     <span class="comment">// Move selection down
                     </span><span class="kw">if </span>selected &lt; options.len() - <span class="number">1 </span>{
                         selected += <span class="number">1</span>;
@@ -364,7 +366,7 @@
                 KeyCode::Enter =&gt; {
                     <span class="kw">break</span>;
                 }
-                KeyCode::Char(<span class="string">&#39;c&#39;</span>)
+                KeyCode::Char(<span class="string">'c'</span>)
                     <span class="kw">if </span>event.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =&gt;
                 {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -384,17 +386,17 @@
             init().suggestion(support_message())<span class="question-mark">?</span>;
         }
         <span class="number">1 </span>=&gt; {
-            <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to initialize farmer in verbose mode? [y/n]: &quot;</span>;
+            <span class="kw">let </span>prompt = <span class="string">"Do you want to initialize farmer in verbose mode? [y/n]: "</span>;
             <span class="kw">let </span>verbose =
-                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">"prompt failed"</span>)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to run a domain node? [y/n]: &quot;</span>;
+            <span class="kw">let </span>prompt = <span class="string">"Do you want to run a domain node? [y/n]: "</span>;
             <span class="kw">let </span>enable_domains =
-                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">"prompt failed"</span>)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>prompt = <span class="string">&quot;Do you want to disable rotation for logs? [y/n]: &quot;</span>;
+            <span class="kw">let </span>prompt = <span class="string">"Do you want to disable rotation for logs? [y/n]: "</span>;
             <span class="kw">let </span>no_rotation =
-                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+                get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">"prompt failed"</span>)<span class="question-mark">?</span>;
 
             farm(verbose, enable_domains, no_rotation).<span class="kw">await</span>.suggestion(support_message())<span class="question-mark">?</span>;
         }
@@ -408,7 +410,7 @@
             open_log_dir().suggestion(support_message())<span class="question-mark">?</span>;
         }
         <span class="kw">_ </span>=&gt; {
-            <span class="macro">unreachable!</span>(<span class="string">&quot;this number must stay in [0-4]&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"this number must stay in [0-4]"</span>)
         }
     }
 
@@ -423,19 +425,19 @@
     position: u16,
 ) -&gt; io::Result&lt;()&gt; {
     <span class="macro">execute!</span>(stdout, cursor::MoveTo(<span class="number">1</span>, position + <span class="number">2</span>), cursor::SavePosition)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(stdout, <span class="string">&quot;Please select an option below using arrow keys (or `j` and `k`):\n&quot;</span>,)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(stdout, <span class="string">"Please select an option below using arrow keys (or `j` and `k`):\n"</span>,)<span class="question-mark">?</span>;
 
     <span class="comment">// Print options to the terminal
     </span><span class="kw">for </span>(i, option) <span class="kw">in </span>options.iter().enumerate() {
         <span class="kw">if </span>i == selected {
-            <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">&quot; &gt; {} &quot;</span>, option);
-            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output.green())<span class="question-mark">?</span>;
+            <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">" &gt; {} "</span>, option);
+            <span class="macro">writeln!</span>(stdout, <span class="string">"{} {}"</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output.green())<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">&quot;  {} &quot;</span>, option);
-            <span class="macro">writeln!</span>(stdout, <span class="string">&quot;{} {}&quot;</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output)<span class="question-mark">?</span>;
+            <span class="kw">let </span>output = <span class="macro">format!</span>(<span class="string">"  {} "</span>, option);
+            <span class="macro">writeln!</span>(stdout, <span class="string">"{} {}"</span>, cursor::MoveTo(<span class="number">1</span>, i <span class="kw">as </span>u16 + position + <span class="number">4</span>), output)<span class="question-mark">?</span>;
         }
     }
-    <span class="macro">writeln!</span>(stdout, <span class="string">&quot;\n\r&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(stdout, <span class="string">"\n\r"</span>)<span class="question-mark">?</span>;
     stdout.flush()<span class="question-mark">?</span>;
 
     <span class="macro">execute!</span>(stdout, cursor::RestorePosition)<span class="question-mark">?</span>;
@@ -444,13 +446,13 @@
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Commands {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Commands::Farm { verbose: <span class="kw">_</span>, enable_domains: <span class="kw">_</span>, no_rotation: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;farm&quot;</span>),
-            Commands::Wipe { farmer: <span class="kw">_</span>, node: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;wipe&quot;</span>),
-            Commands::Info =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;info&quot;</span>),
-            Commands::Init =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;init&quot;</span>),
-            Commands::OpenLogs =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;open logs directory&quot;</span>),
+            Commands::Farm { verbose: <span class="kw">_</span>, enable_domains: <span class="kw">_</span>, no_rotation: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">"farm"</span>),
+            Commands::Wipe { farmer: <span class="kw">_</span>, node: <span class="kw">_ </span>} =&gt; <span class="macro">write!</span>(f, <span class="string">"wipe"</span>),
+            Commands::Info =&gt; <span class="macro">write!</span>(f, <span class="string">"info"</span>),
+            Commands::Init =&gt; <span class="macro">write!</span>(f, <span class="string">"init"</span>),
+            Commands::OpenLogs =&gt; <span class="macro">write!</span>(f, <span class="string">"open logs directory"</span>),
         }
     }
 }

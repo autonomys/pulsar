@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/utils.rs`."><title>utils.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/utils.rs`."><title>utils.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../pulsar/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -384,10 +386,6 @@
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs::create_dir_all;
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -414,29 +412,29 @@
 
 <span class="doccomment">/// &lt;3
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_ascii_art() {
-    <span class="macro">println!</span>(<span class="string">&quot;
+    <span class="macro">println!</span>(<span class="string">"
  ____             __                                              __  __          __                               __
 /\\  _`\\          /\\ \\                                            /\\ \\/\\ \\        /\\ \\__                           /\\ \\
-\\ \\,\\L\\_\\  __  __\\ \\ \\____    ____  _____      __      ___     __\\ \\ `\\\\ \\     __\\ \\ ,_\\  __  __  __    ___   _ __\\ \\ \\/&#39;\\
- \\/_\\__ \\ /\\ \\/\\ \\\\ \\ &#39;__`\\  /&#39;,__\\/\\ &#39;__`\\  /&#39;__`\\   /&#39;___\\ /&#39;__`\\ \\ , ` \\  /&#39;__`\\ \\ \\/ /\\ \\/\\ \\/\\ \\  / __`\\/\\`&#39;__\\ \\ , &lt;
+\\ \\,\\L\\_\\  __  __\\ \\ \\____    ____  _____      __      ___     __\\ \\ `\\\\ \\     __\\ \\ ,_\\  __  __  __    ___   _ __\\ \\ \\/'\\
+ \\/_\\__ \\ /\\ \\/\\ \\\\ \\ '__`\\  /',__\\/\\ '__`\\  /'__`\\   /'___\\ /'__`\\ \\ , ` \\  /'__`\\ \\ \\/ /\\ \\/\\ \\/\\ \\  / __`\\/\\`'__\\ \\ , &lt;
    /\\ \\L\\ \\ \\ \\_\\ \\\\ \\ \\L\\ \\/\\__, `\\ \\ \\L\\ \\/\\ \\L\\.\\_/\\ \\__//\\  __/\\ \\ \\`\\ \\/\\  __/\\ \\ \\_\\ \\ \\_/ \\_/ \\/\\ \\L\\ \\ \\ \\/ \\ \\ \\\\`\\
-   \\ `\\____\\ \\____/ \\ \\_,__/\\/\\____/\\ \\ ,__/\\ \\__/.\\_\\ \\____\\ \\____\\\\ \\_\\ \\_\\ \\____\\\\ \\__\\\\ \\___x___/&#39;\\ \\____/\\ \\_\\  \\ \\_\\ \\_\\
+   \\ `\\____\\ \\____/ \\ \\_,__/\\/\\____/\\ \\ ,__/\\ \\__/.\\_\\ \\____\\ \\____\\\\ \\_\\ \\_\\ \\____\\\\ \\__\\\\ \\___x___/'\\ \\____/\\ \\_\\  \\ \\_\\ \\_\\
     \\/_____/\\/___/   \\/___/  \\/___/  \\ \\ \\/  \\/__/\\/_/\\/____/\\/____/ \\/_/\\/_/\\/____/ \\/__/ \\/__//__/   \\/___/  \\/_/   \\/_/\\/_/
                                       \\ \\_\\
                                        \\/_/
-&quot;</span>);
+"</span>);
 }
 
 <span class="doccomment">/// prints the version of the crate
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_version() {
-    <span class="kw">let </span>version: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;version: {version}&quot;</span>);
+    <span class="kw">let </span>version: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>);
+    <span class="macro">println!</span>(<span class="string">"version: {version}"</span>);
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>print_run_executable_command() {
     <span class="kw">let </span>exec_name =
-        std::env::args().next().map(PathBuf::from).expect(<span class="string">&quot;First argument always exists&quot;</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;`{exec_name:?} farm`&quot;</span>);
+        std::env::args().next().map(PathBuf::from).expect(<span class="string">"First argument always exists"</span>);
+    <span class="macro">println!</span>(<span class="string">"`{exec_name:?} farm`"</span>);
 }
 
 <span class="doccomment">/// gets the input from the user for a given `prompt`
@@ -458,7 +456,7 @@
     F: Fn(<span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;O, E&gt;,
 {
     <span class="kw">loop </span>{
-        <span class="macro">print!</span>(<span class="string">&quot;{prompt}&quot;</span>);
+        <span class="macro">print!</span>(<span class="string">"{prompt}"</span>);
         std::io::Write::flush(<span class="kw-2">&amp;mut </span>std::io::stdout())<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>input = String::new();
         std::io::stdin().read_line(<span class="kw-2">&amp;mut </span>input)<span class="question-mark">?</span>;
@@ -472,7 +470,7 @@
 
         <span class="kw">match </span>condition(<span class="kw-2">&amp;</span>user_input) {
             <span class="prelude-val">Ok</span>(o) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(o),
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">println!</span>(<span class="string">&quot;{err}&quot;</span>),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">println!</span>(<span class="string">"{err}"</span>),
         }
     }
 }
@@ -481,15 +479,15 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>node_name_parser(node_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
     <span class="kw">let </span>node_name = node_name.trim();
     <span class="kw">match </span>node_name {
-        <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;Node name cannot be empty!&quot;</span>)),
-        <span class="string">&quot;root&quot; </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;please select a name different than `root`&quot;</span>)),
+        <span class="string">"" </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"Node name cannot be empty!"</span>)),
+        <span class="string">"root" </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"please select a name different than `root`"</span>)),
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(node_name.to_string()),
     }
 }
 
 <span class="doccomment">/// check for a valid SS58 address
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>reward_address_parser(address: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKey&gt; {
-    PublicKey::from_str(address).context(<span class="string">&quot;Failed to parse reward address&quot;</span>)
+    PublicKey::from_str(address).context(<span class="string">"Failed to parse reward address"</span>)
 }
 
 <span class="doccomment">/// the provided path should be an existing directory
@@ -499,23 +497,23 @@
         <span class="prelude-val">Ok</span>(path)
     } <span class="kw">else </span>{
         <span class="comment">// prompt the user for creation of the given path
-        </span><span class="kw">let </span>prompt = <span class="string">&quot;The given path does not exist. Do you want to create it? (y/n): &quot;</span>;
-        <span class="kw">let </span>permission = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">&quot;prompt failed&quot;</span>)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>prompt = <span class="string">"The given path does not exist. Do you want to create it? (y/n): "</span>;
+        <span class="kw">let </span>permission = get_user_input(prompt, <span class="prelude-val">None</span>, yes_or_no_parser).context(<span class="string">"prompt failed"</span>)<span class="question-mark">?</span>;
         <span class="kw">if </span>permission {
             create_dir_all(<span class="kw-2">&amp;</span>path)<span class="question-mark">?</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
         }
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;supplied directory does not exist! Please enter a valid path.&quot;</span>))
+        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"supplied directory does not exist! Please enter a valid path."</span>))
     }
 }
 
 <span class="doccomment">/// utilize `ByteSize` crate for the validation
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>size_parser(size: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;ByteSize&gt; {
     <span class="kw">let </span><span class="prelude-val">Ok</span>(size) = size.parse::&lt;ByteSize&gt;() <span class="kw">else </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not parse the value!&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"could not parse the value!"</span>));
     };
     <span class="kw">if </span>size &lt; MIN_FARM_SIZE {
-        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="macro">format!</span>(<span class="string">&quot;farm size cannot be smaller than {}&quot;</span>, MIN_FARM_SIZE)))
+        <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="macro">format!</span>(<span class="string">"farm size cannot be smaller than {}"</span>, MIN_FARM_SIZE)))
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(size)
     }
@@ -523,69 +521,65 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>yes_or_no_parser(answer: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
     <span class="kw">match </span>answer.to_lowercase().as_str() {
-        <span class="string">&quot;y&quot; </span>| <span class="string">&quot;yes&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-        <span class="string">&quot;n&quot; </span>| <span class="string">&quot;no&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;could not interpret your answer. Please provide `y` or `n`.&quot;</span>)),
+        <span class="string">"y" </span>| <span class="string">"yes" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+        <span class="string">"n" </span>| <span class="string">"no" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"could not interpret your answer. Please provide `y` or `n`."</span>)),
     }
 }
 
 <span class="doccomment">/// generates a farm path from the given path
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>farm_directory_getter() -&gt; PathBuf {
-    data_dir_getter().join(<span class="string">&quot;farms&quot;</span>)
+    data_dir_getter().join(<span class="string">"farms"</span>)
 }
 
 <span class="doccomment">/// generates a node path from the given path
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>node_directory_getter() -&gt; PathBuf {
-    data_dir_getter().join(<span class="string">&quot;node&quot;</span>)
-}
-
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>provider_storage_dir_getter() -&gt; PathBuf {
-    node_directory_getter().join(<span class="string">&quot;provider-storage&quot;</span>)
+    data_dir_getter().join(<span class="string">"node"</span>)
 }
 
 <span class="kw">fn </span>data_dir_getter() -&gt; PathBuf {
-    dirs::data_dir().expect(<span class="string">&quot;data folder must be present in every major OS&quot;</span>).join(<span class="string">&quot;pulsar&quot;</span>)
+    dirs::data_dir().expect(<span class="string">"data folder must be present in every major OS"</span>).join(<span class="string">"pulsar"</span>)
 }
 
 <span class="doccomment">/// returns OS specific log directory
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>custom_log_dir() -&gt; PathBuf {
-    <span class="kw">let </span>id = <span class="string">&quot;pulsar&quot;</span>;
+    <span class="kw">let </span>id = <span class="string">"pulsar"</span>;
 
-    <span class="attr">#[cfg(target_os = <span class="string">&quot;macos&quot;</span>)]
-    </span><span class="kw">let </span>path = dirs::home_dir().map(|dir| dir.join(<span class="string">&quot;Library/Logs&quot;</span>).join(id));
+    <span class="attr">#[cfg(target_os = <span class="string">"macos"</span>)]
+    </span><span class="kw">let </span>path = dirs::home_dir().map(|dir| dir.join(<span class="string">"Library/Logs"</span>).join(id));
     <span class="comment">// evaluates to: `~/Library/Logs/{id}/
 
-    </span><span class="attr">#[cfg(target_os = <span class="string">&quot;linux&quot;</span>)]
-    </span><span class="kw">let </span>path = dirs::data_local_dir().map(|dir| dir.join(id).join(<span class="string">&quot;logs&quot;</span>));
+    </span><span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
+    </span><span class="kw">let </span>path = dirs::data_local_dir().map(|dir| dir.join(id).join(<span class="string">"logs"</span>));
     <span class="comment">// evaluates to: `~/.local/share/${id}/logs/
 
-    </span><span class="attr">#[cfg(target_os = <span class="string">&quot;windows&quot;</span>)]
-    </span><span class="kw">let </span>path = dirs::data_local_dir().map(|dir| dir.join(id).join(<span class="string">&quot;logs&quot;</span>));
+    </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+    </span><span class="kw">let </span>path = dirs::data_local_dir().map(|dir| dir.join(id).join(<span class="string">"logs"</span>));
     <span class="comment">// evaluates to: `C:/Users/Username/AppData/Local/${id}/logs/
 
-    </span>path.expect(<span class="string">&quot;Could not resolve custom log directory path!&quot;</span>)
+    </span>path.expect(<span class="string">"Could not resolve custom log directory path!"</span>)
 }
 
 <span class="doccomment">/// opens log directory
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>open_log_dir() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>path = custom_log_dir();
-    open::that(path).context(<span class="string">&quot;couldn&#39;t open the directory&quot;</span>)
+    open::that(path).context(<span class="string">"couldn't open the directory"</span>)
 }
 
 <span class="doccomment">/// in case of any error, display this message
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>support_message() -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;If you think this is a bug, please submit it to our forums: {}&quot;</span>,
-        <span class="string">&quot;https://forum.subspace.network&quot;</span>.underline()
+        <span class="string">"If you think this is a bug, please submit it to our forums: {}"</span>,
+        <span class="string">"https://forum.subspace.network"</span>.underline()
     )
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>raise_fd_limit() {
     <span class="kw">match </span>std::panic::catch_unwind(fdlimit::raise_fd_limit) {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(limit)) =&gt; {
-            <span class="macro">tracing::info!</span>(<span class="string">&quot;Increase file limit from soft to hard (limit is {limit})&quot;</span>)
+            <span class="macro">tracing::info!</span>(<span class="string">"Increase file limit from soft to hard (limit is {limit})"</span>)
         }
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="macro">tracing::debug!</span>(<span class="string">&quot;Failed to increase file limit&quot;</span>),
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="macro">tracing::debug!</span>(<span class="string">"Failed to increase file limit"</span>),
         <span class="prelude-val">Err</span>(err) =&gt; {
             <span class="kw">let </span>err = <span class="kw">if let </span><span class="prelude-val">Some</span>(err) = err.downcast_ref::&lt;<span class="kw-2">&amp;</span>str&gt;() {
                 <span class="kw-2">*</span>err
@@ -593,11 +587,11 @@
                 err
             } <span class="kw">else </span>{
                 <span class="macro">unreachable!</span>(
-                    <span class="string">&quot;Should be unreachable as `fdlimit` uses panic macro, which should return \
-                     either `&amp;str` or `String`.&quot;
+                    <span class="string">"Should be unreachable as `fdlimit` uses panic macro, which should return \
+                     either `&amp;str` or `String`."
                 </span>)
             };
-            <span class="macro">tracing::warn!</span>(<span class="string">&quot;Failed to increase file limit: {err}&quot;</span>)
+            <span class="macro">tracing::warn!</span>(<span class="string">"Failed to increase file limit: {err}"</span>)
         }
     }
 }
@@ -612,16 +606,16 @@
     } <span class="kw">else </span>{
         RollingFileAppender::builder().max_log_files(KEEP_LAST_N_FILE).rotation(Rotation::HOURLY)
     }
-    .filename_prefix(<span class="string">&quot;pulsar.log&quot;</span>)
+    .filename_prefix(<span class="string">"pulsar.log"</span>)
     .build(log_dir)
-    .expect(<span class="string">&quot;building should always succeed&quot;</span>);
+    .expect(<span class="string">"building should always succeed"</span>);
 
     <span class="comment">// filter for logging
     </span><span class="kw">let </span>filter = || {
         EnvFilter::builder()
             .with_default_directive(LevelFilter::INFO.into())
             .from_env_lossy()
-            .add_directive(<span class="string">&quot;regalloc2=off&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>))
+            .add_directive(<span class="string">"regalloc2=off"</span>.parse().expect(<span class="string">"hardcoded value is true"</span>))
     };
 
     <span class="comment">// start logger, after we acquire the bundle identifier
@@ -633,7 +627,7 @@
 
     <span class="kw">let </span>tracing_layer = tracing_layer
         .with(
-            BunyanFormattingLayer::new(<span class="string">&quot;pulsar&quot;</span>.to_owned(), file_appender)
+            BunyanFormattingLayer::new(<span class="string">"pulsar"</span>.to_owned(), file_appender)
                 .and_then(JsonStorageLayer)
                 .with_filter(filter()),
         )
@@ -682,32 +676,32 @@
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>table: toml::Table =
-        toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(config).expect(<span class="string">&quot;Config is always toml serializable&quot;</span>))
-            .expect(<span class="string">&quot;Config is always toml deserializable&quot;</span>);
+        toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(config).expect(<span class="string">"Config is always toml serializable"</span>))
+            .expect(<span class="string">"Config is always toml deserializable"</span>);
 
     apply_extra_options_inner(<span class="kw-2">&amp;mut </span>table, extra);
 
-    <span class="prelude-val">Ok</span>(toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(<span class="kw-2">&amp;</span>table).context(<span class="string">&quot;Failed to deserialize extra options&quot;</span>)<span class="question-mark">?</span>)
-        .expect(<span class="string">&quot;At this stage we know that config is always toml deserializable&quot;</span>))
+    <span class="prelude-val">Ok</span>(toml::from_str(<span class="kw-2">&amp;</span>toml::to_string(<span class="kw-2">&amp;</span>table).context(<span class="string">"Failed to deserialize extra options"</span>)<span class="question-mark">?</span>)
+        .expect(<span class="string">"At this stage we know that config is always toml deserializable"</span>))
 }
 
 <span class="attr">#[cfg(tokio_unstable)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>spawn_task&lt;F&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, future: F) -&gt; tokio::task::JoinHandle&lt;F::Output&gt;
 <span class="kw">where
-    </span>F: futures::Future + Send + <span class="lifetime">&#39;static</span>,
-    F::Output: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: futures::Future + Send + <span class="lifetime">'static</span>,
+    F::Output: Send + <span class="lifetime">'static</span>,
 {
     tokio::task::Builder::new()
         .name(name.as_ref())
         .spawn(future)
-        .expect(<span class="string">&quot;Spawning task never fails&quot;</span>)
+        .expect(<span class="string">"Spawning task never fails"</span>)
 }
 
 <span class="attr">#[cfg(not(tokio_unstable))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>spawn_task&lt;F&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, future: F) -&gt; tokio::task::JoinHandle&lt;F::Output&gt;
 <span class="kw">where
-    </span>F: futures::Future + Send + <span class="lifetime">&#39;static</span>,
-    F::Output: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: futures::Future + Send + <span class="lifetime">'static</span>,
+    F::Output: Send + <span class="lifetime">'static</span>,
 {
     <span class="kw">let _ </span>= name;
     tokio::task::spawn(future)
@@ -760,19 +754,19 @@
         </span>S: Serializer,
     {
         <span class="comment">// You can choose how you want to serialize the data.
-        // Here, we&#39;re just serializing the u128 as a string.
+        // Here, we're just serializing the u128 as a string.
         </span><span class="kw">let </span>s = <span class="self">self</span>.<span class="number">0</span>.to_string();
         serializer.serialize_str(<span class="kw-2">&amp;</span>s)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Rewards {
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>Rewards {
     <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
     <span class="kw">where
-        </span>D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+        </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="comment">// Choose how you want to deserialize the data.
-        // Here, we&#39;re deserializing the string back to u128.
+        // Here, we're deserializing the string back to u128.
         </span><span class="kw">let </span>s = String::deserialize(deserializer)<span class="question-mark">?</span>;
         <span class="kw">let </span>value = s.parse::&lt;u128&gt;().map_err(serde::de::Error::custom)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Rewards(value))

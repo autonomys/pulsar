@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/commands/init.rs`."><title>init.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `pulsar/src/commands/init.rs`."><title>init.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pulsar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../pulsar/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -229,15 +231,15 @@
     print_ascii_art();
     print_version();
     <span class="macro">println!</span>();
-    <span class="macro">println!</span>(<span class="string">&quot;Configuration creation process has started...&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"Configuration creation process has started..."</span>);
     <span class="kw">let </span>config = get_config_from_user_inputs()<span class="question-mark">?</span>;
     config_file
-        .write_all(toml::to_string_pretty(<span class="kw-2">&amp;</span>config).wrap_err(<span class="string">&quot;Failed to write config&quot;</span>)<span class="question-mark">?</span>.as_ref())
-        .wrap_err(<span class="string">&quot;Failed to write config&quot;</span>)<span class="question-mark">?</span>;
+        .write_all(toml::to_string_pretty(<span class="kw-2">&amp;</span>config).wrap_err(<span class="string">"Failed to write config"</span>)<span class="question-mark">?</span>.as_ref())
+        .wrap_err(<span class="string">"Failed to write config"</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">println!</span>(<span class="string">&quot;Configuration has been generated at {}&quot;</span>, config_path.display());
+    <span class="macro">println!</span>(<span class="string">"Configuration has been generated at {}"</span>, config_path.display());
 
-    <span class="macro">println!</span>(<span class="string">&quot;Ready for lift off! Run the follow command to begin:&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"Ready for lift off! Run the follow command to begin:"</span>);
     print_run_executable_command();
 
     <span class="prelude-val">Ok</span>(())
@@ -248,22 +250,22 @@
 </span><span class="kw">fn </span>get_config_from_user_inputs() -&gt; <span class="prelude-ty">Result</span>&lt;Config&gt; {
     <span class="comment">// check if user has an existing reward address
     </span><span class="kw">let </span>reward_address_exist = get_user_input(
-        <span class="string">&quot;Do you have an existing farmer/reward address? [y/n]: &quot;</span>,
+        <span class="string">"Do you have an existing farmer/reward address? [y/n]: "</span>,
         <span class="prelude-val">None</span>,
         yes_or_no_parser,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>reward_address = generate_or_get_reward_address(reward_address_exist)
-        .context(<span class="string">&quot;reward address creation failed&quot;</span>)<span class="question-mark">?</span>;
+        .context(<span class="string">"reward address creation failed"</span>)<span class="question-mark">?</span>;
 
     <span class="comment">// get node name
     </span><span class="kw">let </span>default_node_name = whoami::username();
     <span class="kw">let </span>node_name = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Enter your node name to be identified on the network(defaults to \
-             `{default_node_name}`, press enter to use the default): &quot;
+            <span class="string">"Enter your node name to be identified on the network(defaults to \
+             `{default_node_name}`, press enter to use the default): "
         </span>),
-        (default_node_name != <span class="string">&quot;root&quot;</span>).then_some(default_node_name),
+        (default_node_name != <span class="string">"root"</span>).then_some(default_node_name),
         node_name_parser,
     )<span class="question-mark">?</span>;
 
@@ -271,8 +273,8 @@
     </span><span class="kw">let </span>default_farm_loc = farm_directory_getter();
     <span class="kw">let </span>farm_directory = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify a path for storing farm files (press enter to use the default: \
-             `{default_farm_loc:?}`): &quot;</span>,
+            <span class="string">"Specify a path for storing farm files (press enter to use the default: \
+             `{default_farm_loc:?}`): "</span>,
         ),
         <span class="prelude-val">Some</span>(default_farm_loc),
         directory_parser,
@@ -281,8 +283,8 @@
     <span class="kw">let </span>default_node_loc = node_directory_getter();
     <span class="kw">let </span>node_directory = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify a path for storing node files (press enter to use the default: \
-             `{default_node_loc:?}`): &quot;</span>,
+            <span class="string">"Specify a path for storing node files (press enter to use the default: \
+             `{default_node_loc:?}`): "</span>,
         ),
         <span class="prelude-val">Some</span>(default_node_loc),
         directory_parser,
@@ -291,19 +293,19 @@
     <span class="comment">// get farm size
     </span><span class="kw">let </span>farm_size = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify a farm size (defaults to `{DEFAULT_FARM_SIZE}`, press enter to use the \
-             default): &quot;
+            <span class="string">"Specify a farm size (defaults to `{DEFAULT_FARM_SIZE}`, press enter to use the \
+             default): "
         </span>),
         <span class="prelude-val">Some</span>(DEFAULT_FARM_SIZE),
         size_parser,
     )<span class="question-mark">?</span>;
 
     <span class="comment">// get chain
-    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3g;
+    </span><span class="kw">let </span>default_chain = ChainConfig::Gemini3h;
     <span class="kw">let </span>chain = get_user_input(
         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">&quot;Specify the chain to farm. Available options are: {:?}. \n Defaults to \
-             `{default_chain:?}`, press enter to use the default:&quot;</span>,
+            <span class="string">"Specify the chain to farm. Available options are: {:?}. \n Defaults to \
+             `{default_chain:?}`, press enter to use the default:"</span>,
             ChainConfig::iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         ),
         <span class="prelude-val">Some</span>(default_chain),
@@ -327,17 +329,17 @@
 
 <span class="kw">fn </span>generate_or_get_reward_address(reward_address_exist: bool) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKey&gt; {
     <span class="kw">if </span>reward_address_exist {
-        <span class="kw">return </span>get_user_input(<span class="string">&quot;Enter your farmer/reward address: &quot;</span>, <span class="prelude-val">None</span>, reward_address_parser);
+        <span class="kw">return </span>get_user_input(<span class="string">"Enter your farmer/reward address: "</span>, <span class="prelude-val">None</span>, reward_address_parser);
     }
 
     <span class="kw">let </span>wants_new_key = get_user_input(
-        <span class="string">&quot;Do you want to create a new farmer/reward key? [y/n]: &quot;</span>,
+        <span class="string">"Do you want to create a new farmer/reward key? [y/n]: "</span>,
         <span class="prelude-val">None</span>,
         yes_or_no_parser,
     )<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!wants_new_key {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;New key creation was not confirmed&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">"New key creation was not confirmed"</span>));
     }
 
     <span class="comment">// generate new mnemonic and key pair
@@ -351,27 +353,27 @@
     <span class="kw">let </span>words: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = phrase.split_whitespace().collect();
 
     <span class="macro">println!</span>(
-        <span class="string">&quot;IMPORTANT NOTICE: The mnemonic displayed below is crucial to regain access to your \
-         account in case you forget your credentials. It&#39;s highly recommended to store it in a \
+        <span class="string">"IMPORTANT NOTICE: The mnemonic displayed below is crucial to regain access to your \
+         account in case you forget your credentials. It's highly recommended to store it in a \
          secure and retrievable location. Failure to do so may result in permanent loss of access \
-         to your account.\n&quot;
+         to your account.\n"
     </span>);
     <span class="macro">println!</span>(
-        <span class="string">&quot;Please press &#39;Enter&#39; after you&#39;ve securely stored the mnemonic. Once you press &#39;Enter&#39;, \
-         the mnemonic will no longer be visible in this interface for security reasons.\n&quot;
+        <span class="string">"Please press 'Enter' after you've securely stored the mnemonic. Once you press 'Enter', \
+         the mnemonic will no longer be visible in this interface for security reasons.\n"
     </span>);
     <span class="comment">// saving position, since we will later clear the mnemonic
-    </span><span class="macro">println!</span>(<span class="string">&quot;Here is your mnemonic:&quot;</span>);
-    <span class="macro">execute!</span>(std::io::stdout(), cursor::SavePosition).context(<span class="string">&quot;save position failed&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, phrase.as_str());
+    </span><span class="macro">println!</span>(<span class="string">"Here is your mnemonic:"</span>);
+    <span class="macro">execute!</span>(std::io::stdout(), cursor::SavePosition).context(<span class="string">"save position failed"</span>)<span class="question-mark">?</span>;
+    <span class="macro">println!</span>(<span class="string">"{}"</span>, phrase.as_str());
     std::io::stdin().lock().lines().next();
 
     <span class="comment">// clear the mnemonic
-    </span><span class="macro">execute!</span>(std::io::stdout(), cursor::RestorePosition).context(<span class="string">&quot;restore cursor failed&quot;</span>)<span class="question-mark">?</span>;
+    </span><span class="macro">execute!</span>(std::io::stdout(), cursor::RestorePosition).context(<span class="string">"restore cursor failed"</span>)<span class="question-mark">?</span>;
     <span class="macro">execute!</span>(std::io::stdout(), Clear(ClearType::FromCursorDown))
-        .context(<span class="string">&quot;clear mnemonic failed&quot;</span>)<span class="question-mark">?</span>;
+        .context(<span class="string">"clear mnemonic failed"</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">println!</span>(<span class="string">&quot;...redacted...&quot;</span>);
+    <span class="macro">println!</span>(<span class="string">"...redacted..."</span>);
 
     <span class="comment">// User has to provide 3 randomly selected words from the mnemonic
     </span><span class="kw">let </span><span class="kw-2">mut </span>rng = rand::thread_rng();
@@ -380,7 +382,7 @@
     <span class="kw">for </span>index <span class="kw">in </span><span class="kw-2">&amp;</span>word_indexes {
         <span class="kw">loop </span>{
             <span class="kw">let </span>word = get_user_input(
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Enter the {}th word in the mnemonic: &quot;</span>, index + <span class="number">1</span>),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Enter the {}th word in the mnemonic: "</span>, index + <span class="number">1</span>),
                 <span class="prelude-val">None</span>,
                 |input| <span class="prelude-val">Ok</span>::&lt;String, Error&gt;(input.to_owned()),
             )<span class="question-mark">?</span>;
@@ -388,13 +390,13 @@
             <span class="kw">if </span>word == words[<span class="kw-2">*</span>index] {
                 <span class="kw">break</span>;
             } <span class="kw">else </span>{
-                <span class="macro">println!</span>(<span class="string">&quot;incorrect word, please try again.&quot;</span>)
+                <span class="macro">println!</span>(<span class="string">"incorrect word, please try again."</span>)
             }
         }
     }
 
     <span class="comment">// print the public key and return it
-    </span><span class="macro">println!</span>(<span class="string">&quot;Your new public key is: {}&quot;</span>, pair.public());
+    </span><span class="macro">println!</span>(<span class="string">"Your new public key is: {}"</span>, pair.public());
     <span class="kw">let </span>public_key_array = pair.public().<span class="number">0</span>;
     <span class="prelude-val">Ok</span>(public_key_array.into())
 }

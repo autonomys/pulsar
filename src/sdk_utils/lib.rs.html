@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/utils/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_utils" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/utils/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_utils" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../sdk_utils/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -985,17 +987,6 @@
 <a href="#985" id="985">985</a>
 <a href="#986" id="986">986</a>
 <a href="#987" id="987">987</a>
-<a href="#988" id="988">988</a>
-<a href="#989" id="989">989</a>
-<a href="#990" id="990">990</a>
-<a href="#991" id="991">991</a>
-<a href="#992" id="992">992</a>
-<a href="#993" id="993">993</a>
-<a href="#994" id="994">994</a>
-<a href="#995" id="995">995</a>
-<a href="#996" id="996">996</a>
-<a href="#997" id="997">997</a>
-<a href="#998" id="998">998</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Utilities crate shared across all SDK crates
 
 </span><span class="attr">#![warn(
@@ -1032,8 +1023,7 @@
 <span class="kw">use </span>subspace_farmer::jsonrpsee::tracing;
 <span class="kw">use </span>subspace_farmer::node_client::{Error <span class="kw">as </span>NodeClientError, NodeClient};
 <span class="kw">use </span>subspace_rpc_primitives::{
-    FarmerAppInfo, NodeSyncStatus, RewardSignatureResponse, RewardSigningInfo, SlotInfo,
-    SolutionResponse,
+    FarmerAppInfo, RewardSignatureResponse, RewardSigningInfo, SlotInfo, SolutionResponse,
 };
 
 <span class="doccomment">/// Output that indicates whether the task was cancelled or successfully
@@ -1059,14 +1049,14 @@
     }
 
     <span class="doccomment">/// Subscribe to new block headers
-    </span><span class="kw">pub async fn </span>subscribe_new_heads&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Stream&lt;Item = HeaderFor&lt;T&gt;&gt; + Send + Sync + Unpin + <span class="lifetime">&#39;static</span>, Error&gt;
+    </span><span class="kw">pub async fn </span>subscribe_new_heads&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, T&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Stream&lt;Item = HeaderFor&lt;T&gt;&gt; + Send + Sync + Unpin + <span class="lifetime">'static</span>, Error&gt;
     <span class="kw">where
         </span>T: frame_system::Config + sp_runtime::traits::GetRuntimeBlockType,
-        T::RuntimeBlock: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">&#39;static</span>,
-        HeaderFor&lt;T&gt;: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">&#39;static</span>,
-        <span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
+        T::RuntimeBlock: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">'static</span>,
+        HeaderFor&lt;T&gt;: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">'static</span>,
+        <span class="lifetime">'a</span>: <span class="lifetime">'b</span>,
     {
         <span class="kw">let </span>stream = sc_rpc::chain::ChainApiClient::&lt;
             BlockNumberFor&lt;T&gt;,
@@ -1081,14 +1071,14 @@
     }
 
     <span class="doccomment">/// Subscribe to new finalized block headers
-    </span><span class="kw">pub async fn </span>subscribe_finalized_heads&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, T&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Stream&lt;Item = HeaderFor&lt;T&gt;&gt; + Send + Sync + Unpin + <span class="lifetime">&#39;static</span>, Error&gt;
+    </span><span class="kw">pub async fn </span>subscribe_finalized_heads&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, T&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Stream&lt;Item = HeaderFor&lt;T&gt;&gt; + Send + Sync + Unpin + <span class="lifetime">'static</span>, Error&gt;
     <span class="kw">where
         </span>T: frame_system::Config + sp_runtime::traits::GetRuntimeBlockType,
-        T::RuntimeBlock: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">&#39;static</span>,
-        HeaderFor&lt;T&gt;: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">&#39;static</span>,
-        <span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
+        T::RuntimeBlock: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">'static</span>,
+        HeaderFor&lt;T&gt;: serde::de::DeserializeOwned + sp_runtime::DeserializeOwned + <span class="lifetime">'static</span>,
+        <span class="lifetime">'a</span>: <span class="lifetime">'b</span>,
     {
         <span class="kw">let </span>stream = sc_rpc::chain::ChainApiClient::&lt;
             BlockNumberFor&lt;T&gt;,
@@ -1109,17 +1099,17 @@
     ) -&gt; anyhow::Result&lt;Vec&lt;frame_system::EventRecord&lt;T::RuntimeEvent, T::Hash&gt;&gt;&gt;
     <span class="kw">where
         </span>T: frame_system::Config,
-        T::Hash: serde::ser::Serialize + serde::de::DeserializeOwned + Send + Sync + <span class="lifetime">&#39;static</span>,
+        T::Hash: serde::ser::Serialize + serde::de::DeserializeOwned + Send + Sync + <span class="lifetime">'static</span>,
         Vec&lt;frame_system::EventRecord&lt;T::RuntimeEvent, T::Hash&gt;&gt;: parity_scale_codec::Decode,
     {
         <span class="kw">match </span><span class="self">self
             </span>.get_storage::&lt;T::Hash&gt;(StorageKey::events(), block)
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;Failed to get events from storage&quot;</span>)<span class="question-mark">?
+            </span>.context(<span class="string">"Failed to get events from storage"</span>)<span class="question-mark">?
         </span>{
             <span class="prelude-val">Some</span>(sp_storage::StorageData(events)) =&gt;
                 parity_scale_codec::DecodeAll::decode_all(<span class="kw-2">&amp;mut </span>events.as_ref())
-                    .context(<span class="string">&quot;Failed to decode events&quot;</span>),
+                    .context(<span class="string">"Failed to decode events"</span>),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]),
         }
     }
@@ -1133,7 +1123,7 @@
 
     <span class="kw">async fn </span>subscribe_slot_info(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = SlotInfo&gt; + Send + <span class="lifetime">&#39;static</span>&gt;&gt;, NodeClientError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = SlotInfo&gt; + Send + <span class="lifetime">'static</span>&gt;&gt;, NodeClientError&gt; {
         <span class="prelude-val">Ok</span>(Box::pin(
             SubspaceRpcApiClient::subscribe_slot_info(<span class="self">self</span>)
                 .<span class="kw">await</span><span class="question-mark">?
@@ -1150,7 +1140,7 @@
 
     <span class="kw">async fn </span>subscribe_reward_signing(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = RewardSigningInfo&gt; + Send + <span class="lifetime">&#39;static</span>&gt;&gt;, NodeClientError&gt;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = RewardSigningInfo&gt; + Send + <span class="lifetime">'static</span>&gt;&gt;, NodeClientError&gt;
     {
         <span class="prelude-val">Ok</span>(Box::pin(
             SubspaceRpcApiClient::subscribe_reward_signing(<span class="self">self</span>)
@@ -1168,19 +1158,9 @@
 
     <span class="kw">async fn </span>subscribe_archived_segment_headers(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = SegmentHeader&gt; + Send + <span class="lifetime">&#39;static</span>&gt;&gt;, NodeClientError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = SegmentHeader&gt; + Send + <span class="lifetime">'static</span>&gt;&gt;, NodeClientError&gt; {
         <span class="prelude-val">Ok</span>(Box::pin(
             SubspaceRpcApiClient::subscribe_archived_segment_header(<span class="self">self</span>)
-                .<span class="kw">await</span><span class="question-mark">?
-                </span>.filter_map(|result| futures::future::ready(result.ok())),
-        ))
-    }
-
-    <span class="kw">async fn </span>subscribe_node_sync_status_change(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Stream&lt;Item = NodeSyncStatus&gt; + Send + <span class="lifetime">&#39;static</span>&gt;&gt;, NodeClientError&gt; {
-        <span class="prelude-val">Ok</span>(Box::pin(
-            SubspaceRpcApiClient::subscribe_node_sync_status_change(<span class="self">self</span>)
                 .<span class="kw">await</span><span class="question-mark">?
                 </span>.filter_map(|result| futures::future::ready(result.ok())),
         ))
@@ -1198,7 +1178,7 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(bytes) = result {
             <span class="kw">let </span>piece = Piece::try_from(bytes.as_slice())
-                .map_err(|<span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">&quot;Cannot convert piece. PieceIndex={}&quot;</span>, piece_index))<span class="question-mark">?</span>;
+                .map_err(|<span class="kw">_</span>| <span class="macro">format!</span>(<span class="string">"Cannot convert piece. PieceIndex={}"</span>, piece_index))<span class="question-mark">?</span>;
 
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(piece));
         }
@@ -1232,24 +1212,24 @@
     </span>}
 
     <span class="attr">#[allow(clippy::diverging_sub_expression)]
-    </span><span class="kw">async fn </span>batch_request&lt;<span class="lifetime">&#39;a</span>, R&gt;(
+    </span><span class="kw">async fn </span>batch_request&lt;<span class="lifetime">'a</span>, R&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _batch: BatchRequestBuilder&lt;<span class="lifetime">&#39;a</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;BatchResponse&lt;<span class="lifetime">&#39;a</span>, R&gt;, Error&gt;
+        _batch: BatchRequestBuilder&lt;<span class="lifetime">'a</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;BatchResponse&lt;<span class="lifetime">'a</span>, R&gt;, Error&gt;
     <span class="kw">where
-        </span>R: DeserializeOwned + std::fmt::Debug + <span class="lifetime">&#39;a</span>,
+        </span>R: DeserializeOwned + std::fmt::Debug + <span class="lifetime">'a</span>,
     {
-        <span class="macro">unreachable!</span>(<span class="string">&quot;It isn&#39;t called at all&quot;</span>)
+        <span class="macro">unreachable!</span>(<span class="string">"It isn't called at all"</span>)
     }
 }
 
 <span class="attr">#[async_trait::async_trait]
 </span><span class="kw">impl </span>SubscriptionClientT <span class="kw">for </span>Rpc {
-    <span class="kw">async fn </span>subscribe&lt;<span class="lifetime">&#39;a</span>, Notif, Params&gt;(
+    <span class="kw">async fn </span>subscribe&lt;<span class="lifetime">'a</span>, Notif, Params&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        subscribe_method: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        subscribe_method: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
         params: Params,
-        _unsubscribe_method: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        _unsubscribe_method: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;jsonrpsee_core::client::Subscription&lt;Notif&gt;, Error&gt;
     <span class="kw">where
         </span>Params: ToRpcParams + Send,
@@ -1272,14 +1252,14 @@
     }
 
     <span class="attr">#[allow(clippy::diverging_sub_expression)]
-    </span><span class="kw">async fn </span>subscribe_to_method&lt;<span class="lifetime">&#39;a</span>, Notif&gt;(
+    </span><span class="kw">async fn </span>subscribe_to_method&lt;<span class="lifetime">'a</span>, Notif&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _method: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        _method: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;jsonrpsee_core::client::Subscription&lt;Notif&gt;, Error&gt;
     <span class="kw">where
         </span>Notif: DeserializeOwned,
     {
-        <span class="macro">unreachable!</span>(<span class="string">&quot;It isn&#39;t called&quot;</span>)
+        <span class="macro">unreachable!</span>(<span class="string">"It isn't called"</span>)
     }
 }
 
@@ -1298,7 +1278,7 @@
 
 <span class="kw">impl</span>&lt;F: FnOnce()&gt; Drop <span class="kw">for </span>Defer&lt;F&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        (<span class="self">self</span>.<span class="number">0</span>.take().expect(<span class="string">&quot;Always set&quot;</span>))();
+        (<span class="self">self</span>.<span class="number">0</span>.take().expect(<span class="string">"Always set"</span>))();
     }
 }
 
@@ -1306,7 +1286,7 @@
 </span><span class="attr">#[derive(Default, derivative::Derivative)]
 #[derivative(Debug)]
 </span><span class="kw">struct </span>DropCollection {
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>vec: Vec&lt;Box&lt;<span class="kw">dyn </span>Send + Sync&gt;&gt;,
 }
 
@@ -1317,22 +1297,22 @@
     }
 
     <span class="doccomment">/// Run closure during drop
-    </span><span class="kw">pub fn </span>defer&lt;F: FnOnce() + Sync + Send + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) {
+    </span><span class="kw">pub fn </span>defer&lt;F: FnOnce() + Sync + Send + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) {
         <span class="self">self</span>.push(Defer::new(f))
     }
 
     <span class="doccomment">/// Add something to drop collection
-    </span><span class="kw">pub fn </span>push&lt;T: Send + Sync + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, t: T) {
+    </span><span class="kw">pub fn </span>push&lt;T: Send + Sync + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, t: T) {
         <span class="self">self</span>.vec.push(Box::new(t))
     }
 
     <span class="doccomment">/// Drain the underlying vector
-    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">&#39;_</span>, Box&lt;<span class="kw">dyn </span>Send + Sync&gt;&gt; {
+    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">'_</span>, Box&lt;<span class="kw">dyn </span>Send + Sync&gt;&gt; {
         <span class="self">self</span>.vec.drain(..)
     }
 }
 
-<span class="kw">impl</span>&lt;T: Send + Sync + <span class="lifetime">&#39;static</span>&gt; FromIterator&lt;T&gt; <span class="kw">for </span>DropCollection {
+<span class="kw">impl</span>&lt;T: Send + Sync + <span class="lifetime">'static</span>&gt; FromIterator&lt;T&gt; <span class="kw">for </span>DropCollection {
     <span class="kw">fn </span>from_iter&lt;I: IntoIterator&lt;Item = T&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>me = <span class="self">Self</span>::new();
         <span class="kw">for </span>item <span class="kw">in </span>iter {
@@ -1342,7 +1322,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T: Send + Sync + <span class="lifetime">&#39;static</span>&gt; Extend&lt;T&gt; <span class="kw">for </span>DropCollection {
+<span class="kw">impl</span>&lt;T: Send + Sync + <span class="lifetime">'static</span>&gt; Extend&lt;T&gt; <span class="kw">for </span>DropCollection {
     <span class="kw">fn </span>extend&lt;I: IntoIterator&lt;Item = T&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iter: I) {
         <span class="kw">for </span>item <span class="kw">in </span>iter {
             <span class="self">self</span>.push(item);
@@ -1354,7 +1334,7 @@
 </span><span class="attr">#[derive(Default, derivative::Derivative)]
 #[derivative(Debug)]
 </span><span class="kw">struct </span>AsyncDropFutures {
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>vec: Vec&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send + Sync&gt;&gt;&gt;,
 }
 
@@ -1365,12 +1345,12 @@
     }
 
     <span class="doccomment">/// Push some future
-    </span><span class="kw">pub fn </span>push&lt;F: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fut: F) {
+    </span><span class="kw">pub fn </span>push&lt;F: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fut: F) {
         <span class="self">self</span>.vec.push(Box::pin(fut))
     }
 
     <span class="doccomment">/// Drain the underlying vector
-    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">&#39;_</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send + Sync&gt;&gt;&gt; {
+    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">'_</span>, Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send + Sync&gt;&gt;&gt; {
         <span class="self">self</span>.vec.drain(..)
     }
 }
@@ -1408,8 +1388,8 @@
 
         <span class="kw">if </span><span class="self">self</span>.allow_async {
             <span class="macro">tracing::warn!</span>(
-                <span class="string">&quot;Destructor set: {} with async allowed is being dropped. Async destructors won&#39;t \
-                 run. Are you missing the `async_drop` call?&quot;</span>,
+                <span class="string">"Destructor set: {} with async allowed is being dropped. Async destructors won't \
+                 run. Are you missing the `async_drop` call?"</span>,
                 <span class="self">self</span>.name
             );
         }
@@ -1423,16 +1403,16 @@
         <span class="kw">for </span>order <span class="kw">in </span>order_drain {
             <span class="kw">match </span>order {
                 ToDestruct::Sync =&gt; {
-                    <span class="kw">let </span>sync_fn = sync_fns_drain.next().expect(<span class="string">&quot;sync fn always set&quot;</span>);
+                    <span class="kw">let </span>sync_fn = sync_fns_drain.next().expect(<span class="string">"sync fn always set"</span>);
                     drop(sync_fn);
                 }
                 ToDestruct::Async =&gt; {
-                    <span class="kw">let </span>async_fn = async_fns_drain.next().expect(<span class="string">&quot;async fn always set&quot;</span>);
+                    <span class="kw">let </span>async_fn = async_fns_drain.next().expect(<span class="string">"async fn always set"</span>);
                     <span class="comment">// We cannot run async function here, we can only drop them.
                     </span>drop(async_fn);
                 }
                 ToDestruct::Item =&gt; {
-                    <span class="kw">let </span>item = items_drain.next().expect(<span class="string">&quot;item always set&quot;</span>);
+                    <span class="kw">let </span>item = items_drain.next().expect(<span class="string">"item always set"</span>);
                     drop(item);
                 }
             }
@@ -1473,9 +1453,9 @@
     }
 
     <span class="doccomment">/// Add sync destructor in the sync destructor collection
-    </span><span class="kw">pub fn </span>add_sync_destructor&lt;F: FnOnce() + Sync + Send + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub fn </span>add_sync_destructor&lt;F: FnOnce() + Sync + Send + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if </span><span class="self">self</span>.already_ran {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;Destructor set: {} has been run already&quot;</span>, <span class="self">self</span>.name));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">"Destructor set: {} has been run already"</span>, <span class="self">self</span>.name));
         }
         <span class="self">self</span>.order.push(ToDestruct::Sync);
         <span class="self">self</span>.sync_destructors.defer(f);
@@ -1483,15 +1463,15 @@
     }
 
     <span class="doccomment">/// Add async destructor in the async destructor collection
-    </span><span class="kw">pub fn </span>add_async_destructor&lt;F: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">&#39;static</span>&gt;(
+    </span><span class="kw">pub fn </span>add_async_destructor&lt;F: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">'static</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         fut: F,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if </span><span class="self">self</span>.already_ran {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;Destructor set: {} has been run already&quot;</span>, <span class="self">self</span>.name));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">"Destructor set: {} has been run already"</span>, <span class="self">self</span>.name));
         }
         <span class="kw">if </span>!<span class="self">self</span>.allow_async {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;async destructors are disabled in Destructor set: {}&quot;</span>, <span class="self">self</span>.name));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">"async destructors are disabled in Destructor set: {}"</span>, <span class="self">self</span>.name));
         }
         <span class="self">self</span>.order.push(ToDestruct::Async);
         <span class="self">self</span>.async_destructors.push(fut);
@@ -1499,9 +1479,9 @@
     }
 
     <span class="doccomment">/// Add normal object to drop
-    </span><span class="kw">pub fn </span>add_items_to_drop&lt;T: Send + Sync + <span class="lifetime">&#39;static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, t: T) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub fn </span>add_items_to_drop&lt;T: Send + Sync + <span class="lifetime">'static</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, t: T) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">if </span><span class="self">self</span>.already_ran {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;Destructor set: {} has been run already&quot;</span>, <span class="self">self</span>.name));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">"Destructor set: {} has been run already"</span>, <span class="self">self</span>.name));
         }
         <span class="self">self</span>.order.push(ToDestruct::Item);
         <span class="self">self</span>.items_to_drop.push(t);
@@ -1512,13 +1492,13 @@
     </span><span class="kw">pub async fn </span>async_drop(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="comment">// already closed, nothing to do.
         </span><span class="kw">if </span><span class="self">self</span>.already_ran {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;Destructor set: {} has been run already&quot;</span>, <span class="self">self</span>.name));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">"Destructor set: {} has been run already"</span>, <span class="self">self</span>.name));
         }
 
         <span class="kw">if </span>!<span class="self">self</span>.allow_async {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-                <span class="string">&quot;Destructor set: {} is only configured to run sync destructors. To run them drop \
-                 this instance.&quot;</span>,
+                <span class="string">"Destructor set: {} is only configured to run sync destructors. To run them drop \
+                 this instance."</span>,
                 <span class="self">self</span>.name
             ));
         }
@@ -1531,15 +1511,15 @@
         <span class="kw">for </span>order <span class="kw">in </span>order_drain {
             <span class="kw">match </span>order {
                 ToDestruct::Sync =&gt; {
-                    <span class="kw">let </span>sync_fn = sync_fns_drain.next().expect(<span class="string">&quot;sync fn always set&quot;</span>);
+                    <span class="kw">let </span>sync_fn = sync_fns_drain.next().expect(<span class="string">"sync fn always set"</span>);
                     drop(sync_fn);
                 }
                 ToDestruct::Async =&gt; {
-                    <span class="kw">let </span>async_fn = async_fns_drain.next().expect(<span class="string">&quot;async fn always set&quot;</span>);
+                    <span class="kw">let </span>async_fn = async_fns_drain.next().expect(<span class="string">"async fn always set"</span>);
                     async_fn.<span class="kw">await</span>;
                 }
                 ToDestruct::Item =&gt; {
-                    <span class="kw">let </span>item = items_drain.next().expect(<span class="string">&quot;item always set&quot;</span>);
+                    <span class="kw">let </span>item = items_drain.next().expect(<span class="string">"item always set"</span>);
                     drop(item);
                 }
             }
@@ -1569,7 +1549,7 @@
     Serialize,
 )]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>ByteSize(<span class="attr">#[serde(with = <span class="string">&quot;bytesize_serde&quot;</span>)] </span><span class="kw">pub </span>bytesize::ByteSize);
+</span><span class="kw">pub struct </span>ByteSize(<span class="attr">#[serde(with = <span class="string">"bytesize_serde"</span>)] </span><span class="kw">pub </span>bytesize::ByteSize);
 
 <span class="kw">impl </span>ByteSize {
     <span class="doccomment">/// Constructor for bytes
@@ -1633,13 +1613,13 @@
 
 <span class="kw">impl </span>From&lt;Multiaddr&gt; <span class="kw">for </span>sc_network::Multiaddr {
     <span class="kw">fn </span>from(value: Multiaddr) -&gt; <span class="self">Self </span>{
-        value.<span class="number">0</span>.to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions is always right&quot;</span>)
+        value.<span class="number">0</span>.to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions is always right"</span>)
     }
 }
 
 <span class="kw">impl </span>From&lt;sc_network::Multiaddr&gt; <span class="kw">for </span>Multiaddr {
     <span class="kw">fn </span>from(value: sc_network::Multiaddr) -&gt; <span class="self">Self </span>{
-        value.to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions is always right&quot;</span>)
+        value.to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions is always right"</span>)
     }
 }
 
@@ -1662,19 +1642,19 @@
 
 <span class="kw">impl </span>From&lt;MultiaddrWithPeerId&gt; <span class="kw">for </span>libp2p_core::Multiaddr {
     <span class="kw">fn </span>from(value: MultiaddrWithPeerId) -&gt; <span class="self">Self </span>{
-        value.<span class="number">0</span>.to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions is always right&quot;</span>)
+        value.<span class="number">0</span>.to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions is always right"</span>)
     }
 }
 
 <span class="kw">impl </span>From&lt;MultiaddrWithPeerId&gt; <span class="kw">for </span>sc_network::Multiaddr {
     <span class="kw">fn </span>from(multiaddr: MultiaddrWithPeerId) -&gt; <span class="self">Self </span>{
-        multiaddr.to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions is always right&quot;</span>)
+        multiaddr.to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions is always right"</span>)
     }
 }
 
 <span class="kw">impl </span>From&lt;MultiaddrWithPeerId&gt; <span class="kw">for </span>Multiaddr {
     <span class="kw">fn </span>from(multiaddr: MultiaddrWithPeerId) -&gt; <span class="self">Self </span>{
-        multiaddr.to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions is always right&quot;</span>)
+        multiaddr.to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions is always right"</span>)
     }
 }
 
@@ -1682,8 +1662,8 @@
 </span><span class="attr">#[cfg(not(tokio_unstable))]
 </span><span class="kw">pub fn </span>task_spawn&lt;F&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, future: F) -&gt; tokio::task::JoinHandle&lt;F::Output&gt;
 <span class="kw">where
-    </span>F: Future + Send + <span class="lifetime">&#39;static</span>,
-    F::Output: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: Future + Send + <span class="lifetime">'static</span>,
+    F::Output: Send + <span class="lifetime">'static</span>,
 {
     <span class="kw">let _ </span>= name;
     tokio::task::spawn(future)
@@ -1693,21 +1673,21 @@
 </span><span class="attr">#[cfg(tokio_unstable)]
 </span><span class="kw">pub fn </span>task_spawn&lt;F&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, future: F) -&gt; tokio::task::JoinHandle&lt;F::Output&gt;
 <span class="kw">where
-    </span>F: Future + Send + <span class="lifetime">&#39;static</span>,
-    F::Output: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: Future + Send + <span class="lifetime">'static</span>,
+    F::Output: Send + <span class="lifetime">'static</span>,
 {
     tokio::task::Builder::new()
         .name(name.as_ref())
         .spawn(future)
-        .expect(<span class="string">&quot;Spawning task never fails&quot;</span>)
+        .expect(<span class="string">"Spawning task never fails"</span>)
 }
 
 <span class="doccomment">/// Spawn task with provided name (if possible)
 </span><span class="attr">#[cfg(not(tokio_unstable))]
 </span><span class="kw">pub fn </span>task_spawn_blocking&lt;F, R&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, f: F) -&gt; tokio::task::JoinHandle&lt;R&gt;
 <span class="kw">where
-    </span>F: FnOnce() -&gt; R + Send + <span class="lifetime">&#39;static</span>,
-    R: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: FnOnce() -&gt; R + Send + <span class="lifetime">'static</span>,
+    R: Send + <span class="lifetime">'static</span>,
 {
     <span class="kw">let _ </span>= name;
     tokio::task::spawn_blocking(f)
@@ -1717,13 +1697,13 @@
 </span><span class="attr">#[cfg(tokio_unstable)]
 </span><span class="kw">pub fn </span>task_spawn_blocking&lt;F, R&gt;(name: <span class="kw">impl </span>AsRef&lt;str&gt;, f: F) -&gt; tokio::task::JoinHandle&lt;R&gt;
 <span class="kw">where
-    </span>F: FnOnce() -&gt; R + Send + <span class="lifetime">&#39;static</span>,
-    R: Send + <span class="lifetime">&#39;static</span>,
+    </span>F: FnOnce() -&gt; R + Send + <span class="lifetime">'static</span>,
+    R: Send + <span class="lifetime">'static</span>,
 {
     tokio::task::Builder::new()
         .name(name.as_ref())
         .spawn_blocking(f)
-        .expect(<span class="string">&quot;Spawning task never fails&quot;</span>)
+        .expect(<span class="string">"Spawning task never fails"</span>)
 }
 
 <span class="doccomment">/// Substrate storage key abstraction
@@ -1741,7 +1721,7 @@
 
     <span class="doccomment">/// Storage key for events
     </span><span class="kw">pub fn </span>events() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new([<span class="string">&quot;System&quot;</span>, <span class="string">&quot;Events&quot;</span>])
+        <span class="self">Self</span>::new([<span class="string">"System"</span>, <span class="string">"Events"</span>])
     }
 }
 
@@ -1752,11 +1732,11 @@
         block: <span class="prelude-ty">Option</span>&lt;H&gt;,
     ) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;sp_storage::StorageData&gt;&gt;
     <span class="kw">where
-        </span>H: Send + Sync + <span class="lifetime">&#39;static </span>+ serde::ser::Serialize + serde::de::DeserializeOwned,
+        </span>H: Send + Sync + <span class="lifetime">'static </span>+ serde::ser::Serialize + serde::de::DeserializeOwned,
     {
         <span class="self">self</span>.storage(sp_storage::StorageKey(key), block)
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;Failed to fetch storage entry&quot;</span>)
+            </span>.context(<span class="string">"Failed to fetch storage entry"</span>)
     }
 }
 
@@ -1817,14 +1797,14 @@
     // Copyright (C) 2022 Subspace Labs, Inc.
     // SPDX-License-Identifier: Apache-2.0
 
-    // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+    // Licensed under the Apache License, Version 2.0 (the "License");
     // you may not use this file except in compliance with the License.
     // You may obtain a copy of the License at
     //
     // 	http://www.apache.org/licenses/LICENSE-2.0
     //
     // Unless required by applicable law or agreed to in writing, software
-    // distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+    // distributed under the License is distributed on an "AS IS" BASIS,
     // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     // See the License for the specific language governing permissions and
     // limitations under the License.
@@ -1840,26 +1820,26 @@
     <span class="kw">use </span>subspace_core_primitives::{PublicKey, PUBLIC_KEY_LENGTH};
     <span class="kw">use </span>thiserror::Error;
 
-    <span class="kw">const </span>PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;SS58PRE&quot;</span>;
+    <span class="kw">const </span>PREFIX: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"SS58PRE"</span>;
     <span class="kw">const </span>CHECKSUM_LEN: usize = <span class="number">2</span>;
 
     <span class="doccomment">/// An error type for SS58 decoding.
     </span><span class="attr">#[derive(Debug, Error)]
     </span><span class="kw">pub enum </span>Ss58ParsingError {
         <span class="doccomment">/// Base 58 requirement is violated
-        </span><span class="attr">#[error(<span class="string">&quot;Base 58 requirement is violated&quot;</span>)]
+        </span><span class="attr">#[error(<span class="string">"Base 58 requirement is violated"</span>)]
         </span>BadBase58,
         <span class="doccomment">/// Length is bad
-        </span><span class="attr">#[error(<span class="string">&quot;Length is bad&quot;</span>)]
+        </span><span class="attr">#[error(<span class="string">"Length is bad"</span>)]
         </span>BadLength,
         <span class="doccomment">/// Invalid SS58 prefix byte
-        </span><span class="attr">#[error(<span class="string">&quot;Invalid SS58 prefix byte&quot;</span>)]
+        </span><span class="attr">#[error(<span class="string">"Invalid SS58 prefix byte"</span>)]
         </span>InvalidPrefix,
         <span class="doccomment">/// Disallowed SS58 Address Format for this datatype
-        </span><span class="attr">#[error(<span class="string">&quot;Disallowed SS58 Address Format for this datatype&quot;</span>)]
+        </span><span class="attr">#[error(<span class="string">"Disallowed SS58 Address Format for this datatype"</span>)]
         </span>FormatNotAllowed,
         <span class="doccomment">/// Invalid checksum
-        </span><span class="attr">#[error(<span class="string">&quot;Invalid checksum&quot;</span>)]
+        </span><span class="attr">#[error(<span class="string">"Invalid checksum"</span>)]
         </span>InvalidChecksum,
     }
 
@@ -1941,27 +1921,27 @@
     </span><span class="kw">pub fn </span>chain_spec_properties() -&gt; Properties {
         <span class="kw">let </span><span class="kw-2">mut </span>properties = Properties::new();
 
-        properties.insert(<span class="string">&quot;dsnBootstrapNodes&quot;</span>.to_string(), Vec::&lt;String&gt;::new().into());
-        properties.insert(<span class="string">&quot;ss58Format&quot;</span>.to_string(), &lt;SS58Prefix <span class="kw">as </span>Get&lt;u16&gt;&gt;::get().into());
-        properties.insert(<span class="string">&quot;tokenDecimals&quot;</span>.to_string(), DECIMAL_PLACES.into());
-        properties.insert(<span class="string">&quot;tokenSymbol&quot;</span>.to_string(), <span class="string">&quot;tSSC&quot;</span>.into());
+        properties.insert(<span class="string">"dsnBootstrapNodes"</span>.to_string(), Vec::&lt;String&gt;::new().into());
+        properties.insert(<span class="string">"ss58Format"</span>.to_string(), &lt;SS58Prefix <span class="kw">as </span>Get&lt;u16&gt;&gt;::get().into());
+        properties.insert(<span class="string">"tokenDecimals"</span>.to_string(), DECIMAL_PLACES.into());
+        properties.insert(<span class="string">"tokenSymbol"</span>.to_string(), <span class="string">"tSSC"</span>.into());
         <span class="kw">let </span>domains_bootstrap_nodes = Map::&lt;String, Value&gt;::new();
-        properties.insert(<span class="string">&quot;domainsBootstrapNodes&quot;</span>.to_string(), domains_bootstrap_nodes.into());
+        properties.insert(<span class="string">"domainsBootstrapNodes"</span>.to_string(), domains_bootstrap_nodes.into());
 
         properties
     }
 
     <span class="doccomment">/// Get public key from keypair seed.
     </span><span class="kw">pub fn </span>get_public_key_from_seed&lt;TPublic: Public&gt;(
-        seed: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        seed: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
     ) -&gt; &lt;TPublic::Pair <span class="kw">as </span>Pair&gt;::Public {
-        TPublic::Pair::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;//{seed}&quot;</span>), <span class="prelude-val">None</span>)
-            .expect(<span class="string">&quot;Static values are valid; qed&quot;</span>)
+        TPublic::Pair::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"//{seed}"</span>), <span class="prelude-val">None</span>)
+            .expect(<span class="string">"Static values are valid; qed"</span>)
             .public()
     }
 
     <span class="doccomment">/// Generate an account ID from seed.
-    </span><span class="kw">pub fn </span>get_account_id_from_seed(seed: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; AccountId32 {
+    </span><span class="kw">pub fn </span>get_account_id_from_seed(seed: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; AccountId32 {
         MultiSigner::from(get_public_key_from_seed::&lt;sr25519::Public&gt;(seed)).into_account()
     }
 }
@@ -1977,9 +1957,9 @@
                 <span class="self">Self</span>::default()
             }
 
-            <span class="attr">#[doc = <span class="macro">concat!</span>(<span class="string">&quot;Build &quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>))]
+            <span class="attr">#[doc = <span class="macro">concat!</span>(<span class="string">"Build "</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>))]
             </span><span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; <span class="macro-nonterminal">$name </span>{
-                <span class="self">self</span>._build().expect(<span class="string">&quot;Infallible&quot;</span>)
+                <span class="self">self</span>._build().expect(<span class="string">"Infallible"</span>)
             }
         }
 

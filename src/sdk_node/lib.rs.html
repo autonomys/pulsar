@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/node/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_node" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../sdk_node/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -907,23 +909,6 @@
 <a href="#907" id="907">907</a>
 <a href="#908" id="908">908</a>
 <a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
-<a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
-<a href="#923" id="923">923</a>
-<a href="#924" id="924">924</a>
-<a href="#925" id="925">925</a>
-<a href="#926" id="926">926</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Crate with subspace node
 
 </span><span class="attr">#![warn(
@@ -948,13 +933,15 @@
 <span class="kw">use </span>futures::{FutureExt, Stream, StreamExt};
 <span class="kw">use </span>sc_consensus_subspace::archiver::SegmentHeadersStore;
 <span class="kw">use </span>sc_network::network_state::NetworkState;
-<span class="kw">use </span>sc_network::{NetworkService, NetworkStateInfo, SyncState};
+<span class="kw">use </span>sc_network::{NetworkService, NetworkStateInfo};
+<span class="kw">use </span>sc_network_sync::SyncState;
 <span class="kw">use </span>sc_rpc_api::state::StateApiClient;
 <span class="kw">use </span>sc_service::Configuration;
 <span class="kw">use </span>sc_utils::mpsc::tracing_unbounded;
 <span class="kw">use </span>sdk_dsn::{DsnOptions, DsnShared};
 <span class="kw">use </span>sdk_traits::Farmer;
 <span class="kw">use </span>sdk_utils::{DestructorSet, MultiaddrWithPeerId, PublicKey, TaskOutput};
+<span class="kw">use </span>serde_json::Value;
 <span class="kw">use </span>sp_consensus::SyncOracle;
 <span class="kw">use </span>sp_consensus_subspace::digests::PreDigest;
 <span class="kw">use </span>sp_core::traits::SpawnEssentialNamed;
@@ -970,7 +957,7 @@
 <span class="kw">use </span>subspace_rpc_primitives::MAX_SEGMENT_HEADERS_PER_REQUEST;
 <span class="kw">use </span>subspace_runtime::RuntimeApi;
 <span class="kw">use </span>subspace_runtime_primitives::opaque::{Block <span class="kw">as </span>OpaqueBlock, Header};
-<span class="kw">use </span>subspace_service::SubspaceConfiguration;
+<span class="kw">use </span>subspace_service::config::SubspaceConfiguration;
 <span class="kw">use </span>tokio::sync::oneshot;
 
 <span class="kw">mod </span>builder;
@@ -995,31 +982,34 @@
 
 <span class="kw">fn </span>pot_external_entropy(
     consensus_chain_config: <span class="kw-2">&amp;</span>Configuration,
-    config_pot_external_entropy: <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;,
+    maybe_pot_external_entropy: <span class="prelude-ty">Option</span>&lt;String&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, sc_service::Error&gt; {
     <span class="kw">let </span>maybe_chain_spec_pot_external_entropy = consensus_chain_config
         .chain_spec
         .properties()
-        .get(<span class="string">&quot;potExternalEntropy&quot;</span>)
-        .map(|d| serde_json::from_value(d.clone()))
-        .transpose()
-        .map_err(|error| {
-            sc_service::Error::Other(<span class="macro">format!</span>(<span class="string">&quot;Failed to decode PoT initial key: {error:?}&quot;</span>))
-        })<span class="question-mark">?
-        </span>.flatten();
+        .get(<span class="string">"potExternalEntropy"</span>)
+        .map(|d| <span class="kw">match </span>d.clone() {
+            Value::String(s) =&gt; <span class="prelude-val">Ok</span>(s),
+            Value::Null =&gt; <span class="prelude-val">Ok</span>(String::new()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(sc_service::Error::Other(<span class="string">"Failed to decode PoT initial key"</span>.to_string())),
+        })
+        .transpose()<span class="question-mark">?</span>;
     <span class="kw">if </span>maybe_chain_spec_pot_external_entropy.is_some()
-        &amp;&amp; config_pot_external_entropy.is_some()
-        &amp;&amp; maybe_chain_spec_pot_external_entropy != config_pot_external_entropy
+        &amp;&amp; maybe_pot_external_entropy.is_some()
+        &amp;&amp; maybe_chain_spec_pot_external_entropy != maybe_pot_external_entropy
     {
         <span class="macro">tracing::warn!</span>(
-            <span class="string">&quot;--pot-external-entropy CLI argument was ignored due to chain spec having a different \
-             explicit value&quot;
+            <span class="string">"--pot-external-entropy CLI argument was ignored due to chain spec having a different \
+             explicit value"
         </span>);
     }
-    <span class="prelude-val">Ok</span>(maybe_chain_spec_pot_external_entropy.or(config_pot_external_entropy).unwrap_or_default())
+    <span class="prelude-val">Ok</span>(maybe_chain_spec_pot_external_entropy
+        .or(maybe_pot_external_entropy)
+        .unwrap_or_default()
+        .into_bytes())
 }
 
-<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">&#39;static</span>&gt; Config&lt;F&gt; {
+<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">'static</span>&gt; Config&lt;F&gt; {
     <span class="doccomment">/// Start a node with supplied parameters
     </span><span class="kw">pub async fn </span>build(
         <span class="self">self</span>,
@@ -1031,7 +1021,6 @@
             <span class="kw-2">mut </span>dsn,
             sync_from_dsn,
             storage_monitor,
-            enable_subspace_block_relay,
             is_timekeeper,
             timekeeper_cpu_cores,
             pot_external_entropy: config_pot_external_entropy,
@@ -1040,15 +1029,13 @@
 
         <span class="kw">let </span>base = base.configuration(directory.as_ref(), chain_spec.clone()).<span class="kw">await</span>;
         <span class="kw">let </span>name = base.network.node_name.clone();
-        <span class="kw">let </span>database_source = base.database.clone();
 
-        <span class="kw">let </span>partial_components =
-            subspace_service::new_partial::&lt;F::Table, RuntimeApi, ExecutorDispatch&gt;(
-                <span class="kw-2">&amp;</span>base,
-                <span class="kw-2">&amp;</span>pot_external_entropy(<span class="kw-2">&amp;</span>base, config_pot_external_entropy)
-                    .context(<span class="string">&quot;Failed to get proof of time external entropy&quot;</span>)<span class="question-mark">?</span>,
-            )
-            .context(<span class="string">&quot;Failed to build a partial subspace node&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>partial_components = subspace_service::new_partial::&lt;F::Table, RuntimeApi&gt;(
+            <span class="kw-2">&amp;</span>base,
+            <span class="kw-2">&amp;</span>pot_external_entropy(<span class="kw-2">&amp;</span>base, config_pot_external_entropy)
+                .context(<span class="string">"Failed to get proof of time external entropy"</span>)<span class="question-mark">?</span>,
+        )
+        .context(<span class="string">"Failed to build a partial subspace node"</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(subspace_networking, dsn, <span class="kw-2">mut </span>runner) = {
             <span class="kw">let </span>keypair = {
@@ -1057,25 +1044,25 @@
                     .node_key
                     .clone()
                     .into_keypair()
-                    .context(<span class="string">&quot;Failed to convert network keypair&quot;</span>)<span class="question-mark">?
+                    .context(<span class="string">"Failed to convert network keypair"</span>)<span class="question-mark">?
                     </span>.to_protobuf_encoding()
-                    .context(<span class="string">&quot;Failed to convert network keypair&quot;</span>)<span class="question-mark">?</span>;
+                    .context(<span class="string">"Failed to convert network keypair"</span>)<span class="question-mark">?</span>;
 
                 subspace_networking::libp2p::identity::Keypair::from_protobuf_encoding(<span class="kw-2">&amp;</span>keypair)
-                    .expect(<span class="string">&quot;Address is correct&quot;</span>)
+                    .expect(<span class="string">"Address is correct"</span>)
             };
 
             <span class="kw">let </span>chain_spec_boot_nodes = base
                 .chain_spec
                 .properties()
-                .get(<span class="string">&quot;dsnBootstrapNodes&quot;</span>)
+                .get(<span class="string">"dsnBootstrapNodes"</span>)
                 .cloned()
                 .map(serde_json::from_value::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;)
                 .transpose()
-                .context(<span class="string">&quot;Failed to decode DSN bootsrap nodes&quot;</span>)<span class="question-mark">?
+                .context(<span class="string">"Failed to decode DSN bootsrap nodes"</span>)<span class="question-mark">?
                 </span>.unwrap_or_default();
 
-            <span class="macro">tracing::trace!</span>(<span class="string">&quot;Subspace networking starting.&quot;</span>);
+            <span class="macro">tracing::trace!</span>(<span class="string">"Subspace networking starting."</span>);
 
             dsn.boot_nodes.extend(chain_spec_boot_nodes);
             <span class="kw">let </span>bootstrap_nodes =
@@ -1095,10 +1082,10 @@
                 is_metrics_enabled,
             })<span class="question-mark">?</span>;
 
-            <span class="macro">tracing::debug!</span>(<span class="string">&quot;Subspace networking initialized: Node ID is {}&quot;</span>, dsn.node.id());
+            <span class="macro">tracing::debug!</span>(<span class="string">"Subspace networking initialized: Node ID is {}"</span>, dsn.node.id());
 
             (
-                subspace_service::SubspaceNetworking::Reuse {
+                subspace_service::config::SubspaceNetworking::Reuse {
                     node: dsn.node.clone(),
                     bootstrap_nodes,
                     metrics_registry,
@@ -1114,17 +1101,18 @@
         &gt; = base
             .chain_spec
             .properties()
-            .get(<span class="string">&quot;domainsBootstrapNodes&quot;</span>)
+            .get(<span class="string">"domainsBootstrapNodes"</span>)
             .map(|d| serde_json::from_value(d.clone()))
             .transpose()
             .map_err(|error| {
                 sc_service::Error::Other(<span class="macro">format!</span>(
-                    <span class="string">&quot;Failed to decode Domains bootstrap nodes: {error:?}&quot;
+                    <span class="string">"Failed to decode Domains bootstrap nodes: {error:?}"
                 </span>))
             })<span class="question-mark">?
             </span>.unwrap_or_default();
 
         <span class="kw">let </span>consensus_state_pruning_mode = base.state_pruning.clone().unwrap_or_default();
+        <span class="kw">let </span>base_path_buf = base.base_path.path().to_path_buf();
 
         <span class="comment">// Default value are used for many of parameters
         </span><span class="kw">let </span>configuration = SubspaceConfiguration {
@@ -1132,29 +1120,29 @@
             force_new_slot_notifications: <span class="bool-val">false</span>,
             subspace_networking,
             sync_from_dsn,
-            enable_subspace_block_relay,
             is_timekeeper,
             timekeeper_cpu_cores,
-        };
+            dsn_piece_getter: <span class="prelude-val">None</span>, <span class="comment">// TODO: Use custom piece getter for better performance
+        </span>};
 
         <span class="kw">let </span>node_runner_future = subspace_farmer::utils::run_future_in_dedicated_thread(
             <span class="kw">move </span>|| <span class="kw">async move </span>{
                 runner.run().<span class="kw">await</span>;
-                <span class="macro">tracing::error!</span>(<span class="string">&quot;Exited from node runner future&quot;</span>);
+                <span class="macro">tracing::error!</span>(<span class="string">"Exited from node runner future"</span>);
             },
-            <span class="macro">format!</span>(<span class="string">&quot;sdk-networking-{name}&quot;</span>),
+            <span class="macro">format!</span>(<span class="string">"sdk-networking-{name}"</span>),
         )
-        .context(<span class="string">&quot;Failed to run node runner future&quot;</span>)<span class="question-mark">?</span>;
+        .context(<span class="string">"Failed to run node runner future"</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>slot_proportion = sc_consensus_slots::SlotProportion::new(<span class="number">3f32 </span>/ <span class="number">4f32</span>);
-        <span class="kw">let </span>full_client = subspace_service::new_full::&lt;F::Table, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
+        <span class="kw">let </span>full_client = subspace_service::new_full::&lt;F::Table, <span class="kw">_</span>&gt;(
             configuration,
             partial_components,
             <span class="bool-val">true</span>,
             slot_proportion,
         )
         .<span class="kw">await
-        </span>.context(<span class="string">&quot;Failed to build a full subspace node&quot;</span>)<span class="question-mark">?</span>;
+        </span>.context(<span class="string">"Failed to build a full subspace node"</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>NewFull {
             <span class="kw-2">mut </span>task_manager,
@@ -1171,30 +1159,31 @@
             transaction_pool,
             block_importing_notification_stream,
             new_slot_notification_stream,
+            xdm_gossip_notification_service,
         } = full_client;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(storage_monitor) = storage_monitor {
             sc_storage_monitor::StorageMonitorService::try_spawn(
                 storage_monitor.into(),
-                database_source,
+                base_path_buf,
                 <span class="kw-2">&amp;</span>task_manager.spawn_essential_handle(),
             )
-            .context(<span class="string">&quot;Failed to start storage monitor&quot;</span>)<span class="question-mark">?</span>;
+            .context(<span class="string">"Failed to start storage monitor"</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>destructors = DestructorSet::new(<span class="string">&quot;node-destructors&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>destructors = DestructorSet::new(<span class="string">"node-destructors"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>maybe_domain = <span class="prelude-val">None</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(domain_config) = <span class="self">self</span>.domain {
             <span class="kw">let </span>base_directory = directory.as_ref().to_owned().clone();
 
             <span class="kw">let </span>chain_spec_domains_bootstrap_nodes = chain_spec_domains_bootstrap_nodes_map
-                .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, domain_config.domain_id))
+                .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, domain_config.domain_id))
                 .map(|d| serde_json::from_value(d.clone()))
                 .transpose()
                 .map_err(|error| {
                     sc_service::Error::Other(<span class="macro">format!</span>(
-                        <span class="string">&quot;Failed to decode Domain: {} bootstrap nodes: {error:?}&quot;</span>,
+                        <span class="string">"Failed to decode Domain: {} bootstrap nodes: {error:?}"</span>,
                         domain_config.domain_id
                     ))
                 })<span class="question-mark">?
@@ -1211,13 +1200,13 @@
                 );
 
             task_manager.spawn_essential_handle().spawn_essential_blocking(
-                <span class="string">&quot;consensus-chain-relayer&quot;</span>,
+                <span class="string">"consensus-chain-relayer"</span>,
                 <span class="prelude-val">None</span>,
                 Box::pin(relayer_worker),
             );
 
             <span class="kw">let </span>(consensus_msg_sink, consensus_msg_receiver) =
-                tracing_unbounded(<span class="string">&quot;consensus_message_channel&quot;</span>, <span class="number">100</span>);
+                tracing_unbounded(<span class="string">"consensus_message_channel"</span>, <span class="number">100</span>);
 
             <span class="comment">// Start cross domain message listener for Consensus chain to receive messages
             // from domains in the network
@@ -1231,7 +1220,7 @@
                 );
 
             task_manager.spawn_essential_handle().spawn_essential_blocking(
-                <span class="string">&quot;consensus-message-listener&quot;</span>,
+                <span class="string">"consensus-message-listener"</span>,
                 <span class="prelude-val">None</span>,
                 Box::pin(consensus_listener),
             );
@@ -1240,7 +1229,7 @@
                 .push_chain_tx_pool_sink(ChainId::Consensus, consensus_msg_sink);
 
             <span class="kw">let </span>(domain_message_sink, domain_message_receiver) =
-                tracing_unbounded(<span class="string">&quot;domain_message_channel&quot;</span>, <span class="number">100</span>);
+                tracing_unbounded(<span class="string">"domain_message_channel"</span>, <span class="number">100</span>);
 
             xdm_gossip_worker_builder.push_chain_tx_pool_sink(
                 ChainId::Domain(domain_config.domain_id),
@@ -1266,10 +1255,14 @@
                 .<span class="kw">await</span><span class="question-mark">?</span>;
 
             <span class="kw">let </span>cross_domain_message_gossip_worker = xdm_gossip_worker_builder
-                .build::&lt;OpaqueBlock, <span class="kw">_</span>, <span class="kw">_</span>&gt;(network_service.clone(), sync_service.clone());
+                .build::&lt;OpaqueBlock, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
+                    network_service.clone(),
+                    xdm_gossip_notification_service,
+                    sync_service.clone(),
+                );
 
             task_manager.spawn_essential_handle().spawn_essential_blocking(
-                <span class="string">&quot;cross-domain-gossip-message-worker&quot;</span>,
+                <span class="string">"cross-domain-gossip-message-worker"</span>,
                 <span class="prelude-val">None</span>,
                 Box::pin(cross_domain_message_gossip_worker.run()),
             );
@@ -1280,12 +1273,12 @@
         <span class="kw">let </span>(task_manager_drop_sender, task_manager_drop_receiver) = oneshot::channel();
         <span class="kw">let </span>(task_manager_result_sender, task_manager_result_receiver) = oneshot::channel();
         <span class="kw">let </span>task_manager_join_handle = sdk_utils::task_spawn(
-            <span class="macro">format!</span>(<span class="string">&quot;sdk-node-{name}-task-manager&quot;</span>),
+            <span class="macro">format!</span>(<span class="string">"sdk-node-{name}-task-manager"</span>),
             {
                 <span class="kw">async move </span>{
                     <span class="macro">futures::select! </span>{
                         <span class="kw">_ </span>= task_manager_drop_receiver.fuse() =&gt; {
-                            <span class="kw">let _ </span>= task_manager_result_sender.send(<span class="prelude-val">Ok</span>(TaskOutput::Cancelled(<span class="string">&quot;received drop signal for task manager&quot;</span>.into())));
+                            <span class="kw">let _ </span>= task_manager_result_sender.send(<span class="prelude-val">Ok</span>(TaskOutput::Cancelled(<span class="string">"received drop signal for task manager"</span>.into())));
                         },
                         result = task_manager.future().fuse() =&gt; {
                             <span class="kw">let _ </span>= task_manager_result_sender.send(result.map_err(anyhow::Error::new).map(TaskOutput::Value));
@@ -1301,14 +1294,14 @@
         destructors.add_async_destructor({
             <span class="kw">async move </span>{
                 <span class="kw">let _ </span>= task_manager_drop_sender.send(());
-                task_manager_join_handle.<span class="kw">await</span>.expect(<span class="string">&quot;joining should not fail; qed&quot;</span>);
+                task_manager_join_handle.<span class="kw">await</span>.expect(<span class="string">"joining should not fail; qed"</span>);
             }
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>rpc_handle = sdk_utils::Rpc::new(<span class="kw-2">&amp;</span>rpc_handlers);
         network_starter.start_network();
 
-        <span class="comment">// Disable proper exit for now. Because RPC server looses waker and can&#39;t exit
+        <span class="comment">// Disable proper exit for now. Because RPC server looses waker and can't exit
         // in background.
         //
         // drop_collection.defer(move || {
@@ -1321,7 +1314,7 @@
         //     }
         // });
 
-        </span><span class="macro">tracing::debug!</span>(<span class="string">&quot;Started node&quot;</span>);
+        </span><span class="macro">tracing::debug!</span>(<span class="string">"Started node"</span>);
 
         <span class="prelude-val">Ok</span>(Node {
             client,
@@ -1338,57 +1331,32 @@
     }
 }
 
-<span class="doccomment">/// Executor dispatch for subspace runtime
-</span><span class="kw">pub struct </span>ExecutorDispatch;
-
-<span class="kw">impl </span>sc_executor::NativeExecutionDispatch <span class="kw">for </span>ExecutorDispatch {
-    <span class="comment">// /// Only enable the benchmarking host functions when we actually want to
-    // benchmark. #[cfg(feature = &quot;runtime-benchmarks&quot;)]
-    // type ExtendHostFunctions = (
-    //     frame_benchmarking::benchmarking::HostFunctions,
-    //     sp_consensus_subspace::consensus::HostFunctions,
-    // )
-    // /// Otherwise we only use the default Substrate host functions.
-    // #[cfg(not(feature = &quot;runtime-benchmarks&quot;))]
-    </span><span class="kw">type </span>ExtendHostFunctions =
-        (sp_consensus_subspace::consensus::HostFunctions, sp_domains_fraud_proof::HostFunctions);
-
-    <span class="kw">fn </span>dispatch(method: <span class="kw-2">&amp;</span>str, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
-        subspace_runtime::api::dispatch(method, data)
-    }
-
-    <span class="kw">fn </span>native_version() -&gt; sc_executor::NativeVersion {
-        subspace_runtime::native_version()
-    }
-}
-
 <span class="doccomment">/// Chain spec for subspace node
 </span><span class="kw">pub type </span>ChainSpec = chain_spec::ChainSpec;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>FullClient =
-    subspace_service::FullClient&lt;subspace_runtime::RuntimeApi, ExecutorDispatch&gt;;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>FullClient = subspace_service::FullClient&lt;subspace_runtime::RuntimeApi&gt;;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NewFull = subspace_service::NewFull&lt;FullClient&gt;;
 
 <span class="doccomment">/// Node structure
 </span><span class="attr">#[derive(Derivative)]
 #[derivative(Debug)]
-#[must_use = <span class="string">&quot;Node should be closed&quot;</span>]
+#[must_use = <span class="string">"Node should be closed"</span>]
 </span><span class="kw">pub struct </span>Node&lt;F: Farmer&gt; {
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>client: Arc&lt;FullClient&gt;,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
-    </span>sync_service: Arc&lt;sc_network_sync::service::chain_sync::SyncingService&lt;OpaqueBlock&gt;&gt;,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
+    </span>sync_service: Arc&lt;sc_network_sync::SyncingService&lt;OpaqueBlock&gt;&gt;,
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>network_service: Arc&lt;NetworkService&lt;OpaqueBlock, Hash&gt;&gt;,
     rpc_handle: sdk_utils::Rpc,
     name: String,
     dsn: DsnShared,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>_destructors: DestructorSet,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>_farmer: std::marker::PhantomData&lt;F&gt;,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>task_manager_result_receiver: oneshot::Receiver&lt;anyhow::Result&lt;TaskOutput&lt;(), String&gt;&gt;&gt;,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>maybe_domain: <span class="prelude-ty">Option</span>&lt;Domain&gt;,
 }
 
@@ -1441,7 +1409,7 @@
     </span><span class="kw">pub </span>name: String,
     <span class="doccomment">/// Number of peers connected to our node
     </span><span class="kw">pub </span>connected_peers: u64,
-    <span class="doccomment">/// Number of nodes that we know of but that we&#39;re not connected to
+    <span class="doccomment">/// Number of nodes that we know of but that we're not connected to
     </span><span class="kw">pub </span>not_connected_peers: u64,
     <span class="doccomment">/// Total number of pieces stored on chain
     </span><span class="kw">pub </span>history_size: HistorySize,
@@ -1473,7 +1441,7 @@
             .log(|it| <span class="kw">if let </span>DigestItem::PreRuntime(<span class="kw">_</span>, digest) = it { <span class="prelude-val">Some</span>(digest) } <span class="kw">else </span>{ <span class="prelude-val">None </span>})
             .map(|pre_digest| {
                 parity_scale_codec::Decode::decode(<span class="kw-2">&amp;mut </span>pre_digest.as_ref())
-                    .expect(<span class="string">&quot;Pre digest is always scale encoded&quot;</span>)
+                    .expect(<span class="string">"Pre digest is always scale encoded"</span>)
             });
         <span class="self">Self </span>{ hash, number, parent_hash, state_root, extrinsics_root, pre_digest }
     }
@@ -1512,7 +1480,7 @@
 
     <span class="kw">fn </span>poll_next(
         <span class="self">self</span>: std::pin::Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;,
-        cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">&#39;_</span>&gt;,
+        cx: <span class="kw-2">&amp;mut </span>std::task::Context&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; std::task::Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
         <span class="kw">let </span>this = <span class="self">self</span>.project();
         <span class="kw">let </span>next = this.inner.poll_next(cx);
@@ -1528,7 +1496,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">&#39;static</span>&gt; Node&lt;F&gt; {
+<span class="kw">impl</span>&lt;F: Farmer + <span class="lifetime">'static</span>&gt; Node&lt;F&gt; {
     <span class="doccomment">/// New node builder
     </span><span class="kw">pub fn </span>builder() -&gt; Builder&lt;F&gt; {
         Builder::new()
@@ -1540,8 +1508,8 @@
     }
 
     <span class="doccomment">/// Gemini 3g configuration
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; Builder&lt;F&gt; {
-        Builder::gemini_3g()
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; Builder&lt;F&gt; {
+        Builder::gemini_3h()
     }
 
     <span class="doccomment">/// Devnet configuration
@@ -1562,13 +1530,13 @@
                     .map(|multiaddr| MultiaddrWithPeerId::new(multiaddr, peer_id))
                     .collect()
             })
-            .map_err(|()| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Network worker exited&quot;</span>))
+            .map_err(|()| <span class="macro">anyhow::anyhow!</span>(<span class="string">"Network worker exited"</span>))
     }
 
     <span class="doccomment">/// Get listening addresses of the node
     </span><span class="kw">pub async fn </span>dsn_listen_addresses(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; anyhow::Result&lt;Vec&lt;MultiaddrWithPeerId&gt;&gt; {
         <span class="kw">let </span>peer_id =
-            <span class="self">self</span>.dsn.node.id().to_string().parse().expect(<span class="string">&quot;Conversion between 2 libp2p versions&quot;</span>);
+            <span class="self">self</span>.dsn.node.id().to_string().parse().expect(<span class="string">"Conversion between 2 libp2p versions"</span>);
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.dsn
             .node
@@ -1581,7 +1549,7 @@
     <span class="doccomment">/// Subscribe for node syncing progress
     </span><span class="kw">pub async fn </span>subscribe_syncing_progress(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = anyhow::Result&lt;SyncingProgress&gt;&gt; + Send + Unpin + <span class="lifetime">&#39;static</span>&gt;
+    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = anyhow::Result&lt;SyncingProgress&gt;&gt; + Send + Unpin + <span class="lifetime">'static</span>&gt;
     {
         <span class="kw">const </span>CHECK_SYNCED_EVERY: Duration = Duration::from_millis(<span class="number">100</span>);
         <span class="kw">let </span>check_offline_backoff = backoff::ExponentialBackoffBuilder::new()
@@ -1600,7 +1568,7 @@
             })
         })
         .<span class="kw">await
-        </span>.map_err(|<span class="kw">_</span>| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Failed to connect to the network&quot;</span>))<span class="question-mark">?</span>;
+        </span>.map_err(|<span class="kw">_</span>| <span class="macro">anyhow::anyhow!</span>(<span class="string">"Failed to connect to the network"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(sender, receiver) = tokio::sync::mpsc::channel(<span class="number">10</span>);
         <span class="kw">let </span>inner = tokio_stream::wrappers::ReceiverStream::new(receiver);
@@ -1610,9 +1578,9 @@
                 <span class="prelude-val">Ok</span>(SyncState::Importing { target }) =&gt; <span class="prelude-val">Ok</span>((target, SyncStatus::Importing)),
                 <span class="prelude-val">Ok</span>(SyncState::Downloading { target }) =&gt; <span class="prelude-val">Ok</span>((target, SyncStatus::Downloading)),
                 <span class="kw">_ if </span><span class="self">self</span>.sync_service.is_offline() =&gt;
-                    <span class="prelude-val">Err</span>(backoff::Error::transient(<span class="prelude-val">Some</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Node went offline&quot;</span>)))),
+                    <span class="prelude-val">Err</span>(backoff::Error::transient(<span class="prelude-val">Some</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">"Node went offline"</span>)))),
                 <span class="prelude-val">Err</span>(()) =&gt; <span class="prelude-val">Err</span>(backoff::Error::transient(<span class="prelude-val">Some</span>(<span class="macro">anyhow::anyhow!</span>(
-                    <span class="string">&quot;Failed to fetch networking status&quot;
+                    <span class="string">"Failed to fetch networking status"
                 </span>)))),
                 <span class="prelude-val">Ok</span>(SyncState::Idle | SyncState::Pending) =&gt; <span class="prelude-val">Err</span>(backoff::Error::transient(<span class="prelude-val">None</span>)),
             })
@@ -1630,7 +1598,7 @@
         sender
             .send(<span class="prelude-val">Ok</span>(SyncingProgress { target, at, status }))
             .<span class="kw">await
-            </span>.expect(<span class="string">&quot;We are holding receiver, so it will never panic&quot;</span>);
+            </span>.expect(<span class="string">"We are holding receiver, so it will never panic"</span>);
 
         tokio::spawn({
             <span class="kw">let </span>sync = Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.sync_service);
@@ -1646,7 +1614,7 @@
                             <span class="prelude-val">Ok</span>(SyncState::Downloading { target }) =&gt;
                                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>((target, SyncStatus::Downloading))),
                             <span class="prelude-val">Err</span>(()) =&gt;
-                                <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Failed to fetch networking status&quot;</span>))),
+                                <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="macro">anyhow::anyhow!</span>(<span class="string">"Failed to fetch networking status"</span>))),
                             <span class="prelude-val">Ok</span>(SyncState::Idle | SyncState::Pending) =&gt;
                                 <span class="prelude-val">Err</span>(backoff::Error::transient(())),
                         })
@@ -1688,7 +1656,7 @@
         <span class="kw">match </span>output {
             TaskOutput::Value(<span class="kw">_</span>) =&gt; {}
             TaskOutput::Cancelled(reason) =&gt; {
-                <span class="macro">tracing::warn!</span>(<span class="string">&quot;node task manager was cancelled due to reason: {}&quot;</span>, reason);
+                <span class="macro">tracing::warn!</span>(<span class="string">"node task manager was cancelled due to reason: {}"</span>, reason);
             }
         }
         <span class="prelude-val">Ok</span>(())
@@ -1699,7 +1667,7 @@
         <span class="self">self</span>._destructors.already_ran()
     }
 
-    <span class="doccomment">/// Runs `.close()` and also wipes node&#39;s state
+    <span class="doccomment">/// Runs `.close()` and also wipes node's state
     </span><span class="kw">pub async fn </span>wipe(path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; io::Result&lt;()&gt; {
         tokio::fs::remove_dir_all(path).<span class="kw">await
     </span>}
@@ -1710,7 +1678,7 @@
             </span>.network_service
             .network_state()
             .<span class="kw">await
-            </span>.map_err(|()| <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;Failed to fetch node info: node already exited&quot;</span>))<span class="question-mark">?</span>;
+            </span>.map_err(|()| <span class="macro">anyhow::anyhow!</span>(<span class="string">"Failed to fetch node info: node already exited"</span>))<span class="question-mark">?</span>;
         <span class="kw">let </span>sp_blockchain::Info {
             best_hash,
             best_number,
@@ -1740,38 +1708,38 @@
     </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, number: BlockNumber) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;Hash&gt;&gt; {
         <span class="kw">use </span>sc_client_api::client::BlockBackend;
 
-        <span class="self">self</span>.client.block_hash(number).context(<span class="string">&quot;Failed to get primary node block hash by number&quot;</span>)
+        <span class="self">self</span>.client.block_hash(number).context(<span class="string">"Failed to get primary node block hash by number"</span>)
     }
 
     <span class="doccomment">/// Get block header by hash
     </span><span class="kw">pub fn </span>block_header(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: Hash) -&gt; anyhow::Result&lt;<span class="prelude-ty">Option</span>&lt;BlockHeader&gt;&gt; {
         <span class="self">self</span>.client
             .header(hash)
-            .context(<span class="string">&quot;Failed to get primary node block hash by number&quot;</span>)
+            .context(<span class="string">"Failed to get primary node block hash by number"</span>)
             .map(|opt| opt.map(Into::into))
     }
 
     <span class="doccomment">/// Subscribe to new heads imported
     </span><span class="kw">pub async fn </span>subscribe_new_heads(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = BlockHeader&gt; + Send + Sync + Unpin + <span class="lifetime">&#39;static</span>&gt; {
+    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = BlockHeader&gt; + Send + Sync + Unpin + <span class="lifetime">'static</span>&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.rpc_handle
             .subscribe_new_heads::&lt;subspace_runtime::Runtime&gt;()
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;Failed to subscribe to new blocks&quot;</span>)<span class="question-mark">?
+            </span>.context(<span class="string">"Failed to subscribe to new blocks"</span>)<span class="question-mark">?
             </span>.map(Into::into))
     }
 
     <span class="doccomment">/// Subscribe to finalized heads
     </span><span class="kw">pub async fn </span>subscribe_finalized_heads(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = BlockHeader&gt; + Send + Sync + Unpin + <span class="lifetime">&#39;static</span>&gt; {
+    ) -&gt; anyhow::Result&lt;<span class="kw">impl </span>Stream&lt;Item = BlockHeader&gt; + Send + Sync + Unpin + <span class="lifetime">'static</span>&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">self
             </span>.rpc_handle
             .subscribe_finalized_heads::&lt;subspace_runtime::Runtime&gt;()
             .<span class="kw">await
-            </span>.context(<span class="string">&quot;Failed to subscribe to finalized blocks&quot;</span>)<span class="question-mark">?
+            </span>.context(<span class="string">"Failed to subscribe to finalized blocks"</span>)<span class="question-mark">?
             </span>.map(Into::into))
     }
 
@@ -1796,7 +1764,7 @@
         SegmentHeaderRequest::LastSegmentHeaders { segment_header_number } =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>segment_headers_limit = <span class="kw-2">*</span>segment_header_number;
             <span class="kw">if </span><span class="kw-2">*</span>segment_header_number &gt; SEGMENT_HEADERS_NUMBER_LIMIT {
-                <span class="macro">tracing::debug!</span>(%segment_header_number, <span class="string">&quot;Segment header number exceeded the limit.&quot;</span>);
+                <span class="macro">tracing::debug!</span>(%segment_header_number, <span class="string">"Segment header number exceeded the limit."</span>);
 
                 segment_headers_limit = SEGMENT_HEADERS_NUMBER_LIMIT;
             }
@@ -1821,7 +1789,7 @@
     <span class="kw">match </span>maybe_segment_headers {
         <span class="prelude-val">Some</span>(segment_headers) =&gt; <span class="prelude-val">Some</span>(SegmentHeaderResponse { segment_headers }),
         <span class="prelude-val">None </span>=&gt; {
-            <span class="macro">tracing::error!</span>(<span class="string">&quot;Segment header collection contained empty segment headers.&quot;</span>);
+            <span class="macro">tracing::error!</span>(<span class="string">"Segment header collection contained empty segment headers."</span>);
             <span class="prelude-val">None
         </span>}
     }

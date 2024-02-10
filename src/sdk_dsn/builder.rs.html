@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/dsn/src/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-deb46770fd761b69.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_dsn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0-nightly (42b1224e9 2023-10-15)" data-channel="nightly" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f34af1a0ee6bacd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sdk/dsn/src/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sdk_dsn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (25f8d01fd 2024-01-18)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../sdk_dsn/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -324,36 +326,6 @@
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
 <a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::{Arc, Weak};
@@ -370,12 +342,11 @@
 <span class="kw">use </span>subspace_farmer::piece_cache::PieceCache <span class="kw">as </span>FarmerPieceCache;
 <span class="kw">use </span>subspace_farmer::utils::readers_and_pieces::ReadersAndPieces;
 <span class="kw">use </span>subspace_farmer::KNOWN_PEERS_CACHE_SIZE;
-<span class="kw">use </span>subspace_networking::libp2p::metrics::Metrics;
 <span class="kw">use </span>subspace_networking::utils::strip_peer_id;
 <span class="kw">use </span>subspace_networking::{
-    KademliaMode, KnownPeersManager, KnownPeersManagerConfig, PeerInfo, PeerInfoProvider,
-    PieceByIndexRequest, PieceByIndexRequestHandler, PieceByIndexResponse,
-    SegmentHeaderBySegmentIndexesRequestHandler, SegmentHeaderRequest, SegmentHeaderResponse,
+    KademliaMode, KnownPeersManager, KnownPeersManagerConfig, PieceByIndexRequest,
+    PieceByIndexRequestHandler, PieceByIndexResponse, SegmentHeaderBySegmentIndexesRequestHandler,
+    SegmentHeaderRequest, SegmentHeaderResponse,
 };
 
 <span class="kw">use </span><span class="kw">super</span>::local_provider_record_utils::MaybeLocalRecordProvider;
@@ -389,8 +360,8 @@
 #[serde(transparent)]
 </span><span class="kw">pub struct </span>ListenAddresses(
     <span class="attr">#[derivative(Default(
-        <span class="comment">// TODO: get rid of it, once it won&#39;t be required by monorepo
-        </span>value = <span class="string">&quot;vec![\&quot;/ip4/127.0.0.1/tcp/0\&quot;.parse().expect(\&quot;Always valid\&quot;)]&quot;
+        <span class="comment">// TODO: get rid of it, once it won't be required by monorepo
+        </span>value = <span class="string">"vec![\"/ip4/127.0.0.1/tcp/0\".parse().expect(\"Always valid\")]"
     </span>))]
     </span><span class="kw">pub </span>Vec&lt;Multiaddr&gt;,
 );
@@ -401,7 +372,7 @@
 )]
 #[derivative(Default)]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>InConnections(<span class="attr">#[derivative(Default(value = <span class="string">&quot;300&quot;</span>))] </span><span class="kw">pub </span>u32);
+</span><span class="kw">pub struct </span>InConnections(<span class="attr">#[derivative(Default(value = <span class="string">"300"</span>))] </span><span class="kw">pub </span>u32);
 
 <span class="doccomment">/// Wrapper with default value for number of outgoing connections
 </span><span class="attr">#[derive(
@@ -409,7 +380,7 @@
 )]
 #[derivative(Default)]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>OutConnections(<span class="attr">#[derivative(Default(value = <span class="string">&quot;150&quot;</span>))] </span><span class="kw">pub </span>u32);
+</span><span class="kw">pub struct </span>OutConnections(<span class="attr">#[derivative(Default(value = <span class="string">"150"</span>))] </span><span class="kw">pub </span>u32);
 
 <span class="doccomment">/// Wrapper with default value for number of target connections
 </span><span class="attr">#[derive(
@@ -417,7 +388,7 @@
 )]
 #[derivative(Default)]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>TargetConnections(<span class="attr">#[derivative(Default(value = <span class="string">&quot;15&quot;</span>))] </span><span class="kw">pub </span>u32);
+</span><span class="kw">pub struct </span>TargetConnections(<span class="attr">#[derivative(Default(value = <span class="string">"15"</span>))] </span><span class="kw">pub </span>u32);
 
 <span class="doccomment">/// Wrapper with default value for number of pending incoming connections
 </span><span class="attr">#[derive(
@@ -425,7 +396,7 @@
 )]
 #[derivative(Default)]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>PendingInConnections(<span class="attr">#[derivative(Default(value = <span class="string">&quot;100&quot;</span>))] </span><span class="kw">pub </span>u32);
+</span><span class="kw">pub struct </span>PendingInConnections(<span class="attr">#[derivative(Default(value = <span class="string">"100"</span>))] </span><span class="kw">pub </span>u32);
 
 <span class="doccomment">/// Wrapper with default value for number of pending outgoing connections
 </span><span class="attr">#[derive(
@@ -433,60 +404,51 @@
 )]
 #[derivative(Default)]
 #[serde(transparent)]
-</span><span class="kw">pub struct </span>PendingOutConnections(<span class="attr">#[derivative(Default(value = <span class="string">&quot;150&quot;</span>))] </span><span class="kw">pub </span>u32);
+</span><span class="kw">pub struct </span>PendingOutConnections(<span class="attr">#[derivative(Default(value = <span class="string">"150"</span>))] </span><span class="kw">pub </span>u32);
 
 <span class="doccomment">/// Node DSN builder
 </span><span class="attr">#[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
 #[derivative(Default)]
-#[builder(pattern = <span class="string">&quot;immutable&quot;</span>, build_fn(private, name = <span class="string">&quot;_build&quot;</span>), name = <span class="string">&quot;DsnBuilder&quot;</span>)]
+#[builder(pattern = <span class="string">"immutable"</span>, build_fn(private, name = <span class="string">"_build"</span>), name = <span class="string">"DsnBuilder"</span>)]
 #[non_exhaustive]
 </span><span class="kw">pub struct </span>Dsn {
     <span class="doccomment">/// Listen on some address for other nodes
-    </span><span class="attr">#[builder(default, setter(into, strip_option))]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
-    </span><span class="kw">pub </span>provider_storage_path: <span class="prelude-ty">Option</span>&lt;std::path::PathBuf&gt;,
-    <span class="doccomment">/// Listen on some address for other nodes
     </span><span class="attr">#[builder(default, setter(into))]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>listen_addresses: ListenAddresses,
     <span class="doccomment">/// Boot nodes
     </span><span class="attr">#[builder(default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;Vec::is_empty&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"Vec::is_empty"</span>)]
     </span><span class="kw">pub </span>boot_nodes: Vec&lt;MultiaddrWithPeerId&gt;,
     <span class="doccomment">/// Known external addresses
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>external_addresses: Vec&lt;Multiaddr&gt;,
     <span class="doccomment">/// Reserved nodes
     </span><span class="attr">#[builder(default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>reserved_nodes: Vec&lt;Multiaddr&gt;,
     <span class="doccomment">/// Determines whether we allow keeping non-global (private, shared,
     /// loopback..) addresses in Kademlia DHT.
     </span><span class="attr">#[builder(default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>allow_non_global_addresses_in_dht: bool,
     <span class="doccomment">/// Defines max established incoming swarm connection limit.
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>in_connections: InConnections,
     <span class="doccomment">/// Defines max established outgoing swarm connection limit.
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>out_connections: OutConnections,
     <span class="doccomment">/// Pending incoming swarm connection limit.
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>pending_in_connections: PendingInConnections,
     <span class="doccomment">/// Pending outgoing swarm connection limit.
     </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
+    #[serde(default, skip_serializing_if = <span class="string">"sdk_utils::is_default"</span>)]
     </span><span class="kw">pub </span>pending_out_connections: PendingOutConnections,
-    <span class="doccomment">/// Defines target total (in and out) connection number for DSN that
-    /// should be maintained.
-    </span><span class="attr">#[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = <span class="string">&quot;sdk_utils::is_default&quot;</span>)]
-    </span><span class="kw">pub </span>target_connections: TargetConnections,
 }
 
 <span class="macro">sdk_utils::generate_builder!</span>(Dsn);
@@ -498,18 +460,18 @@
     }
 
     <span class="doccomment">/// Gemini 3g configuration
-    </span><span class="kw">pub fn </span>gemini_3g() -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>gemini_3h() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new().listen_addresses(<span class="macro">vec!</span>[
-            <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-            <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+            <span class="string">"/ip6/::/tcp/30433"</span>.parse().expect(<span class="string">"hardcoded value is true"</span>),
+            <span class="string">"/ip4/0.0.0.0/tcp/30433"</span>.parse().expect(<span class="string">"hardcoded value is true"</span>),
         ])
     }
 
     <span class="doccomment">/// Gemini 3g configuration
     </span><span class="kw">pub fn </span>devnet() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new().listen_addresses(<span class="macro">vec!</span>[
-            <span class="string">&quot;/ip6/::/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
-            <span class="string">&quot;/ip4/0.0.0.0/tcp/30433&quot;</span>.parse().expect(<span class="string">&quot;hardcoded value is true&quot;</span>),
+            <span class="string">"/ip6/::/tcp/30433"</span>.parse().expect(<span class="string">"hardcoded value is true"</span>),
+            <span class="string">"/ip4/0.0.0.0/tcp/30433"</span>.parse().expect(<span class="string">"hardcoded value is true"</span>),
         ])
     }
 }
@@ -557,7 +519,7 @@
     )&gt;
     <span class="kw">where
         </span>B: sp_runtime::traits::Block,
-        C: sc_client_api::AuxStore + sp_blockchain::HeaderBackend&lt;B&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
+        C: sc_client_api::AuxStore + sp_blockchain::HeaderBackend&lt;B&gt; + Send + Sync + <span class="lifetime">'static</span>,
         PieceByIndex: Fn(
                 <span class="kw-2">&amp;</span>PieceByIndexRequest,
                 Weak&lt;parking_lot::Mutex&lt;<span class="prelude-ty">Option</span>&lt;ReadersAndPieces&gt;&gt;&gt;,
@@ -565,12 +527,12 @@
             ) -&gt; F1
             + Send
             + Sync
-            + <span class="lifetime">&#39;static</span>,
-        F1: Future&lt;Output = <span class="prelude-ty">Option</span>&lt;PieceByIndexResponse&gt;&gt; + Send + <span class="lifetime">&#39;static</span>,
+            + <span class="lifetime">'static</span>,
+        F1: Future&lt;Output = <span class="prelude-ty">Option</span>&lt;PieceByIndexResponse&gt;&gt; + Send + <span class="lifetime">'static</span>,
         SegmentHeaderByIndexes: Fn(<span class="kw-2">&amp;</span>SegmentHeaderRequest, <span class="kw-2">&amp;</span>SegmentHeadersStore&lt;C&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;SegmentHeaderResponse&gt;
             + Send
             + Sync
-            + <span class="lifetime">&#39;static</span>,
+            + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>DsnOptions {
             client,
@@ -587,18 +549,15 @@
         <span class="kw">let </span>local_records_provider = MaybeLocalRecordProvider::new(farmer_piece_cache.clone());
 
         <span class="kw">let </span><span class="kw-2">mut </span>metrics_registry = Registry::default();
-        <span class="kw">let </span>metrics = is_metrics_enabled.then(|| Metrics::new(<span class="kw-2">&amp;mut </span>metrics_registry));
 
-        <span class="macro">tracing::debug!</span>(genesis_hash = protocol_version, <span class="string">&quot;Setting DSN protocol version...&quot;</span>);
+        <span class="macro">tracing::debug!</span>(genesis_hash = protocol_version, <span class="string">"Setting DSN protocol version..."</span>);
 
         <span class="kw">let </span><span class="self">Self </span>{
             listen_addresses,
             reserved_nodes,
             allow_non_global_addresses_in_dht,
-            provider_storage_path: <span class="kw">_</span>,
             in_connections: InConnections(max_established_incoming_connections),
             out_connections: OutConnections(max_established_outgoing_connections),
-            target_connections: TargetConnections(target_connections),
             pending_in_connections: PendingInConnections(max_pending_incoming_connections),
             pending_out_connections: PendingOutConnections(max_pending_outgoing_connections),
             boot_nodes,
@@ -610,7 +569,7 @@
         <span class="kw">let </span>listen_on = listen_addresses.<span class="number">0</span>.into_iter().map(Into::into).collect();
 
         <span class="kw">let </span>networking_parameters_registry = KnownPeersManager::new(KnownPeersManagerConfig {
-            path: <span class="prelude-val">Some</span>(base_path.join(<span class="string">&quot;known_addresses.bin&quot;</span>).into_boxed_path()),
+            path: <span class="prelude-val">Some</span>(base_path.join(<span class="string">"known_addresses.bin"</span>).into_boxed_path()),
             ignore_peer_list: strip_peer_id(bootstrap_nodes.clone())
                 .into_iter()
                 .map(|(peer_id, <span class="kw">_</span>)| peer_id)
@@ -618,14 +577,14 @@
             cache_size: KNOWN_PEERS_CACHE_SIZE,
             ..Default::default()
         })
-        .context(<span class="string">&quot;Failed to open known addresses database for DSN&quot;</span>)<span class="question-mark">?
+        .context(<span class="string">"Failed to open known addresses database for DSN"</span>)<span class="question-mark">?
         </span>.boxed();
 
         <span class="kw">let </span>default_networking_config = subspace_networking::Config::new(
             protocol_version,
             keypair,
             local_records_provider.clone(),
-            <span class="prelude-val">Some</span>(PeerInfoProvider::new_farmer()),
+            is_metrics_enabled.then_some(<span class="kw-2">&amp;mut </span>metrics_registry),
         );
 
         <span class="kw">let </span>config = subspace_networking::Config {
@@ -661,35 +620,18 @@
             bootstrap_addresses: bootstrap_nodes,
             kademlia_mode: KademliaMode::Dynamic,
             external_addresses: external_addresses.into_iter().map(Into::into).collect(),
-            <span class="comment">// Proactively maintain permanent connections with farmers (least restrictive value
-            // taken from farmer)
-            </span>special_connected_peers_handler: <span class="prelude-val">Some</span>(Arc::new(PeerInfo::is_farmer)),
-            <span class="comment">// Maintain proactive connections with all peers (least restrictive value taken from
-            // node)
-            </span>general_connected_peers_handler: <span class="prelude-val">Some</span>(Arc::new(|<span class="kw">_</span>| <span class="bool-val">true</span>)),
-            <span class="comment">// Maintain some number of persistent connections (taken from farmer)
-            </span>general_connected_peers_target: <span class="number">0</span>,
-            <span class="comment">// Special peers (taken from farmer)
-            </span>special_connected_peers_target: target_connections,
-            <span class="comment">// Allow up to quarter of incoming connections to be maintained (taken from node)
-            </span>general_connected_peers_limit: max_established_incoming_connections / <span class="number">4</span>,
-            <span class="comment">// Allow to maintain some extra farmer connections beyond direct interest too (taken
-            // from farmer)
-            </span>special_connected_peers_limit: target_connections
-                + max_established_incoming_connections / <span class="number">4</span>,
-            metrics,
             ..default_networking_config
         };
 
         <span class="kw">let </span>(node, runner) = subspace_networking::construct(config)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>destructors = DestructorSet::new_without_async(<span class="string">&quot;dsn-destructors&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>destructors = DestructorSet::new_without_async(<span class="string">"dsn-destructors"</span>);
         <span class="kw">let </span>on_new_listener = node.on_new_listener(Arc::new({
             <span class="kw">let </span>node = node.clone();
 
             <span class="kw">move </span>|address| {
                 <span class="macro">tracing::info!</span>(
-                    <span class="string">&quot;DSN listening on {}&quot;</span>,
+                    <span class="string">"DSN listening on {}"</span>,
                     address
                         .clone()
                         .with(subspace_networking::libp2p::multiaddr::Protocol::P2p(node.id()))
