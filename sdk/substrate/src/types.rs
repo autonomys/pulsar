@@ -8,20 +8,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize, Eq, PartialOrd, Ord)]
 pub enum BlocksPruning {
     #[default]
-    /// Keep full block history, of every block that was ever imported.
-    KeepAll,
     /// Keep full finalized block history.
-    KeepFinalized,
+    ArchiveCanonical,
+    /// Keep full block history, of every block that was ever imported.
+    Archive,
     /// Keep N recent finalized blocks.
-    Some(u32),
+    Number(u32),
 }
 
 impl From<sc_service::BlocksPruning> for BlocksPruning {
     fn from(value: sc_service::BlocksPruning) -> Self {
         match value {
-            sc_service::BlocksPruning::KeepAll => Self::KeepAll,
-            sc_service::BlocksPruning::KeepFinalized => Self::KeepFinalized,
-            sc_service::BlocksPruning::Some(n) => Self::Some(n),
+            sc_service::BlocksPruning::KeepAll => Self::Archive,
+            sc_service::BlocksPruning::KeepFinalized => Self::ArchiveCanonical,
+            sc_service::BlocksPruning::Some(n) => Self::Number(n),
         }
     }
 }
@@ -29,9 +29,9 @@ impl From<sc_service::BlocksPruning> for BlocksPruning {
 impl From<BlocksPruning> for sc_service::BlocksPruning {
     fn from(value: BlocksPruning) -> Self {
         match value {
-            BlocksPruning::KeepAll => Self::KeepAll,
-            BlocksPruning::KeepFinalized => Self::KeepFinalized,
-            BlocksPruning::Some(n) => Self::Some(n),
+            BlocksPruning::Archive => Self::KeepAll,
+            BlocksPruning::ArchiveCanonical => Self::KeepFinalized,
+            BlocksPruning::Number(n) => Self::Some(n),
         }
     }
 }
@@ -59,14 +59,12 @@ impl From<sc_state_db::Constraints> for Constraints {
 /// Pruning mode.
 #[derive(Debug, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 pub enum PruningMode {
-    /// No pruning. Canonicalization is a no-op.
-    #[default]
-    ArchiveAll,
     /// Canonicalization discards non-canonical nodes. All the canonical
     /// nodes are kept in the DB.
+    #[default]
     ArchiveCanonical,
-    /// Maintain a pruning window.
-    Constrained(Constraints),
+    /// No pruning. Canonicalization is a no-op.
+    ArchiveAll,
 }
 
 impl From<PruningMode> for sc_service::PruningMode {
@@ -74,17 +72,6 @@ impl From<PruningMode> for sc_service::PruningMode {
         match value {
             PruningMode::ArchiveAll => Self::ArchiveAll,
             PruningMode::ArchiveCanonical => Self::ArchiveCanonical,
-            PruningMode::Constrained(c) => Self::Constrained(c.into()),
-        }
-    }
-}
-
-impl From<sc_service::PruningMode> for PruningMode {
-    fn from(value: sc_service::PruningMode) -> Self {
-        match value {
-            sc_service::PruningMode::ArchiveAll => Self::ArchiveAll,
-            sc_service::PruningMode::ArchiveCanonical => Self::ArchiveCanonical,
-            sc_service::PruningMode::Constrained(c) => Self::Constrained(c.into()),
         }
     }
 }
@@ -161,7 +148,7 @@ impl OffchainWorkerBuilder {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::default().enabled(true)
     }
 

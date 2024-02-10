@@ -29,8 +29,8 @@ use subspace_core_primitives::{PieceIndex, Record, SectorIndex};
 use subspace_erasure_coding::ErasureCoding;
 use subspace_farmer::piece_cache::PieceCache as FarmerPieceCache;
 use subspace_farmer::single_disk_farm::{
-    SingleDiskFarm, SingleDiskFarmError, SingleDiskFarmId, SingleDiskFarmInfo,
-    SingleDiskFarmOptions, SingleDiskFarmSummary,
+    SectorPlottingDetails, SectorUpdate, SingleDiskFarm, SingleDiskFarmError, SingleDiskFarmId,
+    SingleDiskFarmInfo, SingleDiskFarmOptions, SingleDiskFarmSummary,
 };
 use subspace_farmer::thread_pool_manager::PlottingThreadPoolManager;
 use subspace_farmer::utils::farmer_piece_getter::FarmerPieceGetter;
@@ -344,7 +344,6 @@ async fn create_readers_and_pieces(
     Ok(readers_and_pieces)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn handler_on_sector_plotted(
     plotted_sector: &PlottedSector,
     maybe_old_plotted_sector: &Option<PlottedSector>,
@@ -420,11 +419,12 @@ impl Config {
                 node.rpc().clone(),
                 kzg.clone(),
                 // TODO: Consider introducing and using global in-memory segment commitments cache
-                parking_lot::Mutex::new(lru::LruCache::new(SEGMENT_COMMITMENTS_CACHE_SIZE)),
+                Arc::new(parking_lot::Mutex::new(lru::LruCache::new(
+                    SEGMENT_COMMITMENTS_CACHE_SIZE,
+                ))),
             )),
         );
         let farmer_piece_getter = Arc::new(FarmerPieceGetter::new(
-            node.dsn().node.clone(),
             piece_provider,
             farmer_piece_cache.clone(),
             node.rpc().clone(),
@@ -622,9 +622,19 @@ impl Config {
 
             // Collect newly plotted pieces
             // TODO: Once we have replotting, this will have to be updated
-            sector_plotting_handler_ids.push(single_disk_farm.on_sector_plotted(Arc::new(
-                move |(plotted_sector, maybe_old_plotted_sector)| {
+            sector_plotting_handler_ids.push(single_disk_farm.on_sector_update(Arc::new(
+                move |(_plotted_sector, sector_update)| {
                     let _span_guard = span.enter();
+
+                    let (plotted_sector, maybe_old_plotted_sector) = match sector_update {
+                        SectorUpdate::Plotting(SectorPlottingDetails::Finished {
+                            plotted_sector,
+                            old_plotted_sector,
+                            ..
+                        }) => (plotted_sector, old_plotted_sector),
+                        _ => return,
+                    };
+
                     handler_on_sector_plotted(
                         plotted_sector,
                         maybe_old_plotted_sector,
@@ -792,7 +802,7 @@ pub struct InitialPlottingProgress {
 }
 
 /// Progress data received from sender, used to monitor plotting progress
-pub type ProgressData = Option<(PlottedSector, Option<PlottedSector>)>;
+pub type ProgressData = Option<(u16, SectorUpdate)>;
 
 /// Farm structure
 #[derive(Debug)]
@@ -897,7 +907,7 @@ impl<T: subspace_proof_of_space::Table> Farm<T> {
             plotting_thread_pool_manager,
         }: FarmOptions<
             '_,
-            impl subspace_farmer_components::plotting::PieceGetter + Clone + Send + Sync + 'static,
+            impl subspace_farmer_components::PieceGetter + Clone + Send + Sync + 'static,
             impl sdk_traits::Node,
         >,
     ) -> Result<(Self, SingleDiskFarm), BuildError> {
@@ -945,7 +955,7 @@ impl<T: subspace_proof_of_space::Table> Farm<T> {
 
         let progress = {
             let (sender, receiver) = watch::channel::<Option<_>>(None);
-            destructors.add_items_to_drop(single_disk_farm.on_sector_plotted(Arc::new(
+            destructors.add_items_to_drop(single_disk_farm.on_sector_update(Arc::new(
                 move |sector| {
                     let _ = sender.send(Some(sector.clone()));
                 },

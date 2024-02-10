@@ -49,8 +49,7 @@ async fn sync_block_inner() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-//#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are
-//#[cfg_attr(any(tarpaulin, run only on linux")]
+#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are run only on linux")]
 async fn sync_block() {
     tokio::time::timeout(std::time::Duration::from_secs(60 * 60), sync_block_inner()).await.unwrap()
 }
@@ -116,8 +115,7 @@ async fn sync_farm_inner() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-//#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are
-//#[cfg_attr(any(tarpaulin, run only on linux")]
+#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are run only on linux")]
 async fn sync_farm() {
     tokio::time::timeout(std::time::Duration::from_secs(60 * 60), sync_farm_inner()).await.unwrap()
 }
@@ -135,8 +133,7 @@ async fn node_restart() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-//#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are
-//#[cfg_attr(any(tarpaulin, run only on linux")]
+#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are run only on linux")]
 async fn node_events() {
     crate::common::setup();
 
@@ -175,8 +172,7 @@ async fn node_events() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-//#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are
-//#[cfg_attr(any(tarpaulin, run only on linux")]
+#[cfg_attr(any(tarpaulin, not(target_os = "linux")), ignore = "Slow tests are run only on linux")]
 async fn fetch_block_author() {
     crate::common::setup();
 

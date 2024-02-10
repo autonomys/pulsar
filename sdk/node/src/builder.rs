@@ -5,11 +5,9 @@ use std::path::Path;
 use derivative::Derivative;
 use derive_builder::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
-use sc_service::BlocksPruning;
 use sdk_dsn::{Dsn, DsnBuilder};
 use sdk_substrate::{
-    Base, BaseBuilder, NetworkBuilder, OffchainWorkerBuilder, PruningMode, Role, RpcBuilder,
-    StorageMonitor,
+    Base, BaseBuilder, BlocksPruning, NetworkBuilder, PruningMode, Role, RpcBuilder, StorageMonitor,
 };
 use sdk_utils::ByteSize;
 use serde::{Deserialize, Serialize};
@@ -90,7 +88,7 @@ pub struct Config<F: Farmer> {
     /// Proof of time entropy
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub pot_external_entropy: Option<Vec<u8>>,
+    pub pot_external_entropy: Option<String>,
 }
 
 impl<F: Farmer + 'static> Config<F> {
@@ -100,8 +98,8 @@ impl<F: Farmer + 'static> Config<F> {
     }
 
     /// Gemini 3g configuraiton
-    pub fn gemini_3g() -> Builder<F> {
-        Builder::gemini_3g()
+    pub fn gemini_3h() -> Builder<F> {
+        Builder::gemini_3h()
     }
 
     /// Devnet configuraiton
@@ -119,19 +117,17 @@ impl<F: Farmer + 'static> Builder<F> {
             .network(NetworkBuilder::dev())
             .dsn(DsnBuilder::dev())
             .rpc(RpcBuilder::dev())
-            .offchain_worker(OffchainWorkerBuilder::dev())
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::new()
-            .network(NetworkBuilder::gemini_3g())
-            .dsn(DsnBuilder::gemini_3g())
-            .rpc(RpcBuilder::gemini_3g())
-            .offchain_worker(OffchainWorkerBuilder::gemini_3g())
+            .network(NetworkBuilder::gemini_3h())
+            .dsn(DsnBuilder::gemini_3h())
+            .rpc(RpcBuilder::gemini_3h())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
-            .blocks_pruning(BlocksPruning::Some(256))
+            .state_pruning(PruningMode::ArchiveCanonical)
+            .blocks_pruning(BlocksPruning::Number(256))
     }
 
     /// Devnet chain configuration
@@ -140,10 +136,9 @@ impl<F: Farmer + 'static> Builder<F> {
             .network(NetworkBuilder::devnet())
             .dsn(DsnBuilder::devnet())
             .rpc(RpcBuilder::devnet())
-            .offchain_worker(OffchainWorkerBuilder::devnet())
             .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveAll)
-            .blocks_pruning(BlocksPruning::Some(256))
+            .state_pruning(PruningMode::ArchiveCanonical)
+            .blocks_pruning(BlocksPruning::Number(256))
     }
 
     /// Get configuration for saving on disk

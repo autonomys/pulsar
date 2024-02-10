@@ -13,7 +13,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[derive(ValueEnum, Debug, Clone)]
 enum Chain {
-    Gemini3f,
+    Gemini3h,
     Devnet,
     Dev,
 }
@@ -76,18 +76,9 @@ async fn main() -> anyhow::Result<()> {
 
     let node_dir = base_path.join("node");
     let node = match chain {
-        Chain::Gemini3f => Node::gemini_3g().dsn(
-            subspace_sdk::node::DsnBuilder::gemini_3g()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
-        Chain::Devnet => Node::devnet().dsn(
-            subspace_sdk::node::DsnBuilder::devnet()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
-        Chain::Dev => Node::dev().dsn(
-            subspace_sdk::node::DsnBuilder::dev()
-                .provider_storage_path(node_dir.join("provider_storage")),
-        ),
+        Chain::Gemini3h => Node::gemini_3h().dsn(subspace_sdk::node::DsnBuilder::gemini_3h()),
+        Chain::Devnet => Node::devnet().dsn(subspace_sdk::node::DsnBuilder::devnet()),
+        Chain::Dev => Node::dev().dsn(subspace_sdk::node::DsnBuilder::dev()),
     }
     .role(node::Role::Authority);
 
@@ -106,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
         .build(
             &node_dir,
             match chain {
-                Chain::Gemini3f => node::chain_spec::gemini_3g(),
+                Chain::Gemini3h => node::chain_spec::gemini_3h(),
                 Chain::Devnet => node::chain_spec::devnet_config(),
                 Chain::Dev => node::chain_spec::dev_config(),
             },

@@ -22,13 +22,15 @@ use frame_system::pallet_prelude::BlockNumberFor;
 use futures::{FutureExt, Stream, StreamExt};
 use sc_consensus_subspace::archiver::SegmentHeadersStore;
 use sc_network::network_state::NetworkState;
-use sc_network::{NetworkService, NetworkStateInfo, SyncState};
+use sc_network::{NetworkService, NetworkStateInfo};
+use sc_network_sync::SyncState;
 use sc_rpc_api::state::StateApiClient;
 use sc_service::Configuration;
 use sc_utils::mpsc::tracing_unbounded;
 use sdk_dsn::{DsnOptions, DsnShared};
 use sdk_traits::Farmer;
 use sdk_utils::{DestructorSet, MultiaddrWithPeerId, PublicKey, TaskOutput};
+use serde_json::Value;
 use sp_consensus::SyncOracle;
 use sp_consensus_subspace::digests::PreDigest;
 use sp_core::traits::SpawnEssentialNamed;
@@ -44,7 +46,7 @@ use subspace_networking::{
 use subspace_rpc_primitives::MAX_SEGMENT_HEADERS_PER_REQUEST;
 use subspace_runtime::RuntimeApi;
 use subspace_runtime_primitives::opaque::{Block as OpaqueBlock, Header};
-use subspace_service::SubspaceConfiguration;
+use subspace_service::config::SubspaceConfiguration;
 use tokio::sync::oneshot;
 
 mod builder;
@@ -69,28 +71,31 @@ const SEGMENT_HEADERS_NUMBER_LIMIT: u64 = MAX_SEGMENT_HEADERS_PER_REQUEST as u64
 
 fn pot_external_entropy(
     consensus_chain_config: &Configuration,
-    config_pot_external_entropy: Option<Vec<u8>>,
+    maybe_pot_external_entropy: Option<String>,
 ) -> Result<Vec<u8>, sc_service::Error> {
     let maybe_chain_spec_pot_external_entropy = consensus_chain_config
         .chain_spec
         .properties()
         .get("potExternalEntropy")
-        .map(|d| serde_json::from_value(d.clone()))
-        .transpose()
-        .map_err(|error| {
-            sc_service::Error::Other(format!("Failed to decode PoT initial key: {error:?}"))
-        })?
-        .flatten();
+        .map(|d| match d.clone() {
+            Value::String(s) => Ok(s),
+            Value::Null => Ok(String::new()),
+            _ => Err(sc_service::Error::Other("Failed to decode PoT initial key".to_string())),
+        })
+        .transpose()?;
     if maybe_chain_spec_pot_external_entropy.is_some()
-        && config_pot_external_entropy.is_some()
-        && maybe_chain_spec_pot_external_entropy != config_pot_external_entropy
+        && maybe_pot_external_entropy.is_some()
+        && maybe_chain_spec_pot_external_entropy != maybe_pot_external_entropy
     {
         tracing::warn!(
             "--pot-external-entropy CLI argument was ignored due to chain spec having a different \
              explicit value"
         );
     }
-    Ok(maybe_chain_spec_pot_external_entropy.or(config_pot_external_entropy).unwrap_or_default())
+    Ok(maybe_chain_spec_pot_external_entropy
+        .or(maybe_pot_external_entropy)
+        .unwrap_or_default()
+        .into_bytes())
 }
 
 impl<F: Farmer + 'static> Config<F> {
@@ -105,7 +110,6 @@ impl<F: Farmer + 'static> Config<F> {
             mut dsn,
             sync_from_dsn,
             storage_monitor,
-            enable_subspace_block_relay,
             is_timekeeper,
             timekeeper_cpu_cores,
             pot_external_entropy: config_pot_external_entropy,
@@ -114,15 +118,13 @@ impl<F: Farmer + 'static> Config<F> {
 
         let base = base.configuration(directory.as_ref(), chain_spec.clone()).await;
         let name = base.network.node_name.clone();
-        let database_source = base.database.clone();
 
-        let partial_components =
-            subspace_service::new_partial::<F::Table, RuntimeApi, ExecutorDispatch>(
-                &base,
-                &pot_external_entropy(&base, config_pot_external_entropy)
-                    .context("Failed to get proof of time external entropy")?,
-            )
-            .context("Failed to build a partial subspace node")?;
+        let partial_components = subspace_service::new_partial::<F::Table, RuntimeApi>(
+            &base,
+            &pot_external_entropy(&base, config_pot_external_entropy)
+                .context("Failed to get proof of time external entropy")?,
+        )
+        .context("Failed to build a partial subspace node")?;
 
         let (subspace_networking, dsn, mut runner) = {
             let keypair = {
@@ -172,7 +174,7 @@ impl<F: Farmer + 'static> Config<F> {
             tracing::debug!("Subspace networking initialized: Node ID is {}", dsn.node.id());
 
             (
-                subspace_service::SubspaceNetworking::Reuse {
+                subspace_service::config::SubspaceNetworking::Reuse {
                     node: dsn.node.clone(),
                     bootstrap_nodes,
                     metrics_registry,
@@ -199,6 +201,7 @@ impl<F: Farmer + 'static> Config<F> {
             .unwrap_or_default();
 
         let consensus_state_pruning_mode = base.state_pruning.clone().unwrap_or_default();
+        let base_path_buf = base.base_path.path().to_path_buf();
 
         // Default value are used for many of parameters
         let configuration = SubspaceConfiguration {
@@ -206,9 +209,9 @@ impl<F: Farmer + 'static> Config<F> {
             force_new_slot_notifications: false,
             subspace_networking,
             sync_from_dsn,
-            enable_subspace_block_relay,
             is_timekeeper,
             timekeeper_cpu_cores,
+            dsn_piece_getter: None, // TODO: Use custom piece getter for better performance
         };
 
         let node_runner_future = subspace_farmer::utils::run_future_in_dedicated_thread(
@@ -221,7 +224,7 @@ impl<F: Farmer + 'static> Config<F> {
         .context("Failed to run node runner future")?;
 
         let slot_proportion = sc_consensus_slots::SlotProportion::new(3f32 / 4f32);
-        let full_client = subspace_service::new_full::<F::Table, _, _>(
+        let full_client = subspace_service::new_full::<F::Table, _>(
             configuration,
             partial_components,
             true,
@@ -245,12 +248,13 @@ impl<F: Farmer + 'static> Config<F> {
             transaction_pool,
             block_importing_notification_stream,
             new_slot_notification_stream,
+            xdm_gossip_notification_service,
         } = full_client;
 
         if let Some(storage_monitor) = storage_monitor {
             sc_storage_monitor::StorageMonitorService::try_spawn(
                 storage_monitor.into(),
-                database_source,
+                base_path_buf,
                 &task_manager.spawn_essential_handle(),
             )
             .context("Failed to start storage monitor")?;
@@ -340,7 +344,11 @@ impl<F: Farmer + 'static> Config<F> {
                 .await?;
 
             let cross_domain_message_gossip_worker = xdm_gossip_worker_builder
-                .build::<OpaqueBlock, _, _>(network_service.clone(), sync_service.clone());
+                .build::<OpaqueBlock, _, _>(
+                    network_service.clone(),
+                    xdm_gossip_notification_service,
+                    sync_service.clone(),
+                );
 
             task_manager.spawn_essential_handle().spawn_essential_blocking(
                 "cross-domain-gossip-message-worker",
@@ -412,34 +420,9 @@ impl<F: Farmer + 'static> Config<F> {
     }
 }
 
-/// Executor dispatch for subspace runtime
-pub struct ExecutorDispatch;
-
-impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
-    // /// Only enable the benchmarking host functions when we actually want to
-    // benchmark. #[cfg(feature = "runtime-benchmarks")]
-    // type ExtendHostFunctions = (
-    //     frame_benchmarking::benchmarking::HostFunctions,
-    //     sp_consensus_subspace::consensus::HostFunctions,
-    // )
-    // /// Otherwise we only use the default Substrate host functions.
-    // #[cfg(not(feature = "runtime-benchmarks"))]
-    type ExtendHostFunctions =
-        (sp_consensus_subspace::consensus::HostFunctions, sp_domains_fraud_proof::HostFunctions);
-
-    fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-        subspace_runtime::api::dispatch(method, data)
-    }
-
-    fn native_version() -> sc_executor::NativeVersion {
-        subspace_runtime::native_version()
-    }
-}
-
 /// Chain spec for subspace node
 pub type ChainSpec = chain_spec::ChainSpec;
-pub(crate) type FullClient =
-    subspace_service::FullClient<subspace_runtime::RuntimeApi, ExecutorDispatch>;
+pub(crate) type FullClient = subspace_service::FullClient<subspace_runtime::RuntimeApi>;
 pub(crate) type NewFull = subspace_service::NewFull<FullClient>;
 
 /// Node structure
@@ -450,7 +433,7 @@ pub struct Node<F: Farmer> {
     #[derivative(Debug = "ignore")]
     client: Arc<FullClient>,
     #[derivative(Debug = "ignore")]
-    sync_service: Arc<sc_network_sync::service::chain_sync::SyncingService<OpaqueBlock>>,
+    sync_service: Arc<sc_network_sync::SyncingService<OpaqueBlock>>,
     #[derivative(Debug = "ignore")]
     network_service: Arc<NetworkService<OpaqueBlock, Hash>>,
     rpc_handle: sdk_utils::Rpc,
@@ -614,8 +597,8 @@ impl<F: Farmer + 'static> Node<F> {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Builder<F> {
-        Builder::gemini_3g()
+    pub fn gemini_3h() -> Builder<F> {
+        Builder::gemini_3h()
     }
 
     /// Devnet configuration

@@ -15,12 +15,13 @@ use std::path::Path;
 
 use derivative::Derivative;
 use derive_builder::Builder;
-use sc_executor::{WasmExecutionMethod, WasmtimeInstantiationStrategy};
-use sc_network::config::{NodeKeyConfig, Secret};
-use sc_service::config::{KeystoreConfig, NetworkConfiguration, TransportConfig};
-use sc_service::{BasePath, Configuration, DatabaseSource, TracingReceiver};
+use sc_network::config::{NodeKeyConfig, NonReservedPeerMode, Secret, SetConfig};
+use sc_service::{BasePath, Configuration};
 use sdk_utils::{Multiaddr, MultiaddrWithPeerId};
 use serde::{Deserialize, Serialize};
+use subspace_service::config::{
+    SubstrateConfiguration, SubstrateNetworkConfiguration, SubstrateRpcConfiguration,
+};
 pub use types::*;
 
 mod types;
@@ -63,10 +64,6 @@ pub struct Base {
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub network: Network,
-    /// Offchain worker settings
-    #[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub offchain_worker: OffchainWorker,
     /// Enable color for substrate informant
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -75,10 +72,6 @@ pub struct Base {
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub telemetry: Vec<(Multiaddr, u8)>,
-    /// Dev key seed
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub dev_key_seed: Option<String>,
 }
 
 #[doc(hidden)]
@@ -123,14 +116,10 @@ macro_rules! derive_base {
             rpc: $crate::Rpc,
             /// Network settings
             network: $crate::Network,
-            /// Offchain worker settings
-            offchain_worker: $crate::OffchainWorker,
             /// Enable color for substrate informant
             informant_enable_color: bool,
             /// Additional telemetry endpoints
             telemetry: Vec<(sdk_utils::Multiaddr, u8)>,
-            /// Dev key seed
-            dev_key_seed: String
         });
     }
 }
@@ -144,11 +133,7 @@ impl Base {
         chain_spec: CS,
     ) -> Configuration
     where
-        CS: sc_chain_spec::ChainSpec
-            + serde::Serialize
-            + serde::de::DeserializeOwned
-            + sp_runtime::BuildStorage
-            + 'static,
+        CS: sc_chain_spec::ChainSpec + sp_runtime::BuildStorage + 'static,
     {
         const NODE_KEY_ED25519_FILE: &str = "secret_ed25519";
         const DEFAULT_NETWORK_CONFIG_PATH: &str = "network";
@@ -167,31 +152,19 @@ impl Base {
                     max_connections: rpc_max_connections,
                     cors: rpc_cors,
                     methods: rpc_methods,
-                    max_request_size: rpc_max_request_size,
-                    max_response_size: rpc_max_response_size,
                     max_subs_per_conn: rpc_max_subs_per_conn,
                 },
             network,
-            offchain_worker,
             informant_enable_color,
             telemetry,
-            dev_key_seed,
         } = self;
 
         let base_path = BasePath::new(directory.as_ref());
         let config_dir = base_path.config_dir(chain_spec.id());
 
-        let mut network = {
-            let Network {
-                listen_addresses,
-                boot_nodes,
-                force_synced,
-                name,
-                client_id,
-                enable_mdns,
-                allow_private_ip,
-                allow_non_globals_in_dht,
-            } = network;
+        let network = {
+            let Network { listen_addresses, boot_nodes, force_synced, name, allow_private_ip } =
+                network;
             let name = name.unwrap_or_else(|| {
                 names::Generator::with_naming(names::Name::Numbered)
                     .next()
@@ -199,105 +172,69 @@ impl Base {
                     .expect("RNG is available on all supported platforms; qed")
             });
 
-            let client_id = client_id.unwrap_or_else(|| format!("{impl_name}/v{impl_version}"));
             let config_dir = config_dir.join(DEFAULT_NETWORK_CONFIG_PATH);
             let listen_addresses = listen_addresses.into_iter().map(Into::into).collect::<Vec<_>>();
 
-            NetworkConfiguration {
-                listen_addresses,
-                boot_nodes: chain_spec
+            SubstrateNetworkConfiguration {
+                listen_on: listen_addresses,
+                bootstrap_nodes: chain_spec
                     .boot_nodes()
                     .iter()
                     .cloned()
                     .chain(boot_nodes.into_iter().map(Into::into))
                     .collect(),
+                node_key: NodeKeyConfig::Ed25519(Secret::File(
+                    config_dir.join(NODE_KEY_ED25519_FILE),
+                )),
+                default_peers_set: SetConfig {
+                    in_peers: 125,
+                    out_peers: 50,
+                    reserved_nodes: vec![],
+                    non_reserved_mode: NonReservedPeerMode::Accept,
+                },
+                node_name: name,
+                allow_private_ips: allow_private_ip,
                 force_synced,
-                transport: TransportConfig::Normal { enable_mdns, allow_private_ip },
-                allow_non_globals_in_dht,
-                ..NetworkConfiguration::new(
-                    name,
-                    client_id,
-                    NodeKeyConfig::Ed25519(Secret::File(config_dir.join(NODE_KEY_ED25519_FILE))),
-                    Some(config_dir),
-                )
+                public_addresses: vec![],
             }
         };
 
-        // Increase default value of 25 to improve success rate of sync
-        network.default_peers_set.out_peers = 50;
-        // Full + Light clients
-        network.default_peers_set.in_peers = 25 + 100;
-        let keystore = KeystoreConfig::InMemory;
-
-        // HACK: Tricky way to add extra endpoints as we can't push into telemetry
-        // endpoints
         let telemetry_endpoints = match chain_spec.telemetry_endpoints() {
-            Some(endpoints) => {
-                let Ok(serde_json::Value::Array(extra_telemetry)) =
-                    serde_json::to_value(&telemetry)
-                else {
-                    unreachable!("Will always return an array")
-                };
-                let Ok(serde_json::Value::Array(telemetry)) = serde_json::to_value(endpoints)
-                else {
-                    unreachable!("Will always return an array")
-                };
-
-                serde_json::from_value(serde_json::Value::Array(
-                    telemetry.into_iter().chain(extra_telemetry).collect::<Vec<_>>(),
-                ))
-                .expect("Serialization is always valid")
-            }
+            Some(endpoints) => endpoints.clone(),
             None => sc_service::config::TelemetryEndpoints::new(
                 telemetry.into_iter().map(|(endpoint, n)| (endpoint.to_string(), n)).collect(),
             )
             .expect("Never returns an error"),
         };
 
-        Configuration {
+        SubstrateConfiguration {
             impl_name,
             impl_version,
-            tokio_handle: tokio::runtime::Handle::current(),
             transaction_pool: Default::default(),
             network,
-            keystore,
-            database: DatabaseSource::ParityDb { path: config_dir.join("paritydb").join("full") },
-            trie_cache_maximum_size: Some(67_108_864),
-            state_pruning: Some(state_pruning.into()),
+            state_pruning: state_pruning.into(),
             blocks_pruning: blocks_pruning.into(),
-            wasm_method: WasmExecutionMethod::Compiled {
-                instantiation_strategy: WasmtimeInstantiationStrategy::PoolingCopyOnWrite,
+            rpc_options: SubstrateRpcConfiguration {
+                listen_on: rpc_addr.unwrap_or(SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::LOCALHOST),
+                    rpc_port.unwrap_or(9944),
+                )),
+                max_connections: rpc_max_connections.unwrap_or(100),
+                cors: rpc_cors,
+                methods: rpc_methods.into(),
+                max_subscriptions_per_connection: rpc_max_subs_per_conn.unwrap_or(100),
             },
-            wasm_runtime_overrides: None,
-            rpc_addr,
-            rpc_port: rpc_port.unwrap_or_default(),
-            rpc_methods: rpc_methods.into(),
-            rpc_max_connections: rpc_max_connections.unwrap_or_default() as u32,
-            rpc_cors,
-            rpc_max_request_size: rpc_max_request_size.unwrap_or_default() as u32,
-            rpc_max_response_size: rpc_max_response_size.unwrap_or_default() as u32,
-            rpc_id_provider: None,
-            rpc_max_subs_per_conn: rpc_max_subs_per_conn.unwrap_or_default() as u32,
-            prometheus_config: None,
+            prometheus_listen_on: None,
             telemetry_endpoints: Some(telemetry_endpoints),
-            default_heap_pages: None,
-            offchain_worker: offchain_worker.into(),
             force_authoring,
-            disable_grandpa: false,
-            dev_key_seed,
-            tracing_targets: None,
-            tracing_receiver: TracingReceiver::Log,
             chain_spec: Box::new(chain_spec),
-            max_runtime_instances: 8,
-            announce_block: true,
-            role: role.into(),
-            base_path,
-            data_path: config_dir,
+            base_path: base_path.path().to_path_buf(),
             informant_output_format: sc_informant::OutputFormat {
                 enable_color: informant_enable_color,
             },
-            runtime_cache_size: 2,
+            farmer: role == Role::Authority,
         }
+        .into()
     }
 }
 
@@ -318,7 +255,7 @@ pub struct Rpc {
     /// Maximum number of connections for RPC server. `None` if default.
     #[builder(setter(strip_option), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_connections: Option<usize>,
+    pub max_connections: Option<u32>,
     /// CORS settings for HTTP & WS servers. `None` if all origins are
     /// allowed.
     #[builder(setter(strip_option), default)]
@@ -329,18 +266,10 @@ pub struct Rpc {
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub methods: RpcMethods,
-    /// Maximum payload of a rpc request
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_request_size: Option<usize>,
-    /// Maximum payload of a rpc request
-    #[builder(setter(strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_response_size: Option<usize>,
     /// Maximum allowed subscriptions per rpc connection
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub max_subs_per_conn: Option<usize>,
+    pub max_subs_per_conn: Option<u32>,
 }
 
 impl RpcBuilder {
@@ -355,13 +284,11 @@ impl RpcBuilder {
             .addr(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), port))
             .port(port)
             .max_connections(100)
-            .max_request_size(10 * 1024)
-            .max_response_size(10 * 1024)
             .max_subs_per_conn(Some(100))
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
+    pub fn gemini_3h() -> Self {
         Self::new().addr("127.0.0.1:9944".parse().expect("hardcoded value is true")).cors(vec![
             "http://localhost:*".to_owned(),
             "http://127.0.0.1:*".to_owned(),
@@ -391,15 +318,7 @@ pub struct Network {
     /// Listen on some address for other nodes
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub enable_mdns: bool,
-    /// Listen on some address for other nodes
-    #[builder(default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub allow_private_ip: bool,
-    /// Allow non globals in network DHT
-    #[builder(default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub allow_non_globals_in_dht: bool,
     /// Listen on some address for other nodes
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -416,10 +335,6 @@ pub struct Network {
     #[builder(setter(into, strip_option), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub name: Option<String>,
-    /// Client id for telemetry (default is `{IMPL_NAME}/v{IMPL_VERSION}`)
-    #[builder(setter(into, strip_option), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub client_id: Option<String>,
 }
 
 impl NetworkBuilder {
@@ -429,23 +344,19 @@ impl NetworkBuilder {
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3g() -> Self {
-        Self::default()
-            .listen_addresses(vec![
-                "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-            ])
-            .enable_mdns(true)
+    pub fn gemini_3h() -> Self {
+        Self::default().listen_addresses(vec![
+            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
+        ])
     }
 
     /// Dev network configuration
     pub fn devnet() -> Self {
-        Self::default()
-            .listen_addresses(vec![
-                "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
-                "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
-            ])
-            .enable_mdns(true)
+        Self::default().listen_addresses(vec![
+            "/ip6/::/tcp/30333".parse().expect("hardcoded value is true"),
+            "/ip4/0.0.0.0/tcp/30333".parse().expect("hardcoded value is true"),
+        ])
     }
 }
 
