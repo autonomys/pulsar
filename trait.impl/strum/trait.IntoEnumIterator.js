@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"pulsar":[["impl IntoEnumIterator for <a class=\"enum\" href=\"pulsar/config/enum.ChainConfig.html\" title=\"enum pulsar::config::ChainConfig\">ChainConfig</a>"],["impl IntoEnumIterator for <a class=\"enum\" href=\"pulsar/enum.Commands.html\" title=\"enum pulsar::Commands\">Commands</a>"]]
+"pulsar":[["impl IntoEnumIterator for <a class=\"enum\" href=\"pulsar/enum.Commands.html\" title=\"enum pulsar::Commands\">Commands</a>"],["impl IntoEnumIterator for <a class=\"enum\" href=\"pulsar/config/enum.ChainConfig.html\" title=\"enum pulsar::config::ChainConfig\">ChainConfig</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
