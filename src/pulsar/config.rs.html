@@ -311,7 +311,7 @@
         node = node
             .role(Role::Authority)
             .impl_version(<span class="macro">format!</span>(<span class="string">"{}-{}"</span>, <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>), <span class="macro">env!</span>(<span class="string">"GIT_HASH"</span>)))
-            .impl_name(<span class="string">"Subspace CLI"</span>.to_string());
+            .impl_name(<span class="string">"pulsar"</span>.to_string());
 
         <span class="kw">crate</span>::utils::apply_extra_options(<span class="kw-2">&amp;</span>node.configuration(), extra)
             .context(<span class="string">"Failed to deserialize node config"</span>)<span class="question-mark">?
