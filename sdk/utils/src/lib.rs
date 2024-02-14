@@ -9,11 +9,13 @@
 )]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use std::fmt;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::vec::Drain;
 
 use anyhow::{anyhow, Context, Result};
+use derive_builder::UninitializedFieldError;
 use derive_more::{Deref, DerefMut, Display, From, FromStr, Into};
 use frame_system::pallet_prelude::{BlockNumberFor, HeaderFor};
 use futures::prelude::*;
@@ -36,6 +38,32 @@ use subspace_farmer::node_client::{Error as NodeClientError, NodeClient};
 use subspace_rpc_primitives::{
     FarmerAppInfo, RewardSignatureResponse, RewardSigningInfo, SlotInfo, SolutionResponse,
 };
+
+/// Error encountered during building objects
+#[derive(Debug)]
+pub enum BuilderError {
+    /// Uninitialized field
+    UninitializedField(String),
+    /// Custom validation error
+    ValidationError(String),
+}
+
+impl std::error::Error for BuilderError {}
+
+impl fmt::Display for BuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UninitializedField(field) => write!(f, "Required field '{}' not set", field),
+            Self::ValidationError(err) => write!(f, "Validation error: {}", err),
+        }
+    }
+}
+
+impl From<UninitializedFieldError> for BuilderError {
+    fn from(e: UninitializedFieldError) -> Self {
+        Self::UninitializedField(e.field_name().to_string())
+    }
+}
 
 /// Output that indicates whether the task was cancelled or successfully
 /// completed

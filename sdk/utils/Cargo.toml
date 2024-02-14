@@ -12,6 +12,7 @@ blake2 = "0.10.5"
 bytesize = "1"
 bytesize-serde = "0.2"
 derivative = "2.2.0"
+derive_builder = "0.12"
 derive_more = "0.99"
 frame-support = { version = "4.0.0-dev", git = "https://github.com/subspace/polkadot-sdk", rev = "d6b500960579d73c43fc4ef550b703acfa61c4c8" }
 frame-system = { version = "4.0.0-dev", git = "https://github.com/subspace/polkadot-sdk", rev = "d6b500960579d73c43fc4ef550b703acfa61c4c8" }

@@ -4,15 +4,30 @@ use derive_more::{Deref, DerefMut, Display, From};
 use sdk_utils::ByteSize;
 use serde::{Deserialize, Serialize};
 
+/// RPC default port for consensus chain
+pub const RPC_DEFAULT_PORT_FOR_CONSENSUS: u16 = 9944;
+
+/// RPC default port for domain chain
+pub const RPC_DEFAULT_PORT_FOR_DOMAIN: u16 = RPC_DEFAULT_PORT_FOR_CONSENSUS + 1;
+
+/// The default max number of subscriptions per connection.
+pub const RPC_DEFAULT_MAX_SUBS_PER_CONN: u32 = 1024;
+/// The default max request size in MB.
+pub const RPC_DEFAULT_MAX_REQUEST_SIZE_MB: u32 = 15;
+/// The default max response size in MB.
+pub const RPC_DEFAULT_MAX_RESPONSE_SIZE_MB: u32 = 15;
+/// The default number of connection..
+pub const RPC_DEFAULT_MAX_CONNECTIONS: u32 = 100;
+
 /// Block pruning settings.
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize, Eq, PartialOrd, Ord)]
 pub enum BlocksPruning {
-    #[default]
-    /// Keep full finalized block history.
-    ArchiveCanonical,
-    /// Keep full block history, of every block that was ever imported.
+    /// Keep the data of all blocks.
     Archive,
-    /// Keep N recent finalized blocks.
+    /// Keep only the data of finalized blocks.
+    #[default]
+    ArchiveCanonical,
+    /// Keep the data of the last number of finalized blocks.
     Number(u32),
 }
 
@@ -57,14 +72,14 @@ impl From<sc_state_db::Constraints> for Constraints {
 }
 
 /// Pruning mode.
-#[derive(Debug, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Copy, Debug, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 pub enum PruningMode {
+    /// No pruning. Canonicalization is a no-op.
+    #[default]
+    ArchiveAll,
     /// Canonicalization discards non-canonical nodes. All the canonical
     /// nodes are kept in the DB.
-    #[default]
     ArchiveCanonical,
-    /// No pruning. Canonicalization is a no-op.
-    ArchiveAll,
 }
 
 impl From<PruningMode> for sc_service::PruningMode {

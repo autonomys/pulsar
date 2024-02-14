@@ -69,6 +69,20 @@ struct GenesisDomainParams {
     operator_signing_key: OperatorPublicKey,
 }
 
+/// Creates chain specification based on chain id
+pub fn create_chain_spec(chain_id: String) -> Result<ChainSpec, String> {
+    let chain_spec = match chain_id.as_str() {
+        "dev" => dev_config(),
+        "devnet" => devnet_config(),
+        "devnet-compiled" => devnet_config_compiled(),
+        "gemini-3h" => gemini_3h(),
+        "gemini-3h-compiled" => gemini_3h_compiled()?,
+        path => ChainSpec::from_json_file(std::path::PathBuf::from(path))?,
+    };
+
+    Ok(chain_spec)
+}
+
 /// Chain spec type for the subspace
 pub type ChainSpec = GenericChainSpec<RuntimeGenesisConfig>;
 

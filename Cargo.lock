@@ -10044,21 +10044,29 @@ dependencies = [
 name = "sdk-substrate"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bytesize",
  "derivative",
  "derive_builder",
  "derive_more",
+ "domain-service",
+ "evm-domain-runtime",
  "names",
  "sc-chain-spec",
  "sc-informant",
+ "sc-keystore",
  "sc-network",
  "sc-service",
  "sc-state-db",
  "sc-storage-monitor",
  "sdk-utils",
  "serde",
+ "serde_json",
+ "sp-core",
+ "sp-domains",
  "sp-runtime",
  "subspace-service",
+ "tempfile",
 ]
 
 [[package]]
@@ -10085,6 +10093,7 @@ dependencies = [
  "bytesize",
  "bytesize-serde",
  "derivative",
+ "derive_builder",
  "derive_more",
  "frame-support",
  "frame-system",

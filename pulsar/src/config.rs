@@ -6,9 +6,10 @@ use color_eyre::eyre::{eyre, Report, Result, WrapErr};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
+use subspace_sdk::chain_spec::create_chain_spec;
 use subspace_sdk::farmer::Farmer;
-use subspace_sdk::node::{DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, Role};
-use subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
+use subspace_sdk::node::{DomainConfigBuilder, Node};
+use subspace_sdk::{ByteSize, FarmDescription, PublicKey};
 use tracing::instrument;
 
 use crate::utils::IntoEyre;
@@ -44,59 +45,39 @@ pub(crate) struct NodeConfig {
 }
 
 impl NodeConfig {
-    pub async fn build(self, chain: ChainConfig, is_verbose: bool) -> Result<Node> {
+    pub async fn build(self, chain: ChainConfig, _is_verbose: bool) -> Result<Node> {
         let Self { directory, name, advanced: AdvancedNodeSettings { enable_domains, extra } } =
             self;
 
-        let (mut node, chain_spec) = match chain {
+        let node = match chain {
             ChainConfig::Gemini3h => {
-                let mut node = Node::gemini_3h()
-                    .network(NetworkBuilder::gemini_3h().name(name))
-                    .dsn(DsnBuilder::gemini_3h())
-                    .sync_from_dsn(true)
-                    .enable_subspace_block_relay(true);
+                let mut node = Node::gemini_3h(name, directory)?;
                 if enable_domains {
-                    node = node.domain(Some(DomainConfigBuilder::gemini_3h().configuration()));
+                    node = node.domain(Some(DomainConfigBuilder::gemini_3h().configuration()?));
                 }
-                let chain_spec = chain_spec::gemini_3h();
-                (node, chain_spec)
+                node
             }
             ChainConfig::Dev => {
-                let mut node = Node::dev();
+                let mut node = Node::dev(directory)?;
                 if enable_domains {
-                    node = node.domain(Some(
-                        DomainConfigBuilder::dev().role(Role::Authority).configuration(),
-                    ));
+                    node = node.domain(Some(DomainConfigBuilder::dev().configuration()?));
                 }
-                let chain_spec = chain_spec::dev_config();
-                (node, chain_spec)
+                node
             }
             ChainConfig::DevNet => {
-                let mut node = Node::devnet()
-                    .network(NetworkBuilder::devnet().name(name))
-                    .dsn(DsnBuilder::devnet())
-                    .sync_from_dsn(true)
-                    .enable_subspace_block_relay(true);
+                let mut node = Node::devnet(name, directory)?;
                 if enable_domains {
-                    node = node.domain(Some(DomainConfigBuilder::devnet().configuration()));
+                    node = node.domain(Some(DomainConfigBuilder::devnet().configuration()?));
                 }
-                let chain_spec = chain_spec::devnet_config();
-                (node, chain_spec)
+                node
             }
         };
 
-        if is_verbose {
-            node = node.informant_enable_color(true);
-        }
+        let configuration = node.configuration()?;
 
-        node = node
-            .role(Role::Authority)
-            .impl_version(format!("{}-{}", env!("CARGO_PKG_VERSION"), env!("GIT_HASH")))
-            .impl_name("Subspace CLI".to_string());
-
-        crate::utils::apply_extra_options(&node.configuration(), extra)
+        crate::utils::apply_extra_options(&configuration, extra)
             .context("Failed to deserialize node config")?
-            .build(directory, chain_spec)
+            .build(create_chain_spec)
             .await
             .into_eyre()
             .wrap_err("Failed to build subspace node")

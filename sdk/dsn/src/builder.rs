@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::sync::{Arc, Weak};
 
@@ -14,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use subspace_farmer::piece_cache::PieceCache as FarmerPieceCache;
 use subspace_farmer::utils::readers_and_pieces::ReadersAndPieces;
 use subspace_farmer::KNOWN_PEERS_CACHE_SIZE;
+use subspace_networking::libp2p::multiaddr::{Multiaddr as LibP2PMultiAddress, Protocol};
 use subspace_networking::utils::strip_peer_id;
 use subspace_networking::{
     KademliaMode, KnownPeersManager, KnownPeersManagerConfig, PieceByIndexRequest,
@@ -31,10 +33,28 @@ use super::LocalRecordProvider;
 #[derivative(Default)]
 #[serde(transparent)]
 pub struct ListenAddresses(
-    #[derivative(Default(
-        // TODO: get rid of it, once it won't be required by monorepo
-        value = "vec![\"/ip4/127.0.0.1/tcp/0\".parse().expect(\"Always valid\")]"
-    ))]
+    #[derivative(Default(value = "vec![
+        LibP2PMultiAddress::from(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
+            .with(Protocol::Udp(30533))
+            .with(Protocol::QuicV1).into(),
+        LibP2PMultiAddress::from(IpAddr::V6(Ipv6Addr::UNSPECIFIED))
+            .with(Protocol::Udp(30533))
+            .with(Protocol::QuicV1).into(),
+        LibP2PMultiAddress::from(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
+            .with(Protocol::Tcp(30533)).into(),
+        LibP2PMultiAddress::from(IpAddr::V6(Ipv6Addr::UNSPECIFIED))
+            .with(Protocol::Tcp(30533)).into(),
+        LibP2PMultiAddress::from(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
+            .with(Protocol::Udp(30433))
+            .with(Protocol::QuicV1).into(),
+        LibP2PMultiAddress::from(IpAddr::V6(Ipv6Addr::UNSPECIFIED))
+            .with(Protocol::Udp(30433))
+            .with(Protocol::QuicV1).into(),
+        LibP2PMultiAddress::from(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
+            .with(Protocol::Tcp(30433)).into(),
+        LibP2PMultiAddress::from(IpAddr::V6(Ipv6Addr::UNSPECIFIED))
+            .with(Protocol::Tcp(30433)).into()
+    ]"))]
     pub Vec<Multiaddr>,
 );
 
@@ -81,25 +101,25 @@ pub struct PendingOutConnections(#[derivative(Default(value = "150"))] pub u32);
 /// Node DSN builder
 #[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
 #[derivative(Default)]
-#[builder(pattern = "immutable", build_fn(private, name = "_build"), name = "DsnBuilder")]
+#[builder(pattern = "immutable", build_fn(error = "sdk_utils::BuilderError"))]
 #[non_exhaustive]
 pub struct Dsn {
     /// Listen on some address for other nodes
     #[builder(default, setter(into))]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub listen_addresses: ListenAddresses,
+    pub listen_on: ListenAddresses,
     /// Boot nodes
     #[builder(default)]
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub boot_nodes: Vec<MultiaddrWithPeerId>,
+    pub bootstrap_nodes: Vec<MultiaddrWithPeerId>,
     /// Known external addresses
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub external_addresses: Vec<Multiaddr>,
-    /// Reserved nodes
+    /// Reserved peers
     #[builder(default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub reserved_nodes: Vec<Multiaddr>,
+    pub reserved_peers: Vec<Multiaddr>,
     /// Determines whether we allow keeping non-global (private, shared,
     /// loopback..) addresses in Kademlia DHT.
     #[builder(default)]
@@ -121,30 +141,27 @@ pub struct Dsn {
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub pending_out_connections: PendingOutConnections,
+    /// Defines whether we should run blocking Kademlia bootstrap() operation
+    /// before other requests.
+    #[builder(default = "false")]
+    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
+    pub disable_bootstrap_on_start: bool,
 }
-
-sdk_utils::generate_builder!(Dsn);
 
 impl DsnBuilder {
     /// Dev chain configuration
     pub fn dev() -> Self {
-        Self::new().allow_non_global_addresses_in_dht(true)
+        Self::default().allow_non_global_addresses_in_dht(true).disable_bootstrap_on_start(true)
     }
 
     /// Gemini 3g configuration
     pub fn gemini_3h() -> Self {
-        Self::new().listen_addresses(vec![
-            "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-            "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-        ])
+        Self::default()
     }
 
     /// Gemini 3g configuration
     pub fn devnet() -> Self {
-        Self::new().listen_addresses(vec![
-            "/ip6/::/tcp/30433".parse().expect("hardcoded value is true"),
-            "/ip4/0.0.0.0/tcp/30433".parse().expect("hardcoded value is true"),
-        ])
+        Self::default()
     }
 }
 
@@ -225,20 +242,21 @@ impl Dsn {
         tracing::debug!(genesis_hash = protocol_version, "Setting DSN protocol version...");
 
         let Self {
-            listen_addresses,
-            reserved_nodes,
+            listen_on,
+            reserved_peers,
             allow_non_global_addresses_in_dht,
             in_connections: InConnections(max_established_incoming_connections),
             out_connections: OutConnections(max_established_outgoing_connections),
             pending_in_connections: PendingInConnections(max_pending_incoming_connections),
             pending_out_connections: PendingOutConnections(max_pending_outgoing_connections),
-            boot_nodes,
+            bootstrap_nodes,
             external_addresses,
+            disable_bootstrap_on_start,
         } = self;
 
-        let bootstrap_nodes = boot_nodes.into_iter().map(Into::into).collect::<Vec<_>>();
+        let bootstrap_nodes = bootstrap_nodes.into_iter().map(Into::into).collect::<Vec<_>>();
 
-        let listen_on = listen_addresses.0.into_iter().map(Into::into).collect();
+        let listen_on = listen_on.0.into_iter().map(Into::into).collect();
 
         let networking_parameters_registry = KnownPeersManager::new(KnownPeersManagerConfig {
             path: Some(base_path.join("known_addresses.bin").into_boxed_path()),
@@ -284,7 +302,7 @@ impl Dsn {
                     }
                 }),
             ],
-            reserved_peers: reserved_nodes.into_iter().map(Into::into).collect(),
+            reserved_peers: reserved_peers.into_iter().map(Into::into).collect(),
             max_established_incoming_connections,
             max_established_outgoing_connections,
             max_pending_incoming_connections,
@@ -292,6 +310,7 @@ impl Dsn {
             bootstrap_addresses: bootstrap_nodes,
             kademlia_mode: KademliaMode::Dynamic,
             external_addresses: external_addresses.into_iter().map(Into::into).collect(),
+            disable_bootstrap_on_start,
             ..default_networking_config
         };
 

@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
@@ -13,10 +12,11 @@ use sc_consensus_subspace::block_import::BlockImportingNotification;
 use sc_consensus_subspace::notification::SubspaceNotificationStream;
 use sc_consensus_subspace::slot_worker::NewSlotNotification;
 use sc_network::NetworkService;
+use sc_service::Configuration;
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sc_utils::mpsc::{TracingUnboundedReceiver, TracingUnboundedSender};
-use sdk_substrate::{Base, BaseBuilder};
-use sdk_utils::{DestructorSet, MultiaddrWithPeerId, TaskOutput};
+use sdk_substrate::DomainChainConfiguration;
+use sdk_utils::{BuilderError, DestructorSet, MultiaddrWithPeerId, TaskOutput};
 use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_domains::{DomainId, OperatorId};
@@ -29,7 +29,6 @@ use tokio::sync::{oneshot, RwLock};
 
 use crate::domains::domain::{Domain, DomainBuildingProgress};
 use crate::domains::domain_instance_starter::DomainInstanceStarter;
-use crate::domains::evm_chain_spec;
 
 /// Link to the consensus node
 pub struct ConsensusNodeLink {
@@ -57,14 +56,9 @@ pub struct ConsensusNodeLink {
 
 /// Domain node configuration
 #[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
-#[builder(pattern = "owned", build_fn(private, name = "_build"))]
+#[builder(pattern = "owned", build_fn(error = "sdk_utils::BuilderError", private, name = "_build"))]
 #[non_exhaustive]
 pub struct DomainConfig {
-    /// Chain ID of domain node (must be same as the consensus node's chain id)
-    #[builder(setter(into), default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub chain_id: String,
-
     /// Uniquely identifies a domain
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -81,18 +75,14 @@ pub struct DomainConfig {
     pub additional_args: Vec<String>,
 
     #[doc(hidden)]
-    #[builder(
-        setter(into, strip_option),
-        field(type = "BaseBuilder", build = "self.base.build()")
-    )]
+    #[builder(setter(into))]
     #[serde(flatten, skip_serializing_if = "sdk_utils::is_default")]
-    pub base: Base,
+    pub base: DomainChainConfiguration,
 }
 
 impl Default for DomainConfig {
     fn default() -> Self {
         DomainConfig {
-            chain_id: "".to_string(),
             domain_id: Default::default(),
             maybe_operator_id: None,
             additional_args: vec![],
@@ -100,8 +90,6 @@ impl Default for DomainConfig {
         }
     }
 }
-
-sdk_substrate::derive_base!(@ Base => DomainConfigBuilder);
 
 impl DomainConfig {
     /// Dev configuraiton
@@ -128,31 +116,31 @@ impl DomainConfigBuilder {
 
     /// Dev chain configuration
     pub fn dev() -> Self {
-        Self::new().chain_id("dev").domain_id(DomainId::new(0))
+        Self::new()
     }
 
     /// Gemini 3g configuration
     pub fn gemini_3h() -> Self {
-        Self::new().chain_id("gemini-3g").domain_id(DomainId::new(0))
+        Self::new().domain_id(DomainId::new(0))
     }
 
     /// Devnet chain configuration
     pub fn devnet() -> Self {
-        Self::new().chain_id("devnet").domain_id(DomainId::new(0))
+        Self::new().domain_id(DomainId::new(0))
     }
 
     /// Get configuration for saving on disk
-    pub fn configuration(self) -> DomainConfig {
-        self._build().expect("Build is infallible")
+    pub fn configuration(self) -> Result<DomainConfig, BuilderError> {
+        self._build()
     }
 
     /// Build a domain node
     pub async fn build(
         self,
-        directory: impl AsRef<Path> + Send + 'static,
+        domain_service_config: Configuration,
         consensus_node_link: ConsensusNodeLink,
     ) -> Result<Domain> {
-        self.configuration().build(directory, consensus_node_link).await
+        self.configuration()?.build(domain_service_config, consensus_node_link).await
     }
 }
 
@@ -160,7 +148,7 @@ impl DomainConfig {
     /// Build a domain node
     pub async fn build(
         self,
-        directory: impl AsRef<Path> + Send + 'static,
+        mut domain_service_configuration: Configuration,
         consensus_node_link: ConsensusNodeLink,
     ) -> Result<Domain> {
         let ConsensusNodeLink {
@@ -321,38 +309,17 @@ impl DomainConfig {
 
                     let runtime_type = domain_instance_data.runtime_type.clone();
 
-                    let domain_spec_result = evm_chain_spec::create_domain_spec(
-                        self.chain_id.as_str(),
-                        domain_instance_data.raw_genesis,
-                    );
-
-                    let domain_spec = match domain_spec_result {
-                        Ok(domain_spec) => domain_spec,
-                        Err(domain_spec_creation_error) => {
-                            let _ = domain_runner_result_sender.send(Err(anyhow!(
-                                "Error while creating domain spec for the domain: {} Error: {:?}",
-                                printable_domain_id,
-                                domain_spec_creation_error
-                            )));
-                            return;
-                        }
-                    };
-
-                    let domains_directory =
-                        directory.as_ref().join(format!("domain-{}", printable_domain_id));
-                    let mut service_config =
-                        self.base.configuration(domains_directory, domain_spec).await;
-
-                    if service_config.network.boot_nodes.is_empty() {
-                        service_config.network.boot_nodes = chain_spec_domains_bootstrap_nodes
-                            .clone()
-                            .into_iter()
-                            .map(Into::into)
-                            .collect::<Vec<_>>();
+                    if domain_service_configuration.network.boot_nodes.is_empty() {
+                        domain_service_configuration.network.boot_nodes =
+                            chain_spec_domains_bootstrap_nodes
+                                .clone()
+                                .into_iter()
+                                .map(Into::into)
+                                .collect::<Vec<_>>();
                     }
 
                     let domain_starter = DomainInstanceStarter {
-                        service_config,
+                        service_config: domain_service_configuration,
                         consensus_network,
                         maybe_operator_id: self.maybe_operator_id,
                         domain_id: self.domain_id,

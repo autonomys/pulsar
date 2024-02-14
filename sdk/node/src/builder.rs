@@ -1,15 +1,16 @@
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
-use std::path::Path;
+use std::path::PathBuf;
 
 use derivative::Derivative;
 use derive_builder::Builder;
 use derive_more::{Deref, DerefMut, Display, From};
 use sdk_dsn::{Dsn, DsnBuilder};
 use sdk_substrate::{
-    Base, BaseBuilder, BlocksPruning, NetworkBuilder, PruningMode, Role, RpcBuilder, StorageMonitor,
+    BlocksPruning, ConsensusChainConfiguration, ConsensusChainConfigurationBuilder, NetworkBuilder,
+    PruningMode, RpcBuilder, StorageMonitor,
 };
-use sdk_utils::ByteSize;
+use sdk_utils::{BuilderError, ByteSize};
 use serde::{Deserialize, Serialize};
 
 use super::{ChainSpec, Farmer, Node};
@@ -39,7 +40,11 @@ pub struct SegmentPublishConcurrency(
 /// Node builder
 #[derive(Debug, Clone, Derivative, Builder, Deserialize, Serialize, PartialEq)]
 #[derivative(Default(bound = ""))]
-#[builder(pattern = "owned", build_fn(private, name = "_build"), name = "Builder")]
+#[builder(
+    pattern = "owned",
+    build_fn(private, name = "_build", error = "sdk_utils::BuilderError"),
+    name = "Builder"
+)]
 #[non_exhaustive]
 pub struct Config<F: Farmer> {
     /// Max number of segments that can be published concurrently, impacts
@@ -52,12 +57,9 @@ pub struct Config<F: Farmer> {
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub sync_from_dsn: bool,
     #[doc(hidden)]
-    #[builder(
-        setter(into, strip_option),
-        field(type = "BaseBuilder", build = "self.base.build()")
-    )]
+    #[builder(setter(into))]
     #[serde(flatten, skip_serializing_if = "sdk_utils::is_default")]
-    pub base: Base,
+    pub base: ConsensusChainConfiguration,
     /// DSN settings
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
@@ -66,10 +68,6 @@ pub struct Config<F: Farmer> {
     #[builder(setter(into), default)]
     #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
     pub storage_monitor: Option<StorageMonitor>,
-    /// Enables subspace block relayer
-    #[builder(default)]
-    #[serde(default, skip_serializing_if = "sdk_utils::is_default")]
-    pub enable_subspace_block_relay: bool,
     #[builder(setter(skip), default)]
     #[serde(skip, default)]
     _farmer: std::marker::PhantomData<F>,
@@ -93,57 +91,71 @@ pub struct Config<F: Farmer> {
 
 impl<F: Farmer + 'static> Config<F> {
     /// Dev configuraiton
-    pub fn dev() -> Builder<F> {
-        Builder::dev()
+    pub fn dev(base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::dev(base_path)
     }
 
     /// Gemini 3g configuraiton
-    pub fn gemini_3h() -> Builder<F> {
-        Builder::gemini_3h()
+    pub fn gemini_3h(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::gemini_3h(node_name, base_path)
     }
 
     /// Devnet configuraiton
-    pub fn devnet() -> Builder<F> {
-        Builder::devnet()
+    pub fn devnet(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::devnet(node_name, base_path)
     }
 }
 
 impl<F: Farmer + 'static> Builder<F> {
     /// Dev chain configuration
-    pub fn dev() -> Self {
-        Self::new()
-            .is_timekeeper(true)
-            .force_authoring(true)
-            .network(NetworkBuilder::dev())
-            .dsn(DsnBuilder::dev())
-            .rpc(RpcBuilder::dev())
+    pub fn dev(base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Ok(Self::new().sync_from_dsn(true).dsn(DsnBuilder::dev().build()?).base(
+            ConsensusChainConfigurationBuilder::default()
+                .dev(true)
+                .base_path(base_path)
+                .network(NetworkBuilder::dev().build()?)
+                .rpc(RpcBuilder::dev().build()?)
+                .state_pruning(PruningMode::ArchiveCanonical)
+                .blocks_pruning(BlocksPruning::Number(256))
+                .build()?,
+        ))
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3h() -> Self {
-        Self::new()
-            .network(NetworkBuilder::gemini_3h())
-            .dsn(DsnBuilder::gemini_3h())
-            .rpc(RpcBuilder::gemini_3h())
-            .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveCanonical)
-            .blocks_pruning(BlocksPruning::Number(256))
+    pub fn gemini_3h(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Ok(Self::new().sync_from_dsn(true).dsn(DsnBuilder::gemini_3h().build()?).base(
+            ConsensusChainConfigurationBuilder::default()
+                .chain("gemini-3h".to_string())
+                .name(node_name)
+                .farmer(true)
+                .base_path(base_path)
+                .network(NetworkBuilder::gemini_3h().build()?)
+                .rpc(RpcBuilder::gemini_3h().build()?)
+                .state_pruning(PruningMode::ArchiveCanonical)
+                .blocks_pruning(BlocksPruning::Number(256))
+                .build()?,
+        ))
     }
 
     /// Devnet chain configuration
-    pub fn devnet() -> Self {
-        Self::new()
-            .network(NetworkBuilder::devnet())
-            .dsn(DsnBuilder::devnet())
-            .rpc(RpcBuilder::devnet())
-            .role(Role::Authority)
-            .state_pruning(PruningMode::ArchiveCanonical)
-            .blocks_pruning(BlocksPruning::Number(256))
+    pub fn devnet(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Ok(Self::new().sync_from_dsn(true).dsn(DsnBuilder::devnet().build()?).base(
+            ConsensusChainConfigurationBuilder::default()
+                .chain("devnet".to_string())
+                .name(node_name)
+                .farmer(true)
+                .base_path(base_path)
+                .network(NetworkBuilder::devnet().build()?)
+                .rpc(RpcBuilder::devnet().build()?)
+                .state_pruning(PruningMode::ArchiveCanonical)
+                .blocks_pruning(BlocksPruning::Number(256))
+                .build()?,
+        ))
     }
 
     /// Get configuration for saving on disk
-    pub fn configuration(self) -> Config<F> {
-        self._build().expect("Build is infallible")
+    pub fn configuration(self) -> Result<Config<F>, BuilderError> {
+        self._build()
     }
 
     /// New builder
@@ -152,13 +164,10 @@ impl<F: Farmer + 'static> Builder<F> {
     }
 
     /// Start a node with supplied parameters
-    pub async fn build(
-        self,
-        directory: impl AsRef<Path>,
-        chain_spec: ChainSpec,
-    ) -> anyhow::Result<Node<F>> {
-        self.configuration().build(directory, chain_spec).await
+    async fn build<CSF>(self, chain_spec_fn: CSF) -> anyhow::Result<Node<F>>
+    where
+        CSF: Fn(String) -> Result<ChainSpec, String>,
+    {
+        self.configuration()?.build(chain_spec_fn).await
     }
 }
-
-sdk_substrate::derive_base!(<F: Farmer + 'static> @ Base => Builder);

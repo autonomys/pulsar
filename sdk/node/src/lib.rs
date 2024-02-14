@@ -11,7 +11,7 @@
 #![feature(concat_idents)]
 
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -29,7 +29,7 @@ use sc_service::Configuration;
 use sc_utils::mpsc::tracing_unbounded;
 use sdk_dsn::{DsnOptions, DsnShared};
 use sdk_traits::Farmer;
-use sdk_utils::{DestructorSet, MultiaddrWithPeerId, PublicKey, TaskOutput};
+use sdk_utils::{BuilderError, DestructorSet, MultiaddrWithPeerId, PublicKey, TaskOutput};
 use serde_json::Value;
 use sp_consensus::SyncOracle;
 use sp_consensus_subspace::digests::PreDigest;
@@ -100,35 +100,57 @@ fn pot_external_entropy(
 
 impl<F: Farmer + 'static> Config<F> {
     /// Start a node with supplied parameters
-    pub async fn build(
-        self,
-        directory: impl AsRef<Path>,
-        chain_spec: ChainSpec,
-    ) -> anyhow::Result<Node<F>> {
+    pub async fn build<CSF>(self, chain_spec_fn: CSF) -> anyhow::Result<Node<F>>
+    where
+        CSF: Fn(String) -> Result<ChainSpec, String>,
+    {
         let Self {
             base,
             mut dsn,
             sync_from_dsn,
-            storage_monitor,
             is_timekeeper,
             timekeeper_cpu_cores,
             pot_external_entropy: config_pot_external_entropy,
+            domain,
             ..
         } = self;
 
-        let base = base.configuration(directory.as_ref(), chain_spec.clone()).await;
-        let name = base.network.node_name.clone();
+        let (dev, storage_monitor_params, configuration) =
+            base.configuration(chain_spec_fn).await?;
+        let maybe_domain_config = if let Some(mut domain_config) = domain {
+            let (service_config, domain_id, maybe_operator_id) = domain_config
+                .base
+                .configuration::<ChainSpec, CSF>(
+                    if domain_config.domain_id == Default::default() {
+                        None
+                    } else {
+                        Some(domain_config.domain_id)
+                    },
+                    domain_config.maybe_operator_id,
+                    dev,
+                    &configuration,
+                    configuration.informant_output_format.enable_color,
+                )
+                .await?;
+            domain_config.domain_id = domain_id;
+            domain_config.maybe_operator_id = maybe_operator_id;
+            Some((service_config, domain_config))
+        } else {
+            None
+        };
+
+        let name = configuration.network.node_name.clone();
 
         let partial_components = subspace_service::new_partial::<F::Table, RuntimeApi>(
-            &base,
-            &pot_external_entropy(&base, config_pot_external_entropy)
+            &configuration,
+            &pot_external_entropy(&configuration, config_pot_external_entropy)
                 .context("Failed to get proof of time external entropy")?,
         )
         .context("Failed to build a partial subspace node")?;
 
         let (subspace_networking, dsn, mut runner) = {
             let keypair = {
-                let keypair = base
+                let keypair = configuration
                     .network
                     .node_key
                     .clone()
@@ -141,7 +163,7 @@ impl<F: Farmer + 'static> Config<F> {
                     .expect("Address is correct")
             };
 
-            let chain_spec_boot_nodes = base
+            let chain_spec_boot_nodes = configuration
                 .chain_spec
                 .properties()
                 .get("dsnBootstrapNodes")
@@ -153,18 +175,22 @@ impl<F: Farmer + 'static> Config<F> {
 
             tracing::trace!("Subspace networking starting.");
 
-            dsn.boot_nodes.extend(chain_spec_boot_nodes);
+            dsn.bootstrap_nodes.extend(chain_spec_boot_nodes);
             let bootstrap_nodes =
-                dsn.boot_nodes.clone().into_iter().map(Into::into).collect::<Vec<_>>();
+                dsn.bootstrap_nodes.clone().into_iter().map(Into::into).collect::<Vec<_>>();
+
+            if dev {
+                dsn.disable_bootstrap_on_start = true;
+            }
 
             let segment_header_store = partial_components.other.segment_headers_store.clone();
 
-            let is_metrics_enabled = base.prometheus_config.is_some();
+            let is_metrics_enabled = configuration.prometheus_config.is_some();
 
             let (dsn, runner, metrics_registry) = dsn.build_dsn(DsnOptions {
                 client: partial_components.client.clone(),
                 keypair,
-                base_path: directory.as_ref().to_path_buf(),
+                base_path: configuration.base_path.path().to_path_buf(),
                 get_piece_by_index: get_piece_by_index::<F>,
                 get_segment_header_by_segment_indexes,
                 segment_header_store,
@@ -187,7 +213,7 @@ impl<F: Farmer + 'static> Config<F> {
         let chain_spec_domains_bootstrap_nodes_map: serde_json::map::Map<
             String,
             serde_json::Value,
-        > = base
+        > = configuration
             .chain_spec
             .properties()
             .get("domainsBootstrapNodes")
@@ -200,16 +226,16 @@ impl<F: Farmer + 'static> Config<F> {
             })?
             .unwrap_or_default();
 
-        let consensus_state_pruning_mode = base.state_pruning.clone().unwrap_or_default();
-        let base_path_buf = base.base_path.path().to_path_buf();
+        let consensus_state_pruning_mode = configuration.state_pruning.clone().unwrap_or_default();
+        let base_path_buf = configuration.base_path.path().to_path_buf();
 
         // Default value are used for many of parameters
         let configuration = SubspaceConfiguration {
-            base,
-            force_new_slot_notifications: false,
+            base: configuration,
+            force_new_slot_notifications: maybe_domain_config.is_some(),
             subspace_networking,
             sync_from_dsn,
-            is_timekeeper,
+            is_timekeeper: if dev { true } else { is_timekeeper },
             timekeeper_cpu_cores,
             dsn_piece_getter: None, // TODO: Use custom piece getter for better performance
         };
@@ -251,28 +277,24 @@ impl<F: Farmer + 'static> Config<F> {
             xdm_gossip_notification_service,
         } = full_client;
 
-        if let Some(storage_monitor) = storage_monitor {
-            sc_storage_monitor::StorageMonitorService::try_spawn(
-                storage_monitor.into(),
-                base_path_buf,
-                &task_manager.spawn_essential_handle(),
-            )
-            .context("Failed to start storage monitor")?;
-        }
+        sc_storage_monitor::StorageMonitorService::try_spawn(
+            storage_monitor_params,
+            base_path_buf.clone(),
+            &task_manager.spawn_essential_handle(),
+        )
+        .context("Failed to start storage monitor")?;
 
         let mut destructors = DestructorSet::new("node-destructors");
 
         let mut maybe_domain = None;
-        if let Some(domain_config) = self.domain {
-            let base_directory = directory.as_ref().to_owned().clone();
-
+        if let Some((domain_service_config, domain_config)) = maybe_domain_config {
             let chain_spec_domains_bootstrap_nodes = chain_spec_domains_bootstrap_nodes_map
-                .get(&format!("{}", domain_config.domain_id))
+                .get(&format!("{:?}", domain_config.domain_id))
                 .map(|d| serde_json::from_value(d.clone()))
                 .transpose()
                 .map_err(|error| {
                     sc_service::Error::Other(format!(
-                        "Failed to decode Domain: {} bootstrap nodes: {error:?}",
+                        "Failed to decode Domain: {:?} bootstrap nodes: {error:?}",
                         domain_config.domain_id
                     ))
                 })?
@@ -327,7 +349,7 @@ impl<F: Farmer + 'static> Config<F> {
 
             let domain = domain_config
                 .build(
-                    base_directory,
+                    domain_service_config,
                     ConsensusNodeLink {
                         consensus_network: network_service.clone(),
                         consensus_client: client.clone(),
@@ -592,18 +614,18 @@ impl<F: Farmer + 'static> Node<F> {
     }
 
     /// Development configuration
-    pub fn dev() -> Builder<F> {
-        Builder::dev()
+    pub fn dev(base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::dev(base_path)
     }
 
     /// Gemini 3g configuration
-    pub fn gemini_3h() -> Builder<F> {
-        Builder::gemini_3h()
+    pub fn gemini_3h(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::gemini_3h(node_name, base_path)
     }
 
     /// Devnet configuration
-    pub fn devnet() -> Builder<F> {
-        Builder::devnet()
+    pub fn devnet(node_name: String, base_path: PathBuf) -> Result<Builder<F>, BuilderError> {
+        Builder::devnet(node_name, base_path)
     }
 
     /// Get listening addresses of the node

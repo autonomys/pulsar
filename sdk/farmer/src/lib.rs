@@ -147,7 +147,11 @@ mod builder {
     /// Technical type which stores all
     #[derive(Debug, Clone, Derivative, Builder, Serialize, Deserialize)]
     #[derivative(Default)]
-    #[builder(pattern = "immutable", build_fn(private, name = "_build"), name = "Builder")]
+    #[builder(
+        pattern = "immutable",
+        build_fn(private, name = "_build", error = "sdk_utils::BuilderError"),
+        name = "Builder"
+    )]
     #[non_exhaustive]
     pub struct Config {
         /// Number of farms that can be plotted concurrently, impacts RAM usage.
