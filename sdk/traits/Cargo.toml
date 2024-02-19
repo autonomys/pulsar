@@ -1,0 +1,15 @@
+[package]
+name = "sdk-traits"
+version = "0.1.0"
+edition = "2021"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+parking_lot = "0.12"
+sc-client-api = { version = "4.0.0-dev", git = "https://github.com/subspace/polkadot-sdk", rev = "d6b500960579d73c43fc4ef550b703acfa61c4c8" }
+sdk-dsn = { path = "../dsn" }
+subspace-core-primitives = { git = "https://github.com/subspace/subspace", rev = "a2e0318a75705ab31975ac8b172c999cab378e90" }
+subspace-farmer = { git = "https://github.com/subspace/subspace", rev = "a2e0318a75705ab31975ac8b172c999cab378e90", default-features = false }
+subspace-proof-of-space = { git = "https://github.com/subspace/subspace", rev = "a2e0318a75705ab31975ac8b172c999cab378e90" }
+

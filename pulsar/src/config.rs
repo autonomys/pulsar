@@ -11,7 +11,7 @@ use subspace_sdk::node::{DomainConfigBuilder, DsnBuilder, NetworkBuilder, Node, 
 use subspace_sdk::{chain_spec, ByteSize, FarmDescription, PublicKey};
 use tracing::instrument;
 
-use crate::utils::{provider_storage_dir_getter, IntoEyre};
+use crate::utils::IntoEyre;
 
 /// defaults for the user config file
 pub(crate) const DEFAULT_FARM_SIZE: ByteSize = ByteSize::gb(2);
@@ -49,18 +49,16 @@ impl NodeConfig {
             self;
 
         let (mut node, chain_spec) = match chain {
-            ChainConfig::Gemini3g => {
-                let mut node = Node::gemini_3g()
-                    .network(NetworkBuilder::gemini_3g().name(name))
-                    .dsn(
-                        DsnBuilder::gemini_3g()
-                            .provider_storage_path(provider_storage_dir_getter()),
-                    )
-                    .sync_from_dsn(true);
+            ChainConfig::Gemini3h => {
+                let mut node = Node::gemini_3h()
+                    .network(NetworkBuilder::gemini_3h().name(name))
+                    .dsn(DsnBuilder::gemini_3h())
+                    .sync_from_dsn(true)
+                    .enable_subspace_block_relay(true);
                 if enable_domains {
-                    node = node.domain(Some(DomainConfigBuilder::gemini_3g().configuration()));
+                    node = node.domain(Some(DomainConfigBuilder::gemini_3h().configuration()));
                 }
-                let chain_spec = chain_spec::gemini_3g();
+                let chain_spec = chain_spec::gemini_3h();
                 (node, chain_spec)
             }
             ChainConfig::Dev => {
@@ -76,7 +74,9 @@ impl NodeConfig {
             ChainConfig::DevNet => {
                 let mut node = Node::devnet()
                     .network(NetworkBuilder::devnet().name(name))
-                    .dsn(DsnBuilder::devnet().provider_storage_path(provider_storage_dir_getter()));
+                    .dsn(DsnBuilder::devnet())
+                    .sync_from_dsn(true)
+                    .enable_subspace_block_relay(true);
                 if enable_domains {
                     node = node.domain(Some(DomainConfigBuilder::devnet().configuration()));
                 }
@@ -92,7 +92,7 @@ impl NodeConfig {
         node = node
             .role(Role::Authority)
             .impl_version(format!("{}-{}", env!("CARGO_PKG_VERSION"), env!("GIT_HASH")))
-            .impl_name("Subspace CLI".to_string());
+            .impl_name("pulsar".to_string());
 
         crate::utils::apply_extra_options(&node.configuration(), extra)
             .context("Failed to deserialize node config")?
@@ -150,7 +150,7 @@ impl FarmerConfig {
 #[derive(Deserialize, Serialize, Default, Clone, Debug, EnumIter)]
 pub(crate) enum ChainConfig {
     #[default]
-    Gemini3g,
+    Gemini3h,
     Dev,
     DevNet,
 }
@@ -160,7 +160,7 @@ impl std::str::FromStr for ChainConfig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "gemini3g" => Ok(ChainConfig::Gemini3g),
+            "gemini3h" => Ok(ChainConfig::Gemini3h),
             "dev" => Ok(ChainConfig::Dev),
             "devnet" => Ok(ChainConfig::DevNet),
             _ => Err(eyre!("given chain: `{s}` is not recognized!")),
