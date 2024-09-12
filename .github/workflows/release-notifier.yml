@@ -1,6 +1,17 @@
-# This action is to send a release message to our Discord community.
-# - It will only trigger when our release workflow completes successfully or be triggered manually.
-# - When triggering this manually you will need to select Branch > Tags > Select the release you want to notify. (Generally the release you just updated from a pre-release.)
+# Send Release Messages to Discord
+# This action sends a release notification to the Discord community. It can be triggered automatically following a successful release workflow or manually for a specific release.
+#
+# Usage:
+# - Automatically Triggered:
+#   - Activates when the "release" workflow completes successfully AND the release is marked as "Latest."
+#   - NOTE: This workflow will NOT automatically trigger if the release is created as a pre-release and then updated to "Latest" afterward. 
+#     In such cases, it must be manually triggered.
+# - Manually Triggered:
+#   - Navigate to https://github.com/subspace/pulsar/actions.
+#   - Find "Send Release Messages" on the left side.
+#   - Click 'Run Workflow' > Select Branch > Click the Tags Tab > Choose the Release to notify for.
+#   - Read and check the two provided warnings > Click 'Run Workflow.'
+
 name: Send Release Messages
 
 on:
@@ -64,27 +75,4 @@ jobs:
             Read more at: ${{ steps.release_info.outputs.html_url || steps.manual_release_info.outputs.html_url }}
 
             You can also update by visiting our docs at:
-            https://docs.subspace.network/docs/protocol/cli
-      - name: Create Issue in subspace-docs repository
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch ==  steps.release_info.outputs.tag_name}}
-        uses: dacbd/create-issue-action@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          owner: 'subspace'
-          repo: 'subspace-docs'
-          title: 'Update docs for release ${{ steps.release_info.outputs.tag_name || steps.manual_release_info.outputs.tag_name }}'
-          # TODO: Setup Github Organization Team for Product Team and add @Product tag to the body, to notify non-subscribed team members of the open issue.
-          body: |
-            A new release of ${{ github.repository }} is was released and marked latest.
-
-            Documentation requires update, please update prior version to ${{ steps.release_info.outputs.name || steps.manual_release_info.outputs.name }}
-
-            *Release Description:**
-            ${{ steps.release_info.outputs.body || steps.manual_release_info.outputs.body }}
-
-
-            Read more at: ${{ steps.release_info.outputs.html_url || steps.manual_release_info.outputs.html_url }}
-
-
+            https://docs.subspace.network/docs/protocol/pulsar
